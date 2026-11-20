@@ -1,35 +1,57 @@
-# Crumb & Cloud
+# Kai's Bakery – Tiệm Bánh Thủ Công
 
-A demo bakery that shows what real-time 3D on the web looks like: design a layer cake, slice it, box it up.
-Not a real shop.
+A cake shop website built to show what real-time 3D on the web can do in 2026: design a layer cake in 3D,
+slice it to see the layers, and watch it get boxed up. Vietnamese by default, with an English version.
 
-**Live demo (planned URL):** https://bakery-3d.vercel.app
+**Kai's Bakery is not a real shop.** It is a web project by Kai. The cakes, prices and policies are
+realistic on purpose, but no order is ever sent and nobody is charged; every page says so.
 
-![The home page: a strawberry layer cake resting on a cloud under the night sky, with the brand name behind it](docs/screenshots/home.jpg)
+> Tiếng Việt: Kai's Bakery là dự án web minh họa của Kai, tiệm không có thật. Trang mặc định bằng tiếng
+> Việt, có bản tiếng Anh ở `/en`. Bạn có thể tự thiết kế bánh 3D, cắt bánh xem ruột, đặt thử một đơn (không đơn
+> nào được gửi đi).
+
+![The home page: a pink strawberry cake on a cloud in a daylight sky, under the Kai's Bakery title](docs/screenshots/home.jpg)
 
 ## What it does
 
-- **Home** (`/`): a scroll story. The camera dives into the cake chapter by chapter, a slice slides out to show
-  the layers, the glaze pours again and the toppings land. A side index jumps between chapters.
-- **Cake builder** (`/design`): size, sponge, filling, frosting, drip, up to four toppings, candles and a
-  message on a chocolate plaque. Every choice redraws the cake in 3D and updates the price. Slice it to check
-  the layers, save a picture, or develop a path-traced "studio photo" on a desktop, then add it to the cart.
-- **Vitrine** (`/menu`): six house cakes on a turning table under glass cloches. The chosen cake comes to the
-  front and its cloche lifts. Take it as it is, or open it in the builder.
-- **Cart** (`/cart`): quantities, a demo checkout (pickup name, day and time; no payment details), and a
-  closing scene where the cake is lowered into a box that folds itself shut and gets a ribbon.
+- **Home** (`/`): a scroll story in five chapters. The camera moves around the cake, a slice slides out to
+  show the sponge and filling, the glaze pours over the edge and the toppings land. Under the story: why the
+  shop, the six house cakes, how ordering works in three steps, and a behind-the-scenes section.
+- **Cake builder** (`/design`): size in centimetres (10 cm bento to two tiers), sponge, filling, frosting,
+  drip, up to four toppings, sweetness, candles and a message of up to 22 characters with full Vietnamese
+  diacritics. Every choice redraws the cake and the price in đồng, and shows how far ahead it must be ordered.
+  Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the
+  exact same cake (`/design?cake=…`) to send to the shop on Zalo.
+- **Vitrine** (`/menu`): the six house cakes on a turning table under glass cloches. The chosen cake comes to
+  the front and its cloche lifts. Add it as it is, or open it in the builder.
+- **Cart** (`/cart`): quantities, then a demo checkout with pickup at the shop or delivery, time slots in the
+  shop's own time zone, lead times, holiday rules and a 50% deposit where the policy needs one. It ends with
+  the cake being lowered into a box that folds shut and gets a ribbon.
+- **About, policies, FAQ**: the story of the (imaginary) shop and of the project, ordering, payment,
+  cancellation, storage and allergy policies, and 13 questions answered.
 
-![A path-traced studio photo of a two-tier caramel cake, sliced open, on a dark studio floor](docs/screenshots/photo.jpg)
+| Builder, sliced                                                                             | Vitrine                                                                     | Boxed up                                                                           |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| ![The cake builder with a cake sliced open to show its layers](docs/screenshots/design.jpg) | ![The vitrine with six cakes on a turning table](docs/screenshots/menu.jpg) | ![The order screen with the cake box tied in a ribbon](docs/screenshots/boxed.jpg) |
 
-| Builder, sliced                                                                                       | Vitrine                                                                     | Boxed up                                                                                      |
-| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| ![The cake builder with a chocolate cake sliced open to show its layers](docs/screenshots/design.jpg) | ![The vitrine with six cakes on a turning table](docs/screenshots/menu.jpg) | ![The order confirmation with the cake box tied in a pink ribbon](docs/screenshots/boxed.jpg) |
+![Chapter one of the story: a slice of the cake slides out to show three layers of sponge and jam](docs/screenshots/story.jpg)
 
-![Inside the cake: the story chapter about the sponge layers](docs/screenshots/story.jpg)
+![A path-traced studio photo of a chocolate cake with strawberries and macarons on a porcelain stand](docs/screenshots/photo.jpg)
 
 <img src="docs/screenshots/phone-menu.jpg" width="300" alt="The vitrine on a phone: the 3D table on top, the list of cakes below">
 
 ## How it is built
+
+### Two languages, one set of pages
+
+- Every page lives under `src/app/[lang]` and is prerendered for `vi` and `en`.
+- `src/proxy.ts` keeps Vietnamese without a prefix: `/menu` is rewritten to `/vi/menu`, `/vi/menu`
+  redirects (308) to `/menu`, and `/en/menu` is served as it is. Each page has one address per language,
+  a canonical link and `hreflang` alternates; the sitemap lists both.
+- The words live in typed dictionaries (`src/i18n/vi/*.ts`, `src/i18n/en/*.ts`). The English dictionary is
+  typed from the Vietnamese one, so a missing string is a type error.
+- The cake model (`src/lib/cake.ts`) holds no words at all: sizes in centimetres, prices in đồng, allergens
+  as codes. Names and descriptions come from the dictionary.
 
 ### A cake made of code
 
@@ -38,20 +60,22 @@ There is not a single 3D model file. Each cake is generated from the customer's 
 - **Frosting:** a `LatheGeometry` turned from a profile with a rounded top edge, with a buttercream texture
   painted on a canvas and used as a bump map.
 - **The slice:** the cake is built as two pieces that fit exactly, the body and a wedge. "Slicing" moves the
-  wedge out. Its cut faces are `ShapeGeometry` with the sponge, filling and crumbs painted live on a canvas in
-  the chosen flavours, reused as a bump map so the cut catches the light.
+  wedge out. Its cut faces are painted live on a canvas in the chosen flavours, then reused as a bump map so
+  the cut catches the light.
 - **Drips, sprinkles, piped cream:** `InstancedMesh`, so a hundred drips cost two draw calls. Placement comes
   from a random generator seeded with the design, so the same design always looks the same.
-- **Details:** flickering candle flames, a chocolate plaque with the message written in Pacifico (drei `Text`,
-  from a 66 KB Latin and Vietnamese subset of the 329 KB font), porcelain stands, glass cloches and the folding
-  cake box, all from primitives.
+- **Sizes:** the cake is modelled in centimetres; small cakes are framed closer and their toppings, candles
+  and plaque scale with them.
+- **Details:** candle flames, a plaque with the message written in Pacifico (a Latin and Vietnamese subset of
+  the font), porcelain stands, glass cloches and the folding cake box, all from primitives. Every scene colour
+  comes from one theme file (`src/components/three/theme.ts`).
 
 ### Scroll-driven story
 
 The scroll position becomes a continuous chapter number (2.5 is halfway between chapters 2 and 3). One frame
-loop damps the camera between per-chapter shots, shifts the view to make room for the text on wide screens, and
-drives the slice, glaze and toppings through a small controls object instead of React state, so scrolling
-never re-renders the tree. Lenis smooths the scroll unless the visitor asked for reduced motion.
+loop damps the camera between per-chapter shots and drives the slice, glaze and toppings through a small
+controls object instead of React state, so scrolling never re-renders the tree. Lenis smooths the scroll
+unless the visitor asked for reduced motion.
 
 ### Quality and performance
 
@@ -60,36 +84,30 @@ never re-renders the tree. Lenis smooths the scroll unless the visitor asked for
 - Two quality tiers. Phones and machines with four cores or fewer start on "low"; drei's `PerformanceMonitor`
   moves any device down if the frame rate drops.
 - The "high" tier adds an HDRI from a real café for reflections, shadow maps and post-processing: N8AO
-  ambient occlusion, bloom on the candle flames, a vignette and ACES tone mapping.
-- Floor shadows are a soft radial texture painted once, not `ContactShadows`: they cost nothing per frame and
-  do not show the shadow plane's edge through the effect chain.
+  ambient occlusion, a soft bloom and neutral tone mapping, which keeps the pastel colours true.
 - Scenes load with `next/dynamic` and `ssr: false`; every page is prerendered as static HTML.
-
-### Pictures
-
-"Save picture" and the cart thumbnails draw the frame again through the effect composer and copy it in the same
-task, so the picture matches the screen without turning on `preserveDrawingBuffer`.
 
 ### Studio photo (path tracing)
 
 On a desktop, "Studio photo" hands the builder's canvas to
 [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer), which refines the frame sample by
-sample (256 per pixel) while a progress bar fills, then offers a 1200 px PNG:
+sample while a progress bar fills, then offers a PNG. It is lit by the café HDRI alone, like a soft box.
+Instanced drips and sprinkles are baked into plain geometry first, and the message is repainted on a plane,
+because the path tracer cannot read either directly. It uses the Sobol sampler: the library's default left a
+fixed maze pattern on diffuse surfaces that more samples did not clear.
 
-- The live scene is copied into a still one the path tracer understands: instanced drips and sprinkles are
-  baked into plain geometry with per-instance colours as vertex colours, and the message (troika text, drawn
-  by its own shader) is repainted in Pacifico on a plane.
-- It is lit by the café HDRI itself and set on a studio floor that fades into a night-sky gradient.
-- The quality monitor is held while the photo develops, so the deliberate frame-rate drop does not demote the
-  device.
-- Two workarounds for three r187: the HDRI is passed as an equirect image (the library cannot convert the cube
-  environment the live scene uses), and clearcoat is folded into roughness (it renders black otherwise).
+### Ordering rules, without a backend
 
-### No backend
+- Lead times: 4 hours for a house cake, 24 hours for a cake designed on the site, 48 hours for two tiers and
+  for holidays. Same-day house cakes must be ordered before 18:00.
+- Time is always the shop's (Asia/Ho_Chi_Minh), not the visitor's device, so someone abroad ordering for
+  family in Vietnam still sees the right slots.
+- Two tiers, orders from 1,000,000 đ and holiday orders take a 50% deposit by bank transfer or MoMo.
+- The cart and the current design live in `localStorage` (zustand `persist`) and are read after the first
+  render, so server and browser HTML match. The checkout validates the form and stops there: one switch in
+  `src/lib/shop.ts` (`ORDERING_OPEN`) keeps it a demo.
 
-The cart and the current design live in `localStorage` (zustand `persist`, falling back to memory when storage
-is blocked) and are read after the first render, so server and browser HTML match. The checkout validates the
-pickup details and stops there: nothing is sent and no payment is taken.
+All of these rules have unit tests (`src/lib/*.test.ts`).
 
 ## Accessibility
 
@@ -99,16 +117,17 @@ pickup details and stops there: nothing is sent and no payment is taken.
 - Real form controls throughout, a skip link, visible focus, and focus moved to the first invalid field or to
   the confirmation heading.
 - With reduced motion: no idle animation, no smooth scrolling, the box scene starts closed.
-- All text colour pairs pass WCAG AA (the faintest measures 6.2:1).
+- Every text colour pair passes WCAG AA, and a unit test measures them again from the CSS
+  (`src/lib/contrast.test.ts`).
 
 ## Tech stack
 
 | Area      | Tools                                                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| Framework | Next.js 16.4 (App Router, Turbopack, Cache Components), React 19.3, TypeScript 5.9 (strict)                      |
+| Framework | Next.js 16.4 (App Router, Turbopack, Cache Components, `proxy.ts`), React 19.3, TypeScript 5.9 (strict)          |
 | 3D        | three.js 0.187, React Three Fiber 9.8, drei 10.7, postprocessing 6.39 with @react-three/postprocessing 3.2, N8AO |
-| UI        | Tailwind CSS 4.3, Lenis 1.3, zustand 5.1, Barlow and Barlow Condensed via `next/font`                            |
-| Tests     | Vitest 5.1 (pricing, cart, order rules), Playwright 1.65 (end-to-end, desktop and phone)                         |
+| UI        | Tailwind CSS 4.3, Lenis 1.3, zustand 5.1; Baloo 2, Be Vietnam Pro and Pacifico                                   |
+| Tests     | Vitest 5.1 (pricing, lead times, orders, share links, colour contrast), Playwright 1.65 (desktop and phone)      |
 | CI        | GitHub Actions: typecheck, lint, format, unit tests, build, end-to-end tests                                     |
 
 Dependency versions are pinned exactly in `package.json`.
@@ -119,20 +138,25 @@ Requires Node.js 20.9 or later and pnpm 10 (`corepack enable` picks the version 
 
 ```bash
 pnpm install
-pnpm dev                  # http://localhost:3000
+pnpm dev                  # http://localhost:3000 (Vietnamese), /en for English
 pnpm check                # typecheck, lint, format check, unit tests, production build
 pnpm build && pnpm e2e    # end-to-end tests against the production build
 ```
 
+Set `NEXT_PUBLIC_SITE_URL` to the public address when deploying: canonical links, the sitemap and the
+social preview image (`public/og/kais-bakery.jpg`) use it.
+
 ## Project structure
 
 ```
-src/app/                    routes: / (story), /design, /menu, /cart
-src/components/three/       CanvasShell, lighting, effects, capture, shadows
+src/proxy.ts                Vietnamese without a prefix, English under /en
+src/app/[lang]/             pages: / (story), /design, /menu, /cart, /about, /policies, /faq
+src/i18n/{vi,en}/           typed dictionaries, one file per area
+src/components/three/       CanvasShell, lighting, effects, capture, theme
 src/components/three/cake/  the procedural cake: geometry, layout, toppings
 src/components/three/scenes story, builder, vitrine and box scenes
-src/components/{home,design,menu,cart}/  page UI
-src/lib/                    cake options and pricing, presets, cart, order rules, store, unit tests
+src/components/{home,design,menu,cart,info}/  page UI
+src/lib/                    cake model and prices, presets, lead times, cart, order rules, share links, shop details
 e2e/                        Playwright tests
 scripts/screenshot.mjs      screenshots with a real GPU
 ```
@@ -140,7 +164,7 @@ scripts/screenshot.mjs      screenshots with a real GPU
 ## Credits
 
 Light from Poly Haven (CC0), fonts under the SIL Open Font License. Full list in [CREDITS.md](CREDITS.md).
-Made by [Kiệt Nguyễn](https://kietnguyen.io.vn).
+Made by [Kai](https://kietnguyen.io.vn).
 
 ## License
 

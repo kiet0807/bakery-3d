@@ -72,6 +72,7 @@ export const common: CommonDict = {
     titleTemplate: "%s · Kai's Bakery",
     description:
       "Handmade, less-sweet cakes with cream-cheese whipped cream from the Thủ Đức area. Design your cake in 3D, see the price instantly, pick it up or get it delivered across Ho Chi Minh City. A showcase project; the shop isn't real.",
+    ogImageAlt: "Kai's Bakery – Handmade Cakes: a pink strawberry cake in 3D, resting on a cloud",
     ogDescription:
       'Design a cake in real-time 3D, slice it to see every layer, then watch it boxed up. A web project by Kai.',
   },

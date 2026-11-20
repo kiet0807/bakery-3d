@@ -75,6 +75,7 @@ export const common = {
     titleTemplate: "%s · Kai's Bakery",
     description:
       'Bánh kem làm tay, ít ngọt, kem tươi phô mai ở khu Thủ Đức. Tự thiết kế bánh 3D, xem giá liền, nhận tại tiệm hoặc ship khắp nội thành TP.HCM. Dự án web minh họa, tiệm không có thật.',
+    ogImageAlt: "Kai's Bakery – Tiệm Bánh Thủ Công: một chiếc bánh kem dâu 3D nằm trên mây",
     ogDescription:
       'Tự thiết kế bánh kem 3D, cắt ra xem từng lớp, rồi xem bánh được đóng hộp. Một dự án web của Kai.',
   },

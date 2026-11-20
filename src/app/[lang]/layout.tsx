@@ -7,7 +7,7 @@ import { StoreHydrator } from '@/components/StoreHydrator'
 import { LOCALES, OG_LOCALE, hasLocale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LangProvider } from '@/i18n/LangProvider'
-import { langFrom } from '@/i18n/metadata'
+import { langFrom, ogImage } from '@/i18n/metadata'
 import { SHOP, SITE_URL } from '@/lib/shop'
 import '../globals.css'
 
@@ -46,6 +46,7 @@ export async function generateMetadata({ params }: LayoutProps<'/[lang]'>): Prom
       title: meta.siteTitle,
       description: meta.ogDescription,
       locale: OG_LOCALE[lang],
+      images: [ogImage(lang)],
     },
     twitter: { card: 'summary_large_image' },
   }

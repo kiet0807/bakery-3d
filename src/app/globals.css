@@ -1,35 +1,38 @@
 @import 'tailwindcss';
 
 /*
- * Kai's Bakery, palette B "Bơ Bạc Hà" (butter and mint), chosen by the owner on 2026-11-20.
- * - Page: butter cream. Text: deep leaf green, never pure black. Buying: peach-orange. Links and focus: leaf.
- * - Mint, peach and butter are decoration only (blobs, sprinkles, chips); they never carry text on cream.
- * - Measured contrast (WCAG 2.2): ink on cream 11.1:1, muted on cream 5.8:1, muted on mint 5.5:1, leaf on cream
- *   5.3:1, white on buy 5.0:1, error on cream 6.2:1, control edges on cream 3.4:1 (non-text, needs 3:1).
- *   `src/lib/contrast.test.ts` re-measures these pairs from this file.
+ * Kai's Bakery colours. Four sets live in `src/lib/palettes.ts`; visitors switch between them in the header and
+ * the root layout injects one `:root[data-palette="…"]` rule per set. The values below are the default set,
+ * G1 "Matcha Dâu" (matcha milk and strawberry, default since 2026-11-20), so Tailwind knows every token;
+ * `src/lib/contrast.test.ts` keeps them equal to `PALETTES.g1` and measures all four sets.
+ * - Page: soft cream. Text: deep green, never pure black. Buying: its own colour (`buy`). Links and focus: leaf.
+ *   "Kai's" in script: brand (large text, 3:1).
+ * - Mint, peach, butter and berry are decoration only (blobs, sprinkles, chips); they never carry text on cream.
+ * - Shadows, blobs, selection and focus rings mix from the tokens, so they follow the chosen set.
  * - Type: Baloo 2 (rounded display), Be Vietnam Pro (made for Vietnamese diacritics), Pacifico for the logo.
  */
 @theme {
-  --color-cream: #fff8e5;
-  --color-cream-deep: #fbefcf;
+  --color-cream: #f7f7ec;
+  --color-cream-deep: #ecefd9;
   --color-surface: #ffffff;
-  --color-soft: #e2f5ee;
-  --color-butter: #ffc94d;
-  --color-butter-soft: #fff0c2;
-  --color-peach-soft: #ffe4d4;
-  --color-ink: #1f3d36;
-  --color-muted: #4f665e;
-  --color-line: #e8dfc2;
-  --color-edge: #7a8c83;
-  --color-buy: #c24620;
-  --color-buy-deep: #a53a17;
-  --color-leaf: #1c7560;
-  --color-mint: #8ed9c2;
-  --color-peach: #ffb38a;
-  --color-berry: #f2789f;
+  --color-soft: #e3efd6;
+  --color-butter: #f6d77a;
+  --color-butter-soft: #f6f1d2;
+  --color-peach-soft: #fbe3e6;
+  --color-ink: #1d3424;
+  --color-muted: #4b6151;
+  --color-line: #dfe4cb;
+  --color-edge: #77897b;
+  --color-buy: #3f6f2a;
+  --color-buy-deep: #335b22;
+  --color-leaf: #2c6b45;
+  --color-brand: #d24a6a;
+  --color-mint: #a8cf8e;
+  --color-peach: #f7a8b8;
+  --color-berry: #e0607e;
   --color-error: #b42318;
-  --color-sky-top: #d3f1e6;
-  --color-sky-bottom: #fff8e5;
+  --color-sky-top: #dfeccc;
+  --color-sky-bottom: #f7f7ec;
 
   --font-display: var(--font-baloo), 'Arial Rounded MT Bold', ui-rounded, system-ui, sans-serif;
   --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
@@ -37,7 +40,9 @@
 
   --shadow-sticker: 3px 3px 0 var(--color-ink);
   --shadow-sticker-lg: 5px 5px 0 var(--color-ink);
-  --shadow-soft: 0 1px 2px rgb(31 61 54 / 0.08), 0 14px 34px -18px rgb(31 61 54 / 0.4);
+  --shadow-soft:
+    0 1px 2px color-mix(in srgb, var(--color-ink) 8%, transparent),
+    0 14px 34px -18px color-mix(in srgb, var(--color-ink) 40%, transparent);
 
   --animate-rise: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-drift: drift 18s ease-in-out infinite alternate;
@@ -97,7 +102,7 @@ body {
   background: var(--color-cream);
 }
 
-/* Soft mint and peach blobs behind every page. */
+/* Soft mint, peach and butter blobs behind every page, in the chosen set. */
 body::before {
   content: '';
   position: fixed;
@@ -105,9 +110,21 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(34vmax 24vmax at 84% 4%, rgb(142 217 194 / 0.45), transparent 70%),
-    radial-gradient(30vmax 22vmax at 6% 26%, rgb(255 179 138 / 0.3), transparent 70%),
-    radial-gradient(40vmax 30vmax at 60% 78%, rgb(255 201 77 / 0.22), transparent 70%);
+    radial-gradient(
+      34vmax 24vmax at 84% 4%,
+      color-mix(in srgb, var(--color-mint) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30vmax 22vmax at 6% 26%,
+      color-mix(in srgb, var(--color-peach) 30%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40vmax 30vmax at 60% 78%,
+      color-mix(in srgb, var(--color-butter) 22%, transparent),
+      transparent 70%
+    );
   filter: blur(10px);
   animation: var(--animate-drift);
 }
@@ -120,11 +137,12 @@ body::after {
   z-index: -1;
   pointer-events: none;
   opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cg stroke-linecap='round' stroke-width='5' opacity='.55'%3E%3Cpath d='M30 40l12 6' stroke='%23ffb38a'/%3E%3Cpath d='M150 30l4 13' stroke='%238ed9c2'/%3E%3Cpath d='M260 70l13-3' stroke='%23ffc94d'/%3E%3Cpath d='M80 150l10 9' stroke='%23f2789f'/%3E%3Cpath d='M210 170l-6 12' stroke='%238ed9c2'/%3E%3Cpath d='M320 200l12 5' stroke='%23ffb38a'/%3E%3Cpath d='M40 270l13 2' stroke='%23ffc94d'/%3E%3Cpath d='M150 300l5-12' stroke='%23f2789f'/%3E%3Cpath d='M280 310l11 8' stroke='%238ed9c2'/%3E%3C/g%3E%3C/svg%3E");
+  /* Drawn per palette in `paletteCss()` (a data URI cannot read CSS variables). */
+  background-image: var(--sprinkles, none);
 }
 
 ::selection {
-  background: rgb(255 201 77 / 0.6);
+  background: color-mix(in srgb, var(--color-butter) 60%, transparent);
   color: var(--color-ink);
 }
 
@@ -258,7 +276,7 @@ h3 {
   }
   &:focus {
     border-color: var(--color-leaf);
-    box-shadow: 0 0 0 3px rgb(28 117 96 / 0.2);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-leaf) 20%, transparent);
   }
   &[aria-invalid='true'] {
     border-color: var(--color-error);

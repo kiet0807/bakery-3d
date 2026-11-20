@@ -14,6 +14,17 @@ export const common: CommonDict = {
     cart: 'Cart',
     cartCount: (n: number) => `${n} ${n === 1 ? 'cake' : 'cakes'} in the cart`,
   },
+  palette: {
+    label: 'Shop colours',
+    current: (name: string) => `Shop colours: ${name}. Tap to change`,
+    hint: 'Pick the look you love; the shop remembers it next visit.',
+    sets: {
+      g1: { name: 'Matcha Strawberry', note: 'Matcha latte with strawberries, cuteness overload' },
+      b: { name: 'Butter Mint', note: 'Butter cream and mint, Saturday-morning chill' },
+      g2: { name: 'Pandan Coconut', note: 'Fresh pandan green, bright all day long' },
+      g3: { name: 'Forest Cream', note: 'Deep forest green and rich cream, classy but cute' },
+    },
+  },
   notice: {
     badge: 'Not a real shop',
     text: "Kai's Bakery is a web project by Kai, and the shop isn't real. Cakes, prices and orders are all for show: no order is sent anywhere and nobody gets charged.",

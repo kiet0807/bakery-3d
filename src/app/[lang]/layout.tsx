@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Baloo_2, Be_Vietnam_Pro } from 'next/font/google'
 import { notFound } from 'next/navigation'
+import { PaletteHead } from '@/components/PaletteHead'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 import { StoreHydrator } from '@/components/StoreHydrator'
@@ -8,6 +9,7 @@ import { LOCALES, OG_LOCALE, hasLocale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LangProvider } from '@/i18n/LangProvider'
 import { langFrom, ogImage } from '@/i18n/metadata'
+import { DEFAULT_PALETTE, PALETTES } from '@/lib/palettes'
 import { SHOP, SITE_URL } from '@/lib/shop'
 import '../globals.css'
 
@@ -53,7 +55,8 @@ export async function generateMetadata({ params }: LayoutProps<'/[lang]'>): Prom
 }
 
 export const viewport: Viewport = {
-  themeColor: '#fff8e5',
+  // The default set's cream; the palette switch updates the tag when a visitor picks another set.
+  themeColor: PALETTES[DEFAULT_PALETTE].cream,
   colorScheme: 'light',
 }
 
@@ -62,7 +65,16 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
   if (!hasLocale(lang)) notFound()
   const { common } = dictionaries[lang]
   return (
-    <html lang={lang} className={`${baloo.variable} ${beVietnam.variable}`}>
+    // `data-palette` may change before hydration (the saved set), hence suppressHydrationWarning.
+    <html
+      lang={lang}
+      data-palette={DEFAULT_PALETTE}
+      className={`${baloo.variable} ${beVietnam.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <PaletteHead />
+      </head>
       <body>
         <a
           href="#main"

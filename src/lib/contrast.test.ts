@@ -1,14 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-
-/** Reads the colour tokens straight from globals.css, so a palette change is re-measured here. */
-const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
-const token = (name: string) => {
-  const match = css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`))
-  if (!match) throw new Error(`No --color-${name} in globals.css`)
-  return match[1]
-}
+import { DEFAULT_PALETTE, PALETTES, PALETTE_IDS, UI_TOKENS, paletteCss, type UiToken } from './palettes'
 
 const channel = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
 function luminance(hex: string) {
@@ -22,13 +15,14 @@ export function contrast(a: string, b: string) {
 }
 
 // [text, background, minimum]: 4.5 for text, 3 for control edges and large display text.
-const PAIRS: [string, string, number][] = [
+const PAIRS: [UiToken, UiToken, number][] = [
   ['ink', 'cream', 4.5],
   ['ink', 'surface', 4.5],
   ['ink', 'soft', 4.5],
   ['ink', 'butter', 4.5],
   ['ink', 'butter-soft', 4.5],
   ['ink', 'peach-soft', 4.5],
+  ['ink', 'mint', 4.5],
   ['muted', 'cream', 4.5],
   ['muted', 'surface', 4.5],
   ['muted', 'soft', 4.5],
@@ -43,15 +37,58 @@ const PAIRS: [string, string, number][] = [
   ['error', 'surface', 4.5],
   ['edge', 'cream', 3],
   ['edge', 'surface', 3],
+  // "Kai's" in script is large display text.
+  ['brand', 'cream', 3],
+  ['brand', 'surface', 3],
 ]
 
-describe('palette contrast', () => {
+describe.each(PALETTE_IDS)('palette %s', (id) => {
+  const palette = PALETTES[id]
+
   it.each(PAIRS)('%s on %s reaches %s:1', (text, background, minimum) => {
-    expect(contrast(token(text), token(background))).toBeGreaterThanOrEqual(minimum)
+    expect(contrast(palette[text], palette[background])).toBeGreaterThanOrEqual(minimum)
   })
 
   it('keeps white text readable on the buy button', () => {
-    expect(contrast('#ffffff', token('buy'))).toBeGreaterThanOrEqual(4.5)
-    expect(contrast('#ffffff', token('buy-deep'))).toBeGreaterThanOrEqual(4.5)
+    expect(contrast('#ffffff', palette.buy)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast('#ffffff', palette['buy-deep'])).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('has every token as a six-digit hex colour', () => {
+    for (const token of UI_TOKENS) expect(palette[token]).toMatch(/^#[0-9a-f]{6}$/)
+  })
+})
+
+describe('globals.css', () => {
+  const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
+  const theme = css.slice(css.indexOf('@theme {'), css.indexOf('}', css.indexOf('@theme {')))
+
+  it('declares the default palette in @theme, token for token', () => {
+    for (const token of UI_TOKENS) {
+      const match = theme.match(new RegExp(`--color-${token}:\\s*(#[0-9a-fA-F]{6});`))
+      expect(match?.[1].toLowerCase(), token).toBe(PALETTES[DEFAULT_PALETTE][token])
+    }
+  })
+
+  it('has no other colour tokens than the palettes know', () => {
+    const declared = [...theme.matchAll(/--color-([a-z-]+):/g)].map((m) => m[1])
+    expect(declared.sort()).toEqual([...UI_TOKENS].sort())
+  })
+})
+
+describe('paletteCss', () => {
+  const css = paletteCss()
+
+  it('writes one rule per palette with every token and the sprinkles', () => {
+    for (const id of PALETTE_IDS) {
+      const rule = css.match(new RegExp(`:root\\[data-palette="${id}"\\]\\{([^}]*)\\}`))?.[1]
+      expect(rule, id).toBeDefined()
+      for (const token of UI_TOKENS) expect(rule).toContain(`--color-${token}:${PALETTES[id][token]}`)
+      expect(rule).toContain('--sprinkles:url("data:image/svg+xml,')
+    }
+  })
+
+  it('cannot close the style element early', () => {
+    expect(css).not.toMatch(/<\/?style/i)
   })
 })

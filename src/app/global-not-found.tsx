@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Baloo_2, Be_Vietnam_Pro } from 'next/font/google'
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
+import { PaletteHead } from '@/components/PaletteHead'
 import { dictionaries } from '@/i18n/dictionaries'
+import { DEFAULT_PALETTE } from '@/lib/palettes'
 import './globals.css'
 
 const baloo = Baloo_2({
@@ -32,7 +34,15 @@ export default function GlobalNotFound() {
   const vi = dictionaries.vi.common.notFound
   const en = dictionaries.en.common.notFound
   return (
-    <html lang="vi" className={`${baloo.variable} ${beVietnam.variable}`}>
+    <html
+      lang="vi"
+      data-palette={DEFAULT_PALETTE}
+      className={`${baloo.variable} ${beVietnam.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <PaletteHead />
+      </head>
       <body>
         <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
           <Logo className="h-20 w-20 animate-wiggle" />

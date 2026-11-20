@@ -1,4 +1,5 @@
 import type { Allergen } from '@/lib/cake'
+import type { PaletteId } from '@/lib/palettes'
 
 /** Words shared by every page: header, footer, the "not a real shop" notice, units, allergens. */
 export const common = {
@@ -16,6 +17,18 @@ export const common = {
     about: 'Về tiệm',
     cart: 'Giỏ',
     cartCount: (n: number) => `${n} bánh trong giỏ`,
+  },
+  /** The colour switch in the header. Names and notes follow `PALETTE_IDS`. */
+  palette: {
+    label: 'Đổi màu tiệm',
+    current: (name: string) => `Màu tiệm: ${name}. Bấm để đổi`,
+    hint: 'Chọn tông bạn mê, lần sau ghé tiệm vẫn nhớ nha.',
+    sets: {
+      g1: { name: 'Matcha Dâu', note: 'Matcha latte thêm dâu, xinh xỉu luôn' },
+      b: { name: 'Bơ Bạc Hà', note: 'Kem bơ mát lạnh, chill như sáng thứ Bảy' },
+      g2: { name: 'Lá Dứa Dừa', note: 'Xanh lá dứa thơm lừng, tươi rói cả ngày' },
+      g3: { name: 'Rừng Kem', note: 'Xanh rừng sâu, kem béo, sang mà vẫn cute' },
+    } satisfies Record<PaletteId, { name: string; note: string }>,
   },
   notice: {
     badge: 'Tiệm "ảo"',

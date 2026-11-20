@@ -144,14 +144,35 @@ export const PALETTES: Record<PaletteId, Palette> = {
   },
 }
 
+/** The faint sprinkles behind every page (`body::after`), in the set's decoration colours. */
+const SPRINKLES: [path: string, token: 'peach' | 'mint' | 'butter' | 'berry'][] = [
+  ['M30 40l12 6', 'peach'],
+  ['M150 30l4 13', 'mint'],
+  ['M260 70l13-3', 'butter'],
+  ['M80 150l10 9', 'berry'],
+  ['M210 170l-6 12', 'mint'],
+  ['M320 200l12 5', 'peach'],
+  ['M40 270l13 2', 'butter'],
+  ['M150 300l5-12', 'berry'],
+  ['M280 310l11 8', 'mint'],
+]
+
+/** A data URI cannot read CSS variables, so each palette gets its own sprinkle picture. */
+export function sprinkleUrl(palette: Palette): string {
+  const paths = SPRINKLES.map(([d, token]) => `<path d='${d}' stroke='${palette[token]}'/>`).join('')
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360'><g stroke-linecap='round' stroke-width='5' opacity='.55'>${paths}</g></svg>`
+  return `url("data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23')}")`
+}
+
 /**
  * One rule per palette, for the root layout's inline `<style>`: `:root[data-palette="b"] { --color-cream: … }`.
  * The attribute selector outranks Tailwind's `:root` theme block, so the chosen set wins.
  */
 export function paletteCss(): string {
   return PALETTE_IDS.map((id) => {
-    const vars = UI_TOKENS.map((token) => `--color-${token}:${PALETTES[id][token]}`).join(';')
-    return `:root[data-palette="${id}"]{${vars}}`
+    const vars = UI_TOKENS.map((token) => `--color-${token}:${PALETTES[id][token]}`)
+    vars.push(`--sprinkles:${sprinkleUrl(PALETTES[id])}`)
+    return `:root[data-palette="${id}"]{${vars.join(';')}}`
   }).join('')
 }
 

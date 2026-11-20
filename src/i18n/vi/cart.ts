@@ -45,6 +45,18 @@ export const cart = {
   },
   checkout: {
     title: 'Chốt đơn thôi',
+    steps: {
+      count: (step: number) => `Bước ${step}/2`,
+      who: 'Bạn là ai, nhận kiểu nào?',
+      when: 'Khi nào nhận, trả kiểu gì?',
+      next: 'Tiếp tục: chọn ngày nhận',
+      back: 'Quay lại bước 1',
+      summary: 'Người nhận',
+      edit: 'Sửa',
+      editLabel: 'Sửa tên, số điện thoại và cách nhận',
+      pickup: 'Nhận tại tiệm, khu Thủ Đức',
+      deliverTo: (address: string) => `Giao tới ${address}`,
+    },
     lead: {
       menu: 'Đơn này cần đặt trước 4 giờ',
       custom: 'Đơn này cần đặt trước 24 giờ vì có bánh tự thiết kế',
@@ -82,6 +94,15 @@ export const cart = {
       label: 'Ngày nhận',
       earliest: (day: string) => `Sớm nhất: ${day}`,
       none: 'Trong 30 ngày tới hết chỗ rồi, nhắn Kai nha.',
+      today: 'Hôm nay',
+      tomorrow: 'Mai',
+      /** Sunday first, as Date.getDay() counts. */
+      weekdays: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+      other: 'Ngày khác',
+      otherLabel: 'Ngày bạn muốn nhận',
+      holiday: 'Lễ',
+      holidayFull: 'ngày lễ, cần cọc 50%',
+      holidayNote: 'Ngày dán nhãn “Lễ” đông đơn: đặt trước 48 giờ và cọc 50% nha.',
     },
     time: {
       label: 'Giờ nhận',
@@ -91,6 +112,7 @@ export const cart = {
     },
     payment: {
       legend: 'Thanh toán',
+      short: { cod: 'Tiền mặt', transfer: 'Chuyển khoản', momo: 'MoMo' } satisfies Record<Payment, string>,
       cod: 'Tiền mặt khi nhận (COD)',
       transfer: 'Chuyển khoản',
       momo: 'Ví MoMo',
@@ -111,10 +133,14 @@ export const cart = {
       because: (reasons: string) => `Đơn này cần cọc vì ${reasons}.`,
       now: 'Cọc trước',
       later: 'Trả khi nhận',
+      rounded: (half: string, amount: string) =>
+        `Một nửa đơn là ${half}, tiệm làm tròn lên nghìn thành ${amount} cho chẵn nha.`,
+      exact: 'Cọc đúng một nửa tiền bánh, không lẻ đồng nào.',
       none: 'Đơn này không cần cọc, trả khi nhận hoặc chuyển khoản đều được.',
     },
     note: {
       label: 'Nhắn tiệm (không bắt buộc)',
+      add: 'Nhắn tiệm vài lời (không bắt buộc)',
       placeholder: 'Ví dụ: ít ngọt thêm xíu nha tiệm',
     },
     errors: {
@@ -150,6 +176,7 @@ export const cart = {
       summary: (n: number) => (n === 1 ? 'Còn 1 ô cần sửa ở trên nha.' : `Còn ${n} ô cần sửa ở trên nha.`),
     },
     demo: 'Tiệm không có thật nha: đây là đơn thử, không gửi đi đâu và không trừ tiền ai. Trang không hỏi thẻ ngân hàng, cũng không lưu tên, số điện thoại hay địa chỉ bạn nhập.',
+    demoShort: 'Đơn thử thôi nha: bấm chốt là không gửi đi đâu, không trừ tiền ai.',
     submitDemo: 'Chốt đơn thử',
     submitZalo: 'Gửi đơn qua Zalo',
     zaloManual: 'Trình duyệt không cho chép tự động. Bạn chép đoạn này rồi gửi Zalo cho tiệm nha.',

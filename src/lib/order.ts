@@ -150,8 +150,17 @@ export function dateRange(now: Date): { min: string; max: string } {
 /**
  * The first day of Tết (Lunar New Year) for the years the 30-day order window can reach. It moves with the
  * lunar calendar, so the dates are listed rather than computed; add the next year before the last one passes.
+ * These are Vietnam's dates (the lunar calendar reckoned at UTC+7, Hồ Ngọc Đức's algorithm): in 2030 Tết falls
+ * on 2 February, a day before the Chinese New Year, because the new moon comes just before midnight here.
  */
-export const TET_DAYS = ['2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03'] as const
+export const TET_DAYS = [
+  '2027-02-06',
+  '2028-01-26',
+  '2029-02-13',
+  '2030-02-02',
+  '2031-01-23',
+  '2032-02-11',
+] as const
 /** "Cận Tết": the week before Tết counts as a holiday, from the 23rd of the last lunar month or so. */
 export const TET_RUSH_DAYS = 7
 
@@ -229,12 +238,22 @@ export function slotsFor(date: string, { now, method, items }: SlotContext): str
 
 /** The first day with an open slot, or null if none within the window. */
 export function earliestDate(context: SlotContext): string | null {
+  return dateChoices(context, 1)[0] ?? null
+}
+
+/**
+ * The first `count` days that still have an open slot for this cart, earliest first: the quick picks of the
+ * checkout. A day with nothing left (a holiday inside its 48 hours, today after the cutoff) is skipped, not
+ * shown as a dead option.
+ */
+export function dateChoices(context: SlotContext, count: number): string[] {
   const { min } = dateRange(context.now)
-  for (let day = 0; day <= MAX_DAYS_AHEAD; day++) {
+  const days: string[] = []
+  for (let day = 0; day <= MAX_DAYS_AHEAD && days.length < count; day++) {
     const date = addShopDays(min, day)
-    if (slotsFor(date, context).length) return date
+    if (slotsFor(date, context).length) days.push(date)
   }
-  return null
+  return days
 }
 
 // ---------------------------------------------------------------------------------------------------------

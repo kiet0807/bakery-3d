@@ -1,23 +1,15 @@
 'use client'
 
-import { useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useDict, useLang } from '@/i18n/LangProvider'
 import type { CartItem } from '@/lib/cart'
 import { money } from '@/lib/money'
 import {
   EMPTY_FORM,
   FIELDS,
-  MAX_ADDRESS_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_NOTE_LENGTH,
-  METHODS,
-  PAYMENTS,
   cleanForm,
-  dateRange,
   depositFor,
-  earliestDate,
-  formatDay,
-  leadFor,
   orderNumber,
   orderText,
   slotsFor,
@@ -28,7 +20,11 @@ import {
   type OrderErrors,
   type OrderForm,
 } from '@/lib/order'
-import { DELIVERY_AREAS, ORDERING_OPEN, SHOP } from '@/lib/shop'
+import { ORDERING_OPEN, SHOP } from '@/lib/shop'
+import { getSmoothScroll } from '@/lib/smoothScroll'
+import type { CheckoutKit } from './checkoutKit'
+import { StepWhen } from './StepWhen'
+import { StepWho } from './StepWho'
 
 /** The current minute, read in the browser only, so slots close as time passes without a reload. */
 const subscribeMinute = (onChange: () => void) => {
@@ -37,86 +33,23 @@ const subscribeMinute = (onChange: () => void) => {
 }
 const readMinute = () => Math.floor(Date.now() / 60_000)
 
-function Field({
-  id,
-  label,
-  hint,
-  error,
-  children,
-}: {
-  id: string
-  label: string
-  hint?: ReactNode
-  error?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block font-display text-[0.95rem] font-bold">
-        {label}
-      </label>
-      {children}
-      {error && (
-        <p id={`${id}-error`} className="text-sm font-medium text-error">
-          {error}
-        </p>
-      )}
-      {/* The hint stays under the error: some errors point at it ("the earliest day shown below"). */}
-      {hint && (
-        <p id={`${id}-hint`} className="text-xs leading-relaxed text-muted">
-          {hint}
-        </p>
-      )}
-    </div>
-  )
-}
+type Step = 1 | 2
 
-/** A radio card: the input is real and focusable; the card is its label. */
-function OptionCard({
-  name,
-  value,
-  checked,
-  disabled,
-  onChange,
-  inputRef,
-  describedBy,
-  title,
-  note,
-}: {
-  name: string
-  value: string
-  checked: boolean
-  disabled?: boolean
-  onChange: () => void
-  inputRef?: (node: HTMLInputElement | null) => void
-  describedBy?: string
-  title: string
-  note: string
-}) {
-  return (
-    <label className={`group relative block ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-      <input
-        ref={inputRef}
-        type="radio"
-        name={name}
-        value={value}
-        checked={checked}
-        disabled={disabled}
-        onChange={onChange}
-        aria-describedby={describedBy}
-        className="peer sr-only"
-      />
-      <span className="flex h-full flex-col gap-0.5 rounded-2xl border-2 border-edge bg-surface px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] group-hover:border-ink peer-checked:border-ink peer-checked:bg-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf peer-disabled:border-line peer-disabled:bg-cream peer-disabled:text-muted peer-disabled:shadow-none">
-        <span className="font-display text-[0.95rem] leading-tight font-bold">{title}</span>
-        <span className="text-xs leading-snug text-muted">{note}</span>
-      </span>
-    </label>
-  )
+/** The fields each step asks for, in screen order. "Next" checks only the first step's. */
+const STEP_FIELDS: Record<Step, (keyof OrderForm)[]> = {
+  1: ['name', 'phone', 'method', 'address'],
+  2: ['date', 'time', 'payment', 'note'],
 }
+const stepOf = (field: keyof OrderForm): Step => (STEP_FIELDS[1].includes(field) ? 1 : 2)
+
+/** Room left above a step when it is scrolled to: the fixed header is 64 px (80 from 640 px) high. */
+const HEADER_ROOM = 96
 
 /**
- * Who, how, when and how to pay. While the shop is not real (ORDERING_OPEN off) the order goes nowhere and the
- * page says so right above the button; when it opens, the button copies the order and opens the shop's Zalo.
+ * Who and how, then when and how to pay: two short steps instead of one long form (it was about 1,600 px on a
+ * phone). Everything typed stays when moving between them. While the shop is not real (ORDERING_OPEN off) the
+ * order goes nowhere and the page says so right above the button; when it opens, the button copies the order and
+ * opens the shop's Zalo.
  */
 export function Checkout({
   items,
@@ -130,39 +63,52 @@ export function Checkout({
   const dict = useDict()
   const lang = useLang()
   const t = dict.cart.checkout
+  const reduced = useReducedMotion()
   const prefix = useId()
   const ids = Object.fromEntries(FIELDS.map((field) => [field, `${prefix}-${field}`])) as Record<
     keyof OrderForm,
     string
   >
   const [form, setForm] = useState<OrderForm>(EMPTY_FORM)
-  const [attempted, setAttempted] = useState(false)
+  const [step, setStep] = useState<Step>(1)
+  // The steps whose errors show: a step's errors appear once the visitor has tried to leave it, then follow
+  // every change.
+  const [tried, setTried] = useState<Step[]>([])
   const [manualText, setManualText] = useState<string | null>(null)
   const refs = useRef<Partial<Record<keyof OrderForm, HTMLElement | null>>>({})
+  const box = useRef<HTMLDivElement>(null)
+  const heading = useRef<HTMLHeadingElement>(null)
+  // What gets the focus once the other step has rendered: its heading, or a field with an error.
+  const focusNext = useRef<keyof OrderForm | 'heading' | null>(null)
 
   const minute = useSyncExternalStore(subscribeMinute, readMinute, () => 0)
   const now = minute ? new Date(minute * 60_000) : null
-  const context = now ? { now, method: form.method, items } : null
-  const range = now ? dateRange(now) : null
-  const earliest = context ? earliestDate(context) : null
-  const slots = context && form.date ? slotsFor(form.date, context) : []
-  const lead = leadFor(items, form.date || undefined)
-  const deposit = depositFor(items, form.date || undefined)
 
-  // Errors show after the first try, then follow every change.
-  const errors: OrderErrors = attempted && now ? validateOrder(form, { now, items }) : {}
-  const errorCount = Object.keys(errors).length
+  const found: OrderErrors = tried.length && now ? validateOrder(form, { now, items }) : {}
+  const errors: OrderErrors = Object.fromEntries(
+    Object.entries(found).filter(([field]) => tried.includes(stepOf(field as keyof OrderForm))),
+  )
+  const stepErrors = STEP_FIELDS[step].filter((field) => errors[field]).length
+
   const message = (field: keyof OrderForm) => {
     const code = errors[field]
     if (!code) return undefined
     return (t.errors[field] as Partial<Record<FieldError, string>>)[code]
   }
-  const describedBy = (field: keyof OrderForm, hasHint = true) =>
-    [errors[field] && `${ids[field]}-error`, hasHint && `${ids[field]}-hint`].filter(Boolean).join(' ') ||
-    undefined
-
-  const set = <K extends keyof OrderForm>(field: K, value: OrderForm[K]) =>
-    setForm((current) => ({ ...current, [field]: value }))
+  const kit: CheckoutKit = {
+    form,
+    set: (field, value) => setForm((current) => ({ ...current, [field]: value })),
+    ids,
+    prefix,
+    errors,
+    message,
+    describedBy: (field, hasHint = true) =>
+      [errors[field] && `${ids[field]}-error`, hasHint && `${ids[field]}-hint`].filter(Boolean).join(' ') ||
+      undefined,
+    register: (field) => (node) => {
+      refs.current[field] = node
+    },
+  }
 
   const setMethod = (method: Method) =>
     setForm((current) => {
@@ -185,14 +131,56 @@ export function Checkout({
       }
     })
 
+  // After a step change: focus its heading (a screen reader announces the new step) and bring its top into view
+  // under the header if the visitor had scrolled down to the button; or focus the field that needs fixing.
+  useEffect(() => {
+    const target = focusNext.current
+    focusNext.current = null
+    if (!target) return
+    if (target !== 'heading') {
+      refs.current[target]?.focus()
+      return
+    }
+    heading.current?.focus({ preventScroll: true })
+    const top = box.current?.getBoundingClientRect().top
+    if (top === undefined || (top >= HEADER_ROOM - 16 && top < window.innerHeight * 0.6)) return
+    const y = window.scrollY + top - HEADER_ROOM
+    const lenis = getSmoothScroll()
+    if (lenis) lenis.scrollTo(y, { duration: 0.7, immediate: reduced })
+    else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' })
+  }, [step, reduced])
+
+  const goTo = (next: Step, focus: keyof OrderForm | 'heading' = 'heading') => {
+    focusNext.current = focus
+    setStep(next)
+  }
+
+  const markTried = (...steps: Step[]) =>
+    setTried((current) => [...new Set([...current, ...steps])].sort() as Step[])
+
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const placedAt = new Date()
-    const found = validateOrder(form, { now: placedAt, items })
-    const first = FIELDS.find((field) => found[field])
+    const check = validateOrder(form, { now: placedAt, items })
+
+    // Step 1 (also reached by Enter in one of its fields): check its fields only, then move on.
+    if (step === 1) {
+      const first = STEP_FIELDS[1].find((field) => check[field])
+      if (first) {
+        markTried(1)
+        refs.current[first]?.focus()
+        return
+      }
+      goTo(2)
+      return
+    }
+
+    const first = FIELDS.find((field) => check[field])
     if (first) {
-      setAttempted(true)
-      refs.current[first]?.focus()
+      markTried(1, 2)
+      // Step 1 was fine when it was left, so this is rare; send the visitor back to the field if it happens.
+      if (stepOf(first) === 1) goTo(1, first)
+      else refs.current[first]?.focus()
       return
     }
     const clean = cleanForm(form)
@@ -210,246 +198,83 @@ export function Checkout({
     )
   }
 
-  const reasons = deposit.reasons.map((reason) => t.deposit.reasons[reason]).join(', ')
-
   return (
     <form noValidate onSubmit={submit} className="space-y-6" aria-labelledby={`${prefix}-title`}>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <h2 id={`${prefix}-title`} className="font-display text-3xl leading-tight font-extrabold">
           {t.title}
         </h2>
-        <p className="flex flex-wrap gap-2">
-          <span className="inline-flex -rotate-1 items-center gap-1.5 rounded-full border-2 border-ink bg-butter px-3 py-1 text-sm font-semibold">
-            <span aria-hidden>⏱</span> {lead.holiday ? t.holidayLead : t.lead[lead.kind]}
-          </span>
-        </p>
-        {lead.kind === 'menu' && !lead.holiday && <p className="text-xs text-muted">{t.sameDay}</p>}
-      </div>
-
-      <Field id={ids.name} label={t.name.label} hint={t.name.hint} error={message('name')}>
-        <input
-          ref={(node) => void (refs.current.name = node)}
-          id={ids.name}
-          type="text"
-          autoComplete="name"
-          maxLength={MAX_NAME_LENGTH}
-          value={form.name}
-          onChange={(event) => set('name', event.target.value)}
-          aria-invalid={Boolean(errors.name)}
-          aria-describedby={describedBy('name')}
-          placeholder={t.name.placeholder}
-          className="field"
-        />
-      </Field>
-
-      <Field id={ids.phone} label={t.phone.label} hint={t.phone.hint} error={message('phone')}>
-        <input
-          ref={(node) => void (refs.current.phone = node)}
-          id={ids.phone}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          maxLength={20}
-          value={form.phone}
-          onChange={(event) => set('phone', event.target.value)}
-          aria-invalid={Boolean(errors.phone)}
-          aria-describedby={describedBy('phone')}
-          placeholder={t.phone.placeholder}
-          className="field tabular-nums"
-        />
-      </Field>
-
-      <fieldset className="space-y-2" aria-describedby={errors.method ? `${ids.method}-error` : undefined}>
-        <legend className="mb-2 font-display text-[0.95rem] font-bold">{t.method.legend}</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {METHODS.map((method, index) => (
-            <OptionCard
-              key={method}
-              name={`${prefix}-method`}
-              value={method}
-              checked={form.method === method}
-              onChange={() => setMethod(method)}
-              inputRef={index === 0 ? (node) => void (refs.current.method = node) : undefined}
-              title={t.method[method]}
-              note={t.method.notes[method]}
-            />
+        <div aria-hidden className="grid grid-cols-2 gap-1.5">
+          {([1, 2] as const).map((bar) => (
+            <span key={bar} className="h-2 overflow-hidden rounded-full bg-cream-deep">
+              <span
+                className={`block h-full origin-left rounded-full bg-leaf transition-[scale] duration-500 ease-out ${
+                  bar <= step ? 'scale-x-100' : 'scale-x-0'
+                }`}
+              />
+            </span>
           ))}
         </div>
-        {errors.method && (
-          <p id={`${ids.method}-error`} className="text-sm font-medium text-error">
-            {message('method')}
-          </p>
-        )}
-      </fieldset>
+      </div>
 
-      {form.method === 'delivery' && (
-        <div className="space-y-4 rounded-2xl bg-soft p-4">
-          <Field id={ids.address} label={t.address.label} hint={t.address.hint} error={message('address')}>
-            <input
-              ref={(node) => void (refs.current.address = node)}
-              id={ids.address}
-              type="text"
-              autoComplete="street-address"
-              maxLength={MAX_ADDRESS_LENGTH}
-              value={form.address}
-              onChange={(event) => set('address', event.target.value)}
-              aria-invalid={Boolean(errors.address)}
-              aria-describedby={describedBy('address')}
-              placeholder={t.address.placeholder}
-              className="field"
-            />
-          </Field>
-          <div className="space-y-1.5 text-sm leading-relaxed">
-            <p className="font-display font-bold">{t.delivery.title}</p>
-            <p className="text-muted">
-              {t.delivery.areas}: {DELIVERY_AREAS.join(', ')}.
+      <div ref={box} key={step} className="space-y-6 motion-safe:animate-[rise_0.45s_var(--ease-out)_both]">
+        <h3 ref={heading} tabIndex={-1} className="font-display text-xl leading-tight font-bold outline-none">
+          <span className="eyebrow block">{t.steps.count(step)}</span>{' '}
+          {step === 1 ? t.steps.who : t.steps.when}
+        </h3>
+
+        {step === 1 ? (
+          <StepWho kit={kit} onMethod={setMethod} />
+        ) : (
+          <StepWhen kit={kit} items={items} now={now} onDate={setDate} onEdit={() => goTo(1)} />
+        )}
+
+        {/*
+          While the shop is not real: the full notice where the name, phone and address are typed (nothing of it is
+          kept), and a one-line reminder right above the order button.
+        */}
+        {!ORDERING_OPEN &&
+          (step === 1 ? (
+            <p className="flex gap-3 rounded-2xl border-2 border-dashed border-ink bg-peach-soft p-4 text-sm leading-relaxed">
+              <span aria-hidden className="text-lg leading-none">
+                ✦
+              </span>
+              <span>{t.demo}</span>
             </p>
-            <p>{t.delivery.fee}</p>
-            <p className="text-muted">{t.delivery.car}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-5 min-[420px]:grid-cols-2">
-        <Field
-          id={ids.date}
-          label={t.date.label}
-          hint={earliest ? t.date.earliest(formatDay(earliest, lang)) : now ? t.date.none : undefined}
-          error={message('date')}
-        >
-          <input
-            ref={(node) => void (refs.current.date = node)}
-            id={ids.date}
-            type="date"
-            min={earliest ?? range?.min}
-            max={range?.max}
-            value={form.date}
-            onChange={(event) => setDate(event.target.value)}
-            aria-invalid={Boolean(errors.date)}
-            aria-describedby={describedBy('date', Boolean(now))}
-            className="field min-h-12"
-          />
-        </Field>
-        <Field
-          id={ids.time}
-          label={t.time.label}
-          hint={form.date && !slots.length ? t.time.none : undefined}
-          error={message('time')}
-        >
-          <select
-            ref={(node) => void (refs.current.time = node)}
-            id={ids.time}
-            value={form.time}
-            onChange={(event) => set('time', event.target.value)}
-            aria-invalid={Boolean(errors.time)}
-            aria-describedby={describedBy('time', Boolean(form.date && !slots.length))}
-            className="field min-h-12"
-          >
-            <option value="">{form.date ? t.time.choose : t.time.pickDate}</option>
-            {slots.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-            {form.time && !slots.includes(form.time) && (
-              <option value={form.time} disabled>
-                {form.time}
-              </option>
-            )}
-          </select>
-        </Field>
-      </div>
-
-      <fieldset className="space-y-2" aria-describedby={`${ids.payment}-deposit`}>
-        <legend className="mb-2 font-display text-[0.95rem] font-bold">{t.payment.legend}</legend>
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-          {PAYMENTS.map((payment, index) => (
-            <OptionCard
-              key={payment}
-              name={`${prefix}-payment`}
-              value={payment}
-              checked={form.payment === payment}
-              disabled={payment === 'cod' && deposit.amount > 0}
-              onChange={() => set('payment', payment)}
-              inputRef={
-                index === (deposit.amount > 0 ? 1 : 0)
-                  ? (node) => void (refs.current.payment = node)
-                  : undefined
-              }
-              describedBy={errors.payment ? `${ids.payment}-error` : undefined}
-              title={t.payment[payment]}
-              note={
-                payment === 'cod' && deposit.amount > 0 ? t.payment.codWithDeposit : t.payment.notes[payment]
-              }
-            />
-          ))}
-        </div>
-        {errors.payment && (
-          <p id={`${ids.payment}-error`} className="text-sm font-medium text-error">
-            {message('payment')}
-          </p>
-        )}
-        <div id={`${ids.payment}-deposit`} className="rounded-2xl bg-butter-soft p-4 text-sm leading-relaxed">
-          {deposit.amount > 0 ? (
-            <>
-              <p className="font-display font-bold">{t.deposit.title}</p>
-              <p>{t.deposit.because(reasons)}</p>
-              <dl className="mt-2 space-y-1">
-                <div className="flex justify-between gap-4">
-                  <dt>{t.deposit.now}</dt>
-                  <dd className="font-semibold tabular-nums">{money(deposit.amount, lang)}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>{t.deposit.later}</dt>
-                  <dd className="font-semibold tabular-nums">{money(deposit.rest, lang)}</dd>
-                </div>
-              </dl>
-            </>
           ) : (
-            <p>{t.deposit.none}</p>
-          )}
+            <p className="flex items-start gap-2 text-sm leading-snug">
+              <span aria-hidden className="chip shrink-0 -rotate-2 border border-ink bg-peach-soft">
+                ✦
+              </span>
+              <span>{t.demoShort}</span>
+            </p>
+          ))}
+        <div role="status" aria-live="polite">
+          {stepErrors > 0 && <p className="text-sm font-medium text-error">{t.errors.summary(stepErrors)}</p>}
         </div>
-      </fieldset>
-
-      <Field
-        id={ids.note}
-        label={t.note.label}
-        hint={
-          <span className="tabular-nums">
-            {form.note.length}/{MAX_NOTE_LENGTH}
-          </span>
-        }
-        error={message('note')}
-      >
-        <textarea
-          ref={(node) => void (refs.current.note = node)}
-          id={ids.note}
-          rows={3}
-          maxLength={MAX_NOTE_LENGTH}
-          value={form.note}
-          onChange={(event) => set('note', event.target.value)}
-          aria-invalid={Boolean(errors.note)}
-          aria-describedby={describedBy('note')}
-          placeholder={t.note.placeholder}
-          className="field resize-y"
-        />
-      </Field>
-
-      {!ORDERING_OPEN && (
-        <p className="flex gap-3 rounded-2xl border-2 border-dashed border-ink bg-peach-soft p-4 text-sm leading-relaxed">
-          <span aria-hidden className="text-lg leading-none">
-            ✦
-          </span>
-          <span>{t.demo}</span>
-        </p>
-      )}
-      <div role="status" aria-live="polite">
-        {errorCount > 0 && <p className="text-sm font-medium text-error">{t.errors.summary(errorCount)}</p>}
+        {step === 1 ? (
+          <button type="submit" className="btn btn-buy w-full min-h-13 text-lg">
+            {t.steps.next} <span aria-hidden>→</span>
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <button type="submit" className="btn btn-buy w-full min-h-13 text-lg">
+              {/* One run of text, so a narrow screen wraps it before the price, not around the dot. */}
+              <span>
+                {ORDERING_OPEN ? t.submitZalo : t.submitDemo} <span aria-hidden>·</span>{' '}
+                <span className="whitespace-nowrap tabular-nums">{money(total, lang)}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => goTo(1)}
+              className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-leaf underline-offset-4 hover:underline"
+            >
+              <span aria-hidden>←</span> {t.steps.back}
+            </button>
+          </div>
+        )}
       </div>
-      <button type="submit" className="btn btn-buy w-full min-h-13 text-lg">
-        {ORDERING_OPEN ? t.submitZalo : t.submitDemo} <span aria-hidden>·</span>{' '}
-        <span className="tabular-nums">{money(total, lang)}</span>
-      </button>
 
       {manualText && (
         <div className="space-y-2" role="alert">

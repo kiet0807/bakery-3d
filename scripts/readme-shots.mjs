@@ -24,6 +24,8 @@ async function open(path, { width = 1440, height = 900, dpr = 1, palette, css, i
     ([pal, skip]) => {
       if (skip) sessionStorage.setItem('kais-bakery-intro-seen', '1')
       if (pal) localStorage.setItem('kais-bakery-palette', pal)
+      // The one-time hints (drag to turn, the colour dot's bubble) would sit in every picture.
+      for (const hint of ['drag', 'palette']) localStorage.setItem(`kais-bakery-hint-${hint}`, '1')
     },
     [palette ?? null, !intro],
   )
@@ -100,11 +102,9 @@ if (want('boxed')) {
   await s.page.reload()
   await s.page.getByRole('textbox', { name: 'Tên người nhận' }).fill('Linh')
   await s.page.getByRole('textbox', { name: 'Số điện thoại' }).fill('0347 551 122')
-  const day = s.page.getByLabel('Ngày nhận', { exact: true })
-  const min = await day.getAttribute('min')
-  const pick = new Date(`${min}T12:00:00Z`)
-  pick.setUTCDate(pick.getUTCDate() + 3)
-  await day.fill(pick.toISOString().slice(0, 10))
+  await s.page.getByRole('button', { name: /Tiếp tục: chọn ngày nhận/ }).click()
+  // The fourth quick-pick day: three days after the earliest, clear of every lead time.
+  await s.page.getByRole('group', { name: 'Ngày nhận' }).locator('label').nth(3).click()
   await s.page.getByLabel('Giờ nhận', { exact: true }).selectOption('15:00')
   await s.page.getByText('Chuyển khoản', { exact: true }).click()
   await s.page.getByRole('button', { name: /Chốt đơn thử/ }).click()

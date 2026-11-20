@@ -43,6 +43,18 @@ export const cart: CartDict = {
   },
   checkout: {
     title: "Let's lock it in",
+    steps: {
+      count: (step: number) => `Step ${step} of 2`,
+      who: 'Who is it for, and how?',
+      when: 'When, and how to pay?',
+      next: 'Next: pick a day',
+      back: 'Back to step 1',
+      summary: 'Order for',
+      edit: 'Edit',
+      editLabel: 'Edit the name, phone number and pickup or delivery',
+      pickup: 'Pickup at the shop, Thủ Đức area',
+      deliverTo: (address: string) => `Delivery to ${address}`,
+    },
     lead: {
       menu: 'This order needs 4 hours’ notice',
       custom: 'This order needs 24 hours’ notice because it has a cake you designed',
@@ -80,6 +92,14 @@ export const cart: CartDict = {
       label: 'Day',
       earliest: (day: string) => `Earliest: ${day}`,
       none: 'Nothing free in the next 30 days. Text Kai.',
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      other: 'Other day',
+      otherLabel: 'The day you want',
+      holiday: 'Holiday',
+      holidayFull: 'a holiday, 50% deposit',
+      holidayNote: 'Days tagged “Holiday” get busy: 48 hours’ notice and a 50% deposit.',
     },
     time: {
       label: 'Time',
@@ -89,6 +109,7 @@ export const cart: CartDict = {
     },
     payment: {
       legend: 'Payment',
+      short: { cod: 'Cash', transfer: 'Transfer', momo: 'MoMo' },
       cod: 'Cash on receipt (COD)',
       transfer: 'Bank transfer',
       momo: 'MoMo wallet',
@@ -109,10 +130,14 @@ export const cart: CartDict = {
       because: (reasons: string) => `This order needs a deposit because ${reasons}.`,
       now: 'Deposit now',
       later: 'Pay on receipt',
+      rounded: (half: string, amount: string) =>
+        `Half the order is ${half}; we round up to the next thousand, so ${amount}.`,
+      exact: 'Exactly half the cakes total, no odd change.',
       none: 'No deposit needed: pay on receipt or by transfer, your call.',
     },
     note: {
       label: 'Note for the shop (optional)',
+      add: 'Add a note for the shop (optional)',
       placeholder: 'e.g. a little less sweet please',
     },
     errors: {
@@ -149,6 +174,7 @@ export const cart: CartDict = {
       summary: (n: number) => (n === 1 ? 'One field above needs a fix.' : `${n} fields above need a fix.`),
     },
     demo: "This shop isn't real: it's a test order, nothing is sent and nobody is charged. No card details are asked for, and the name, phone and address you type are not stored.",
+    demoShort: 'Just a test order: placing it sends nothing and charges nobody.',
     submitDemo: 'Place test order',
     submitZalo: 'Send order on Zalo',
     zaloManual: 'Your browser blocked copying. Copy this text and send it to the shop on Zalo.',

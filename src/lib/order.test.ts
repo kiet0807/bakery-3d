@@ -7,6 +7,7 @@ import {
   SLOTS,
   addShopDays,
   cleanForm,
+  dateChoices,
   dateRange,
   depositFor,
   earliestDate,
@@ -131,6 +132,33 @@ describe('slots', () => {
     expect(depositFor(MENU, '2027-02-01').reasons).toEqual(['holiday'])
     // Listed in order, so a mistyped year stands out.
     expect([...TET_DAYS].sort()).toEqual([...TET_DAYS])
+  })
+
+  it('knows Tết by the Vietnamese calendar, years ahead', () => {
+    // 2030: the new moon falls just before midnight at UTC+7, so Tết is a day before the Chinese New Year.
+    expect(TET_DAYS).toContain('2030-02-02')
+    expect(isHoliday('2030-02-01')).toBe(true)
+    expect(isHoliday('2030-02-02')).toBe(false)
+    expect(isHoliday('2031-01-22')).toBe(true)
+    expect(isHoliday('2032-02-10')).toBe(true)
+  })
+
+  it('offers the next days that still have a slot, skipping full ones', () => {
+    // 19 November, 19:00: today is past the 18:00 cutoff and 20 November (a holiday) needs 48 hours.
+    const evening = shopTime('2026-11-19', '19:00')
+    expect(dateChoices({ now: evening, method: 'pickup', items: MENU }, 3)).toEqual([
+      '2026-11-21',
+      '2026-11-22',
+      '2026-11-23',
+    ])
+    const morning = shopTime('2026-11-21', '10:00')
+    expect(dateChoices({ now: morning, method: 'pickup', items: MENU }, 7)).toHaveLength(7)
+    expect(dateChoices({ now: morning, method: 'pickup', items: CUSTOM }, 2)).toEqual([
+      '2026-11-22',
+      '2026-11-23',
+    ])
+    // Near the end of the window there are fewer days than asked for.
+    expect(dateChoices({ now: morning, method: 'pickup', items: MENU }, 40)).toHaveLength(31)
   })
 
   it('has nothing outside the 30-day window', () => {

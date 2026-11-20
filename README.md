@@ -18,7 +18,8 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
 
 - **Home** (`/`): a scroll story in five chapters. The camera moves around the cake, a slice slides out to
   show the sponge and filling, the glaze pours over the edge and the toppings land. Under the story: why the
-  shop, the six house cakes, how ordering works in three steps, and a behind-the-scenes section.
+  shop, the six house cakes and how ordering works in three steps. The welcome screen lets you in at once;
+  the scene finishes loading behind it, and the opening act waits until the cake is on screen.
 - **Cake builder** (`/design`): size in centimetres (10 cm bento to two tiers), sponge, filling, frosting,
   drip, up to four toppings, sweetness, candles and a message of up to 22 characters with full Vietnamese
   diacritics. Every choice redraws the cake and the price in đồng, and shows how far ahead it must be ordered.
@@ -26,8 +27,9 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
   exact same cake (`/design#cake=…`, in the fragment so it never reaches a server) to send to the shop on Zalo.
 - **Vitrine** (`/menu`): the six house cakes on a turning table under glass cloches. The chosen cake comes to
   the front and its cloche lifts. Add it as it is, or open it in the builder.
-- **Cart** (`/cart`): quantities, then a demo checkout with pickup at the shop or delivery, time slots in the
-  shop's own time zone, lead times, holiday rules and a 50% deposit where the policy needs one. It ends with
+- **Cart** (`/cart`): quantities, then a demo checkout in two steps (who and how, then when and how to pay):
+  pickup at the shop or delivery, chips for the next seven open days, time slots in the shop's own time zone,
+  lead times, holiday rules and a 50% deposit where the policy needs one. It ends with
   the cake being lowered into a box that folds shut and gets a ribbon.
 - **About, policies, FAQ**: the story of the (imaginary) shop and of the project, ordering, payment,
   cancellation, storage and allergy policies, and 13 questions answered.
@@ -97,7 +99,7 @@ unless the visitor asked for reduced motion.
 - **The cake answers every choice.** A new frosting or glaze colour eases in over 420 ms; a new size grows or
   shrinks the cake from the one on screen (560 ms, settling with a hint of give) while the camera glides to
   the new framing; toppings and candles drop in one after another; fresh glaze runs down from each tier's
-  edge. The canvas renders on demand, so these frames run only while something moves.
+  edge. The builder's canvas renders on demand, so these frames run only while something moves.
 - **Each kind of decoration has its own random stream**, so a new colour or message never shuffles the
   sprinkles, and adding fruit leaves the macarons where they stood.
 - **Pictures show the finished cake:** saving a picture, adding to the cart or starting a studio photo jumps
@@ -118,6 +120,10 @@ unless the visitor asked for reduced motion.
   moves any device down if the frame rate drops.
 - The "high" tier adds an HDRI from a real café for reflections, shadow maps and post-processing: N8AO
   ambient occlusion, a soft bloom and neutral tone mapping, which keeps the pastel colours true.
+- The builder renders on demand: with the cake standing still it draws nothing (it used to draw about 13,700
+  calls every 3 s on a desktop). Every frame comes back only while candles burn or a studio photo develops. A
+  scene on demand draws continuously for its first 3 s so the frame-rate monitor can judge the device, and the
+  monitor is off while frames are sparse (they would read as a slow machine).
 - Scenes load with `next/dynamic` and `ssr: false`; every page is prerendered as static HTML.
 
 ### Four palettes without a flash
@@ -148,7 +154,8 @@ fixed maze pattern on diffuse surfaces that more samples did not clear.
   for holidays. Same-day house cakes must be ordered before 18:00.
 - Time is always the shop's (Asia/Ho_Chi_Minh), not the visitor's device, so someone abroad ordering for
   family in Vietnam still sees the right slots.
-- Two tiers, orders from 1,000,000 đ and holiday orders take a 50% deposit by bank transfer or MoMo.
+- Two tiers, orders from 1,000,000 đ and holiday orders take a 50% deposit by bank transfer or MoMo, rounded
+  up to the thousand (and the checkout says so). The week before Tết counts as a holiday.
 - The cart and the current design live in `localStorage` (zustand `persist`) and are read after the first
   render, so server and browser HTML match. The checkout validates the form and stops there: one switch in
   `src/lib/shop.ts` (`ORDERING_OPEN`) keeps it a demo.
@@ -160,8 +167,10 @@ All of these rules have unit tests (`src/lib/*.test.ts`).
 - Every page works without WebGL: the scenes show a drawing, the welcome screen still opens, and the shop
   still works.
 - The vitrine has a plain radio list next to the 3D table; arrow keys move through it.
-- Real form controls throughout, a skip link, visible focus, and focus moved to the first invalid field or to
-  the confirmation heading.
+- Real form controls throughout, a skip link, visible focus, and focus moved to the first invalid field, to
+  each checkout step's heading or to the confirmation heading.
+- The one-time hints (drag to turn the cake, what the colour dot does) are for the eyes only: never in the way
+  of a click, hidden from screen readers, shown once per browser.
 - With reduced motion: no idle animation, no smooth scrolling, the box scene starts closed, and changes to
   the cake or the page happen at once (fades stay, movement goes).
 - Every text colour pair passes WCAG AA in all four colour sets, and a unit test measures them again

@@ -34,6 +34,7 @@ import { ScenePoster } from '../ScenePoster'
 import { TickingMoney } from '../TickingMoney'
 import type { Capture } from '../three/Capture'
 import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
+import { DragHint } from './DragHint'
 
 function DesignLoading() {
   return <ScenePoster label={useDict().design.loading} />
@@ -109,6 +110,9 @@ export function Designer() {
   // The stage shows the 2D drawing (no WebGL, or the scene crashed): no studio photo then. Stable for CanvasShell.
   const [flat, setFlat] = useState(false)
   const showFlat = useCallback(() => setFlat(true), [])
+  const stage = useRef<HTMLDivElement>(null)
+  const [sceneReady, setSceneReady] = useState(false)
+  const markReady = useCallback(() => setSceneReady(true), [])
   if (photoFor !== null && photoFor !== sceneKey) setPhotoFor(null)
   const photo = photoFor === sceneKey && !flat
   const developed = photo && photoProgress >= 1
@@ -200,6 +204,7 @@ export function Designer() {
     <div className="mx-auto grid max-w-7xl gap-6 px-3 pt-20 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
       {/* The wheel zooms the cake here (OrbitControls), so the smooth page scroll keeps out of the stage. */}
       <div
+        ref={stage}
         data-lenis-prevent-wheel
         className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
       >
@@ -211,10 +216,12 @@ export function Designer() {
           onPhotoProgress={setPhotoProgress}
           onPhotoError={photoFailed}
           onFallback={showFlat}
+          onReady={markReady}
         />
         <span className="chip pointer-events-none absolute top-3 left-3 rotate-[-3deg] border border-ink/70">
           <span aria-hidden>✦</span> {dict.common.illustration}
         </span>
+        {!photo && !flat && <DragHint ready={sceneReady} stageRef={stage} />}
         <div className="absolute inset-x-3 bottom-3 flex flex-col items-center gap-2">
           {photoNote && !photo && (
             <p className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-ink shadow-soft">

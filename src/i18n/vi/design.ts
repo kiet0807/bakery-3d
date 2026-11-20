@@ -36,6 +36,11 @@ export const design = {
     cancel: 'Hủy',
     download: 'Tải ảnh về',
     back: 'Quay lại 3D',
+    /** Hiện một lần, lúc bánh vừa hiện: chuột, hoặc màn hình cảm ứng. */
+    hint: {
+      mouse: 'Kéo để xoay bánh 360°, lăn chuột để zoom nha',
+      touch: 'Kéo để xoay 360°, chụm 2 ngón để zoom nha',
+    },
   },
   summary: {
     title: 'Chốt lại xíu',

@@ -37,6 +37,11 @@ export const design: DesignDict = {
     cancel: 'Cancel',
     download: 'Download photo',
     back: 'Back to 3D',
+    /** Shown once, the first time the cake appears: mouse, or touch screen. */
+    hint: {
+      mouse: 'Drag to spin the cake 360°, scroll to zoom',
+      touch: 'Drag to spin it 360°, pinch to zoom',
+    },
   },
   summary: {
     title: 'Quick recap',

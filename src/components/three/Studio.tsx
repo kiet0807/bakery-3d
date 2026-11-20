@@ -1,7 +1,8 @@
 'use client'
 
 import { ContactShadows, Environment, Lightformer } from '@react-three/drei'
-import { Suspense } from 'react'
+import { useThree } from '@react-three/fiber'
+import { Suspense, useEffect } from 'react'
 import { useQuality } from './motion'
 import { useScene, type Scene } from './theme'
 
@@ -52,6 +53,17 @@ function Panels({ light }: { light: Scene['light'] }) {
 }
 
 /**
+ * Asks for one frame when it mounts. Placed beside the café HDRI in its Suspense boundary, it mounts when the
+ * download lands: drei sets the scene's environment directly, which a scene rendering on demand would not see
+ * until something else moved.
+ */
+function RedrawOnArrival() {
+  const invalidate = useThree((state) => state.invalidate)
+  useEffect(() => invalidate(), [invalidate])
+  return null
+}
+
+/**
  * Morning-in-the-shop lighting for every scene: warm sunlight on the cake from the front right, a mint fill
  * from behind, a peach bounce from below, and a hemisphere that keeps shadows a soft green instead of grey.
  * Reflections come from a real café interior (Poly Haven, CC0) on the high tier, or from soft panels.
@@ -97,6 +109,7 @@ export function Studio({
           <Environment files={CAFE_HDRI} environmentIntensity={0.7} resolution={256}>
             <Panels light={light} />
           </Environment>
+          <RedrawOnArrival />
         </Suspense>
       )}
       {shadows && (

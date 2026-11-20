@@ -1,7 +1,16 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type RefObject,
+} from 'react'
+import { useOnce } from '@/hooks/useOnce'
 import { useDict } from '@/i18n/LangProvider'
 import { PALETTES, PALETTE_IDS, type Palette, type PaletteId } from '@/lib/palettes'
 import { readPalette, setPalette, usePalette } from '@/lib/usePalette'
@@ -87,10 +96,11 @@ export function PaletteSwitcher() {
   }
 
   const name = t.sets[palette].name
+  const [nudged, setNudged] = useState(false)
   return (
     <div
       ref={wrapper}
-      className="sm:relative"
+      className="relative"
       onBlur={(event) => {
         // Tabbing out of the switch closes it; moving between the button and the card does not.
         if (open && !wrapper.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
@@ -103,7 +113,10 @@ export function PaletteSwitcher() {
         aria-expanded={open}
         aria-controls={panelId}
         title={t.label}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setNudged(true)
+          setOpen((value) => !value)
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && open) close(true)
         }}
@@ -121,6 +134,16 @@ export function PaletteSwitcher() {
           {t.label}
         </span>
       </button>
+
+      <Nudge
+        anchor={wrapper}
+        text={t.nudge}
+        off={open || nudged}
+        onTap={() => {
+          setNudged(true)
+          setOpen(true)
+        }}
+      />
 
       {/*
         Closed, the card is `invisible` rather than `hidden`, so it can leave as smoothly as it came: it grows out of
@@ -207,6 +230,125 @@ export function PaletteSwitcher() {
             )
           })}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** A beat after the page (or the welcome screen's exit) settles, so the bubble does not land with everything else. */
+const NUDGE_AFTER_MS = 2000
+/** Long enough to read; a tap on it or on the switch ends it sooner. */
+const NUDGE_FOR_MS = 8000
+/** The bubble keeps at least this far from the screen's edges, in pixels. */
+const EDGE = 12
+/** Below this width the switch is a bare colour dot (its words show from `lg`). */
+const DOT_ONLY = '(max-width: 1023.98px)'
+
+/**
+ * Once per browser, on screens where the switch is only a colour dot: a speech bubble under it saying what it
+ * does. It waits while the page is inert (the home page's welcome screen is a modal and makes the header inert)
+ * and appears a moment after. A tap on it opens the switch. It is hidden from screen readers, which hear the
+ * switch's own name, and it is not focusable: the switch itself is the control.
+ */
+function Nudge({
+  anchor,
+  text,
+  off,
+  onTap,
+}: {
+  anchor: RefObject<HTMLElement | null>
+  text: string
+  /** The switch is open or has been used: the bubble has done its job. */
+  off: boolean
+  onTap: () => void
+}) {
+  const { due, start, done } = useOnce('palette')
+  const [phase, setPhase] = useState<'waiting' | 'in' | 'out' | 'gone'>('waiting')
+
+  // Waits for a screen where the switch has no words and for the page to be usable (not inert), then a beat.
+  useEffect(() => {
+    if (!due || phase !== 'waiting' || off) return
+    const element = anchor.current
+    if (!element || !window.matchMedia(DOT_ONLY).matches) return
+    let timer = 0
+    const check = () => {
+      window.clearTimeout(timer)
+      if (!element.closest('[inert]'))
+        timer = window.setTimeout(() => start() && setPhase('in'), NUDGE_AFTER_MS)
+    }
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['inert'] })
+    check()
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(timer)
+    }
+  }, [due, phase, off, anchor, start])
+
+  useEffect(() => {
+    if (phase !== 'in') return
+    if (off) {
+      const now = window.setTimeout(() => setPhase('out'), 0)
+      return () => window.clearTimeout(now)
+    }
+    const timer = window.setTimeout(() => setPhase('out'), NUDGE_FOR_MS)
+    return () => window.clearTimeout(timer)
+  }, [phase, off])
+
+  useEffect(() => {
+    if (phase !== 'out') return
+    const timer = window.setTimeout(() => setPhase('gone'), 220)
+    return () => window.clearTimeout(timer)
+  }, [phase])
+
+  // Remembered once it has been on screen: when it leaves, or when the page goes away while it is up. Someone who
+  // found the switch on their own never needs it either.
+  const shown = phase !== 'waiting'
+  useEffect(() => {
+    if (phase === 'gone' || off) done()
+  }, [phase, off, done])
+  useEffect(() => () => void (shown && done()), [shown, done])
+
+  // Centred under the dot, then slid back inside the screen if it would cross an edge (the dot sits near the
+  // right edge on phones); the tail stays on the dot. Measured without the pop-in's scale (offsetWidth).
+  const bubble = useRef<HTMLDivElement>(null)
+  const tail = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const box = bubble.current
+    const element = anchor.current
+    if (phase !== 'in' || !box || !element) return
+    const rect = element.getBoundingClientRect()
+    const width = box.offsetWidth
+    const left = rect.left + rect.width / 2 - width / 2
+    const room = document.documentElement.clientWidth
+    let shift = 0
+    if (left < EDGE) shift = EDGE - left
+    else if (left + width > room - EDGE) shift = room - EDGE - (left + width)
+    box.style.marginLeft = `${shift}px`
+    box.style.transformOrigin = `calc(50% - ${shift}px) 0`
+    if (tail.current) tail.current.style.left = `calc(50% - ${shift}px)`
+  }, [phase, anchor])
+
+  if (phase === 'waiting' || phase === 'gone') return null
+  return (
+    // Under the dot, its tail pointing up at it. Fades out on its own element, so the pop-in never fights it.
+    <div
+      aria-hidden
+      data-hint="palette"
+      className={`absolute top-[calc(100%+0.7rem)] left-1/2 z-10 transition-[opacity,translate] duration-200 ease-in ${
+        phase === 'out' ? '-translate-y-1 opacity-0' : ''
+      }`}
+    >
+      <div
+        ref={bubble}
+        onClick={onTap}
+        className="relative w-max max-w-[min(15rem,calc(100vw-2rem))] -translate-x-1/2 animate-pop cursor-pointer rounded-2xl border-2 border-ink bg-butter px-3 py-2 text-center font-display text-sm leading-snug font-bold text-ink shadow-sticker"
+      >
+        <span
+          ref={tail}
+          className="absolute -top-[7px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-t-2 border-l-2 border-ink bg-butter"
+        />
+        {text}
       </div>
     </div>
   )

@@ -25,6 +25,10 @@ export const test = base.extend<{ quality: Quality; consoleErrors: string[] }>({
       await page.addInitScript(() =>
         Object.defineProperty(Navigator.prototype, 'hardwareConcurrency', { get: () => 2 }),
       )
+    // The one-time hints (drag to turn the cake, the colour dot's bubble) stay out of other tests' way.
+    await page.addInitScript((keys) => {
+      for (const key of keys) window.localStorage.setItem(key, '1')
+    }, HINT_KEYS)
     await provide(page)
   },
   consoleErrors: [
@@ -45,6 +49,20 @@ export { expect }
 
 export const INTRO_KEY = 'kais-bakery-intro-seen'
 export const CART_KEY = 'kais-bakery-cart'
+/** The one-time hints, remembered for good once seen (`useOnce`). */
+const HINT_KEYS = ['kais-bakery-hint-drag', 'kais-bakery-hint-palette']
+
+/**
+ * Lets the one-time hints show on the first load only, whatever the page fixture presets: a reload then shows
+ * whether the page itself remembers them.
+ */
+export async function freshHints(page: Page) {
+  await page.addInitScript((keys) => {
+    if (window.sessionStorage.getItem('e2e-hints-cleared')) return
+    window.sessionStorage.setItem('e2e-hints-cleared', '1')
+    for (const key of keys) window.localStorage.removeItem(key)
+  }, HINT_KEYS)
+}
 
 /** Skips the welcome screen, as if the visitor had already pressed Start in this browser session. */
 export async function skipIntro(page: Page) {

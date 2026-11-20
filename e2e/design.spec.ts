@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test'
 import { normalizeConfig } from '../src/lib/cake'
 import { encodeCake } from '../src/lib/share'
-import { cartCount, clickInBand, expect, test } from './fixtures'
+import { cartCount, clickInBand, expect, freshHints, test } from './fixtures'
 
 /** Clicks a choice card inside one section of the builder (the price breakdown repeats the names). */
 const choose = (page: Page, section: string, choice: string) =>
@@ -180,5 +180,29 @@ test.describe('cake builder', () => {
     await choose(page, 'Size', '14 cm')
     await expect(page.getByTestId('price')).toHaveText('280,000 VND')
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeVisible()
+  })
+
+  test('a first visit is told once that the cake turns', async ({ page, isMobile }) => {
+    await freshHints(page)
+    await page.goto('/design')
+    const hint = page.locator('[data-hint="drag"]')
+    // It waits for the live scene (slow on the software renderer) and, on phones, may wait for the colour
+    // switch's bubble to finish first: one hint at a time.
+    await expect(hint).toBeVisible({ timeout: 60_000 })
+    await expect(hint).toHaveAttribute('aria-hidden', 'true')
+    await expect(hint).toContainText(isMobile ? 'chụm 2 ngón' : 'lăn chuột')
+    // It never covers a control: every pointer event goes through it.
+    await expect(hint).toHaveCSS('pointer-events', 'none')
+
+    // The first press on the stage ends it, and this browser remembers.
+    const box = (await page.locator('canvas').first().boundingBox())!
+    if (isMobile) await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 3)
+    else await page.mouse.click(box.x + box.width / 2, box.y + box.height / 3)
+    await expect(hint).toHaveCount(0)
+    expect(await page.evaluate(() => window.localStorage.getItem('kais-bakery-hint-drag'))).toBe('1')
+    await page.reload()
+    await expect(page.locator('canvas').first()).toBeAttached({ timeout: 30_000 })
+    await page.waitForTimeout(4_000)
+    await expect(hint).toHaveCount(0)
   })
 })

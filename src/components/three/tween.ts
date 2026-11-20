@@ -96,22 +96,36 @@ export class ColourTween {
 /**
  * The tweens running in one canvas. Each registers how to jump to its end; `finishAll()` does that for every
  * one, so the very next render shows the settled scene (pictures, the path-traced photo).
+ *
+ * A tween is started from a React effect, where nothing else may ask the canvas for a frame (a scene that renders
+ * on demand would then never draw its first step). So registering also wakes the canvas: `connect` takes the
+ * canvas's `invalidate`, and every `add` calls it. After that first frame each tween keeps asking for the next
+ * one itself until it arrives.
  */
 export interface Settler {
   add: (finish: () => void) => () => void
   finishAll: () => void
+  connect: (wake: () => void) => () => void
 }
 
 export function createSettler(): Settler {
   const running = new Set<() => void>()
+  let wake = () => {}
   return {
     add: (finish) => {
       running.add(finish)
+      wake()
       return () => void running.delete(finish)
     },
     finishAll: () => {
       for (const finish of [...running]) finish()
       running.clear()
+    },
+    connect: (next) => {
+      wake = next
+      return () => {
+        if (wake === next) wake = () => {}
+      }
     },
   }
 }

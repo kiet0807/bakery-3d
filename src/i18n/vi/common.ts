@@ -24,6 +24,8 @@ export const common = {
     /** The button's accessible name: starts with the visible label (WCAG 2.5.3), then the set in use. */
     current: (name: string) => `Đổi màu tiệm, đang dùng ${name}`,
     hint: 'Chọn tông bạn mê, lần sau ghé tiệm vẫn nhớ nha.',
+    /** A bubble under the round button, once, on screens where the button has no words. */
+    nudge: 'Chấm này đổi màu cả tiệm đó, bấm thử nha!',
     sets: {
       g1: { name: 'Matcha Dâu', note: 'Matcha latte thêm dâu, xinh xỉu luôn' },
       b: { name: 'Bơ Bạc Hà', note: 'Kem bơ mát lạnh, chill như sáng thứ Bảy' },

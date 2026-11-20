@@ -1,6 +1,6 @@
 'use client'
 
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import {
   createContext,
   useContext,
@@ -55,9 +55,12 @@ export function Arrival({
     })
   }, [sig, delay, height, shown, still, settler, timeline])
 
+  const invalidate = useThree((state) => state.invalidate)
   useFrame(() => {
     const g = group.current
     if (!g || !timeline.active) return
+    // Waiting for its turn or falling: either way the next frame is needed (scenes may render on demand).
+    invalidate()
     const now = performance.now()
     if (timeline.waiting(now)) return
     g.visible = true

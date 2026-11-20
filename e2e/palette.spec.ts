@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, skipIntro, test } from './fixtures'
+import { expect, freshHints, skipIntro, test } from './fixtures'
 
 /** The colour switch in the header: four sets, Matcha Dâu (g1) by default, kept in this browser. */
 const KEY = 'kais-bakery-palette'
@@ -203,6 +203,48 @@ test.describe('palette switch', () => {
       })
       expect(width, `the name "Kai's Bakery" on ${path}`).toBeGreaterThan(40)
       expect(room, `room after the name on ${path}`).toBeGreaterThan(12)
+    }
+  })
+})
+
+const bubble = (page: Page) => page.locator('[data-hint="palette"]')
+
+test.describe('palette bubble', () => {
+  test('on a phone, a bubble says once what the dot does', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'From 1024 px the switch shows its words: no bubble.')
+    await freshHints(page)
+    await page.goto('/faq')
+    await expect(bubble(page)).toBeVisible()
+    await expect(bubble(page)).toHaveAttribute('aria-hidden', 'true')
+    await expect(bubble(page)).toContainText('Chấm này đổi màu cả tiệm')
+    // Whole on screen, although the dot is near the right edge.
+    const box = (await bubble(page).locator('div').first().boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+
+    // A tap on it opens the switch; the bubble goes and does not come back.
+    await bubble(page).locator('div').first().click()
+    await expect(group(page)).toBeVisible()
+    await expect(bubble(page)).toHaveCount(0)
+    expect(await page.evaluate(() => window.localStorage.getItem('kais-bakery-hint-palette'))).toBe('1')
+    await page.keyboard.press('Escape')
+    await page.reload()
+    await page.waitForTimeout(3_500)
+    await expect(bubble(page)).toHaveCount(0)
+  })
+
+  test('never over the welcome screen, and not on desktop', async ({ page, isMobile }) => {
+    await freshHints(page)
+    await page.goto('/')
+    await expect(page.getByRole('dialog')).toBeVisible()
+    // Well past the bubble's two-second beat: the header is inert behind the welcome screen.
+    await page.waitForTimeout(4_000)
+    await expect(bubble(page)).toHaveCount(0)
+    await page.getByRole('button', { name: 'Vào tiệm thôi' }).click({ timeout: 60_000 })
+    if (isMobile) await expect(bubble(page)).toBeVisible()
+    else {
+      await page.waitForTimeout(4_000)
+      await expect(bubble(page)).toHaveCount(0)
     }
   })
 })

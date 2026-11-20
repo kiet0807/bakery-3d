@@ -1,6 +1,6 @@
 'use client'
 
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useReducedMotionScene } from './motion'
 import { RESHAPE_MS, Timeline, easeOutSoft, useSettler } from './tween'
@@ -37,8 +37,11 @@ export function useEasedSize(value: number, apply: (size: number) => void) {
     })
   }, [value, still, settler, timeline])
 
+  const invalidate = useThree((state) => state.invalidate)
   useFrame(() => {
     if (!timeline.active) return
+    // Keeps frames coming until it arrives, also in a scene that renders on demand.
+    invalidate()
     const size = from.current + (value - from.current) * easeOutSoft(timeline.progress())
     shown.current = size
     latest.current(size)

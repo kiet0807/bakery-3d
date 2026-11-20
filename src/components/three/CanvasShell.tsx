@@ -24,7 +24,7 @@ import {
   type PerformanceHold,
   type Quality,
 } from './motion'
-import { SettleContext, createSettler } from './tween'
+import { SettleContext, createSettler, useSettler } from './tween'
 
 let webglSupport: boolean | null = null
 
@@ -67,6 +67,12 @@ class SceneBoundary extends Component<
   }
 }
 
+/**
+ * How long a scene that renders on demand keeps drawing every frame after it first appears: the frame-rate
+ * monitor needs 10 windows of 250 ms for a verdict, plus some slack.
+ */
+const WARM_UP_MS = 3000
+
 /** How the live canvas comes in over the poster, and a held picture gives way to it: a soft decelerating fade. */
 const FADE = 'opacity 420ms cubic-bezier(0.16, 1, 0.3, 1)'
 
@@ -87,10 +93,13 @@ function CanvasReady({
   const gl = useThree((state) => state.gl)
   const scene = useThree((state) => state.scene)
   const camera = useThree((state) => state.camera)
+  const invalidate = useThree((state) => state.invalidate)
   const frames = useRef(0)
   useFrame(() => {
     frames.current += 1
     if (frames.current === 3) onDrawn()
+    // Asks for the frames it counts, so a scene rendering on demand cannot leave its poster up.
+    else if (frames.current < 3) invalidate()
   })
   useEffect(() => {
     snapshotRef.current = () => {
@@ -111,6 +120,23 @@ function CanvasReady({
       snapshotRef.current = null
     }
   }, [gl, scene, camera, snapshotRef])
+  return null
+}
+
+/**
+ * For scenes that render on demand: draws again whenever the canvas itself changes underneath the scene. A new
+ * size or pixel ratio clears the drawing buffer, and coming back on screen (the loop was "never") or switching
+ * loop modes may follow changes made meanwhile (a palette switched while scrolled away). Tweens started from
+ * React effects get their first frame through the settler (`connect`), wired up here too.
+ */
+function KeepFresh() {
+  const invalidate = useThree((state) => state.invalidate)
+  const frameloop = useThree((state) => state.frameloop)
+  const size = useThree((state) => state.size)
+  const dpr = useThree((state) => state.viewport.dpr)
+  const settler = useSettler()
+  useLayoutEffect(() => settler.connect(invalidate), [settler, invalidate])
+  useEffect(() => invalidate(), [invalidate, frameloop, size, dpr])
   return null
 }
 
@@ -147,11 +173,16 @@ export interface CanvasShellProps {
   label: string
   camera?: CanvasProps['camera']
   className?: string
-  /** "demand" renders only when something changes; "always" for scenes with idle animation. */
+  /**
+   * "demand" renders only when something changes; "always" for scenes with idle animation. It may change while
+   * the scene is open (the design scene goes to "always" while candles burn): the canvas is not rebuilt.
+   */
   mode?: 'always' | 'demand'
   onCreated?: CanvasProps['onCreated']
   /** Called when the 2D drawing is shown instead: no WebGL, or the scene crashed. */
   onFallback?: () => void
+  /** Called when the live scene has drawn and is coming in (again after a rebuild for another tier). */
+  onReady?: () => void
   /** Pixel ratio on the light tier. Scenes with many objects (the vitrine) can go lower. */
   lowDpr?: number
   /**
@@ -173,6 +204,7 @@ export function CanvasShell({
   mode = 'always',
   onCreated,
   onFallback,
+  onReady,
   lowDpr = 1.25,
   poster,
 }: CanvasShellProps) {
@@ -192,12 +224,30 @@ export function CanvasShell({
   const [posterGone, setPosterGone] = useState(false)
   const [held, setHeld] = useState<HTMLCanvasElement | null>(null)
   const snapshot = useRef<Snapshot | null>(null)
+  // A scene that renders on demand still starts on "always", for WARM_UP_MS after it has drawn: long enough for
+  // the frame-rate monitor to give its verdict on this device (see `measured` below).
+  const [warmedUp, setWarmedUp] = useState(false)
   const downgrade = () => {
     if (holds.current) return
     setHeld(snapshot.current?.() ?? null)
     setDrawn(false)
+    // The rebuilt canvas measures again from the start.
+    setWarmedUp(false)
     setDowngraded(true)
   }
+  useEffect(() => {
+    if (mode !== 'demand' || !drawn || warmedUp) return
+    const timer = window.setTimeout(() => setWarmedUp(true), WARM_UP_MS)
+    return () => window.clearTimeout(timer)
+  }, [mode, drawn, warmedUp])
+  const loop = mode === 'demand' && warmedUp ? 'demand' : 'always'
+  /**
+   * drei's PerformanceMonitor turns the frames it sees into a frame rate, 250 ms at a time. On demand a still
+   * scene draws a frame now and then, which reads as a few frames per second: it would "decline" and drop a fast
+   * machine to the light tier. So it only watches while frames come back to back (the "always" loop: the warm-up,
+   * lit candles, the studio photo), and is unmounted otherwise. Remounted, it starts a fresh measurement.
+   */
+  const measured = loop === 'always'
   // While something holds the tier (photo mode), frame-rate changes are ignored.
   const holds = useRef(0)
   const performanceHold = useMemo<PerformanceHold>(
@@ -225,6 +275,10 @@ export function CanvasShell({
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (drawn) onReady?.()
+  }, [drawn, onReady])
 
   // Pages that wait for the scene (the home page's welcome screen) must not wait for one that never comes.
   useEffect(() => {
@@ -266,7 +320,7 @@ export function CanvasShell({
                 dpr={Math.min(high ? dpr : lowDpr, maxDpr)}
                 shadows={high ? 'percentage' : false}
                 camera={camera}
-                frameloop={inView ? mode : 'never'}
+                frameloop={inView ? loop : 'never'}
                 gl={{ antialias: !high, alpha: true, powerPreference: 'high-performance' }}
                 onCreated={(state) => {
                   // Neutral tone mapping keeps pastel frosting true on a light page; the high tier's effect chain
@@ -276,21 +330,24 @@ export function CanvasShell({
                 }}
                 aria-hidden
               >
-                <PerformanceMonitor
-                  onIncline={() => {
-                    if (!holds.current) setDpr(2)
-                  }}
-                  onDecline={() => {
-                    if (holds.current) return
-                    setDpr(1)
-                    if (quality === 'high') downgrade()
-                  }}
-                  flipflops={3}
-                  onFallback={() => {
-                    if (quality === 'high') downgrade()
-                  }}
-                />
+                {measured && (
+                  <PerformanceMonitor
+                    onIncline={() => {
+                      if (!holds.current) setDpr(2)
+                    }}
+                    onDecline={() => {
+                      if (holds.current) return
+                      setDpr(1)
+                      if (quality === 'high') downgrade()
+                    }}
+                    flipflops={3}
+                    onFallback={() => {
+                      if (quality === 'high') downgrade()
+                    }}
+                  />
+                )}
                 <SettleContext.Provider value={settler}>
+                  <KeepFresh />
                   <PerformanceHoldContext.Provider value={performanceHold}>
                     {children}
                   </PerformanceHoldContext.Provider>

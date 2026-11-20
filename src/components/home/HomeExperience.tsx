@@ -55,14 +55,11 @@ export function HomeExperience() {
   const gate = seen && gateState === 'open' ? 'closed' : gateState
   const started = seen || startedState
 
+  // Content first: the welcome screen lets the visitor in at once and only reports how the 3D scene is coming
+  // along. `ready` is the cake on screen in its final light (or the 2D drawing standing in for it).
+  const [ready, setReady] = useState(false)
   const onProgress = useCallback((value: number) => setPercent((current) => Math.max(current, value)), [])
-
-  // Safety net: if the scene never reports back (a stalled download, a scene chunk that failed), the welcome
-  // screen still lets the visitor in.
-  useEffect(() => {
-    const timer = window.setTimeout(() => onProgress(100), 15000)
-    return () => window.clearTimeout(timer)
-  }, [onProgress])
+  const onReady = useCallback(() => setReady(true), [])
 
   const start = () => {
     try {
@@ -138,7 +135,9 @@ export function HomeExperience() {
 
   return (
     <div className="relative" id="story" aria-label={story.label} role="region">
-      {gate !== 'closed' && <IntroGate percent={percent} onStart={start} leaving={gate === 'leaving'} />}
+      {gate !== 'closed' && (
+        <IntroGate percent={percent} ready={ready} onStart={start} leaving={gate === 'leaving'} />
+      )}
 
       <div
         className="pointer-events-none sticky top-0 h-[100svh] overflow-hidden"
@@ -169,8 +168,22 @@ export function HomeExperience() {
           </span>
         </h1>
         <div className="absolute inset-0">
-          <StoryScene chapterRef={chapterRef} started={started} onProgress={onProgress} />
+          <StoryScene chapterRef={chapterRef} started={started} onProgress={onProgress} onReady={onReady} />
         </div>
+        {/*
+          Came in before the scene was there: a small note where the cake is about to appear, gone once it is.
+          The story's words around it are already there to read, so it is for the eyes only.
+        */}
+        <p
+          aria-hidden
+          className={`absolute top-[56%] left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-cream/85 px-4 py-2 font-display text-sm font-semibold whitespace-nowrap text-muted shadow-sm backdrop-blur transition-[opacity,translate] duration-500 ease-out ${
+            gate !== 'open' && !ready ? 'opacity-100' : 'translate-y-2 opacity-0'
+          }`}
+        >
+          <span className="h-2 w-2 rounded-full bg-leaf motion-safe:animate-pulse" />
+          {home.stage.baking}
+          {percent > 0 && <span className="tabular-nums">· {Math.min(percent, 99)}%</span>}
+        </p>
         <div
           ref={shade}
           className="absolute inset-y-0 left-0 hidden w-[62%] bg-gradient-to-r from-cream/90 via-cream/55 to-transparent opacity-0 sm:block"

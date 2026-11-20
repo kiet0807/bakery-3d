@@ -29,6 +29,7 @@ export const home = {
     welcome: 'Chào mừng tới',
     tagline: 'Bánh kem làm tay, ít ngọt, dựng bằng 3D ngay trên web.',
     loading: 'Đang nướng cảnh 3D',
+    ready: 'Cảnh 3D ra lò rồi nè',
     start: 'Vào tiệm thôi',
     notice: 'Psst: tiệm không có thật đâu, đây là dự án web của Kai.',
   },
@@ -36,6 +37,7 @@ export const home = {
     script: "Kai's",
     word: 'Bakery',
     subtitle: 'Tiệm Bánh Thủ Công',
+    baking: 'Bánh 3D sắp ra lò',
   },
   story: {
     label: 'Câu chuyện chiếc bánh',

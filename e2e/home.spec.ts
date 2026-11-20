@@ -25,10 +25,11 @@ test.describe('home', () => {
     // While the gate is up, the page behind it is inert: Tab cannot reach links hidden under it.
     await expect(page.locator('header').first()).toHaveAttribute('inert')
 
-    // The button only appears once the scene has really loaded, and takes the focus.
+    // Content first: the way in is there at once and has the focus; a status line follows the 3D scene.
     const start = page.getByRole('button', { name: 'Vào tiệm thôi' })
-    await expect(start).toBeVisible({ timeout: 60_000 })
+    await expect(start).toBeVisible()
     await expect(start).toBeFocused()
+    await expect(gate.getByRole('status')).toHaveText('Cảnh 3D ra lò rồi nè', { timeout: 60_000 })
     await start.click()
     await expect(gate).toHaveCount(0)
     await expect(page.locator('header').first()).not.toHaveAttribute('inert')
@@ -39,6 +40,35 @@ test.describe('home', () => {
     await page.reload()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1, name: /Kai's Bakery/ })).toBeAttached()
+  })
+
+  test('coming in before the 3D scene is there: the page works and the cake still gets its opening', async ({
+    page,
+  }) => {
+    // Hold back the scene's code (the chunk that knows where the café light lives) until the visitor is in.
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/_next/static/chunks/**', async (route) => {
+      const response = await route.fetch()
+      const body = await response.text()
+      if (body.includes('comfy_cafe_1k')) await held
+      await route.fulfill({ response, body })
+    })
+    // The held chunk may hold the load event too (dev preloads it): the page is usable long before that.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    const gate = page.getByRole('dialog', { name: /Chào mừng tới/ })
+    await expect(gate.getByRole('status')).toHaveText('Đang nướng cảnh 3D')
+    await page.getByRole('button', { name: 'Vào tiệm thôi' }).click()
+    await expect(gate).toHaveCount(0)
+
+    // The story is there to read, and a small note says the cake is on its way.
+    await expect(page.getByRole('heading', { level: 1, name: /Kai's Bakery/ })).toBeVisible()
+    await expect(page.getByText('Bánh kem làm tay, dựng bằng 3D.')).toBeVisible()
+    const note = page.locator('p', { hasText: 'Bánh 3D sắp ra lò' })
+    await expect(note).toHaveCSS('opacity', '1')
+
+    release()
+    await expect(note).toHaveCSS('opacity', '0', { timeout: 60_000 })
   })
 
   test('the title says the shop name and its tagline', async ({ page }) => {
@@ -116,8 +146,12 @@ test.describe('home', () => {
   test('the English home page tells the same story under /en', async ({ page }) => {
     await page.goto('/en')
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await expect(page.getByRole('dialog', { name: /Welcome to/ })).toBeVisible()
-    await page.getByRole('button', { name: 'Come on in' }).click({ timeout: 60_000 })
+    const gate = page.getByRole('dialog', { name: /Welcome to/ })
+    await expect(gate).toBeVisible()
+    await expect(gate.getByRole('status')).toHaveText('The 3D scene is fresh out of the oven', {
+      timeout: 60_000,
+    })
+    await page.getByRole('button', { name: 'Come on in' }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName("Kai's Bakery, Handmade Cakes")
     for (const name of CHAPTERS.en) {

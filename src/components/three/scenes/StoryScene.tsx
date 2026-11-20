@@ -53,6 +53,16 @@ const scratch = {
   b: new THREE.Vector3(),
 }
 
+/**
+ * How long, after the cake is first drawn, the opening act waits for the café light (the high tier's HDRI,
+ * 1.6 MB) before it plays anyway: on a slow line the glaze should not pour under one light and finish under
+ * another, but a stalled download must not hold the cake bare forever.
+ */
+const LIGHT_WAIT = 4
+
+/** Frames the canvas draws before it fades in (CanvasReady in CanvasShell counts the same three). */
+const FIRST_FRAMES = 3
+
 const smooth = (t: number) => t * t * (3 - 2 * t)
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
 const range = (t: number, from: number, to: number) => clamp01((t - from) / (to - from))
@@ -65,12 +75,15 @@ function Director({
   chapterRef,
   started,
   startedAt,
+  onReady,
   children,
 }: {
   chapterRef: RefObject<number>
   started: boolean
   /** When the opening act began, kept outside the canvas so a rebuilt canvas (light tier) does not replay it. */
   startedAt: RefObject<number | null>
+  /** Called once the cake is on screen in its final light, ready for the opening act. */
+  onReady: () => void
   /** Rendered next to the cake, inside the same bobbing group (the cloud it rests on). */
   children?: ReactNode
 }) {
@@ -78,6 +91,13 @@ function Director({
   const still = useReducedMotionScene()
   const chapter = useRef(0)
   const controls = useRef<CakeControls>({ slice: 0, drips: 0, toppings: 0 })
+  // The visitor may come in long before the scene is there (the welcome screen no longer waits for it), so
+  // the opening act's clock starts when the cake can really be seen: after the frames the canvas draws before
+  // it fades in, and once the café light has arrived (or LIGHT_WAIT has passed). Until then the cake waits,
+  // bare, under the stage's "almost out of the oven" note.
+  const frames = useRef(0)
+  const drawnAt = useRef<number | null>(null)
+  const ready = useRef(false)
 
   useEffect(() => () => (camera as THREE.PerspectiveCamera).clearViewOffset(), [camera])
 
@@ -115,14 +135,24 @@ function Director({
     // the glaze pours again in "The finish" (3), the toppings land again in "The crown" (4).
     const dripsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 2.35, 3))
     const toppingsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 3.3, 4))
-    // Opening act, once the visitor presses Start: the glaze pours, then the toppings land.
+    const now = performance.now() / 1000
+    if (!ready.current) {
+      frames.current += 1
+      if (frames.current >= FIRST_FRAMES) drawnAt.current ??= now
+      // drei's loading store is global; on the home page this canvas is the only thing loading.
+      const lit = !useProgress.getState().active
+      if (drawnAt.current !== null && (lit || now - drawnAt.current > LIGHT_WAIT)) {
+        ready.current = true
+        onReady()
+      }
+    }
+    // Opening act, once the visitor presses Start and the cake is ready: the glaze pours, then the toppings land.
     let dripsIntro = 0
     let toppingsIntro = 0
     if (started && still) {
       dripsIntro = 1
       toppingsIntro = 1
-    } else if (started) {
-      const now = performance.now() / 1000
+    } else if (started && (ready.current || startedAt.current !== null)) {
       startedAt.current ??= now
       const t = now - startedAt.current
       dripsIntro = range(t, 0.4, 1.8)
@@ -162,16 +192,22 @@ export default function StoryScene({
   chapterRef,
   started,
   onProgress,
+  onReady,
 }: {
   chapterRef: RefObject<number>
   started: boolean
   onProgress: (percent: number) => void
+  /** The cake is on screen and lit (or the 2D drawing stands in for it): the stage can stop saying "loading". */
+  onReady: () => void
 }) {
   const { scenes } = useDict()
   const { cloud } = useScene()
   const startedAt = useRef<number | null>(null)
   // Without WebGL the 2D drawing is all there is to load.
-  const done = useCallback(() => onProgress(100), [onProgress])
+  const done = useCallback(() => {
+    onProgress(100)
+    onReady()
+  }, [onProgress, onReady])
   return (
     <CanvasShell
       className="h-full w-full"
@@ -182,7 +218,7 @@ export default function StoryScene({
       <LoadingReporter onProgress={onProgress} />
       <Studio floor={-0.4} shadows={false} />
       <FloatingSprinkles count={80} />
-      <Director chapterRef={chapterRef} started={started} startedAt={startedAt}>
+      <Director chapterRef={chapterRef} started={started} startedAt={startedAt} onReady={onReady}>
         <Cloud
           seed={3}
           puffs={34}

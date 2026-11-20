@@ -10,6 +10,7 @@ export const home: HomeDict = {
     welcome: 'Welcome to',
     tagline: 'Handmade, less-sweet cakes, built in 3D right in your browser.',
     loading: 'Baking the 3D scene',
+    ready: 'The 3D scene is fresh out of the oven',
     start: 'Come on in',
     notice: "Psst: this shop isn't real, it's a web project by Kai.",
   },
@@ -17,6 +18,7 @@ export const home: HomeDict = {
     script: "Kai's",
     word: 'Bakery',
     subtitle: 'Handmade Cakes',
+    baking: 'Cake almost out of the oven',
   },
   story: {
     label: 'The story of a cake',

@@ -2,7 +2,7 @@
 
 import { Stars, useProgress } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
 import { normalizeConfig } from '@/lib/cake'
 import { Cake, type CakeControls } from '../cake/Cake'
@@ -48,20 +48,25 @@ const smooth = (t: number) => t * t * (3 - 2 * t)
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
 const range = (t: number, from: number, to: number) => clamp01((t - from) / (to - from))
 
-/** Moves the camera between shots as the story scrolls, and drives the slice, drips and toppings. */
+/**
+ * Moves the camera between shots as the story scrolls, and drives the slice, drips and toppings of the cake
+ * it renders. It owns the cake's controls, so all frame-by-frame writes stay inside one component.
+ */
 function Director({
   chapterRef,
   started,
-  controls,
+  children,
 }: {
   chapterRef: RefObject<number>
   started: boolean
-  controls: RefObject<CakeControls>
+  /** Rendered next to the cake, inside the same bobbing group (the cloud it rests on). */
+  children?: ReactNode
 }) {
   const camera = useThree((state) => state.camera)
   const still = useReducedMotionScene()
   const chapter = useRef(0)
   const startedAt = useRef<number | null>(null)
+  const controls = useRef<CakeControls>({ slice: 0, drips: 0, toppings: 0 })
 
   useEffect(() => () => (camera as THREE.PerspectiveCamera).clearViewOffset(), [camera])
 
@@ -114,7 +119,12 @@ function Director({
     c.drips = Math.min(dripsIntro, dripsByScroll)
     c.toppings = Math.min(toppingsIntro, toppingsByScroll)
   })
-  return null
+  return (
+    <Bob>
+      <Cake config={STORY_CAKE} controls={controls} sliceReach={1.5} sliceAngle={0.6} sliceTurn={1.25} />
+      {children}
+    </Bob>
+  )
 }
 
 function LoadingReporter({ onProgress }: { onProgress: (percent: number) => void }) {
@@ -125,7 +135,7 @@ function LoadingReporter({ onProgress }: { onProgress: (percent: number) => void
   return null
 }
 
-function Bob({ children }: { children: React.ReactNode }) {
+function Bob({ children }: { children: ReactNode }) {
   const group = useRef<THREE.Group>(null)
   const still = useReducedMotionScene()
   useFrame(({ clock }) => {
@@ -145,7 +155,6 @@ export default function StoryScene({
   started: boolean
   onProgress: (percent: number) => void
 }) {
-  const controls = useRef<CakeControls>({ slice: 0, drips: 0, toppings: 0 })
   return (
     <CanvasShell
       className="h-full w-full"
@@ -153,12 +162,10 @@ export default function StoryScene({
       camera={{ position: [0, 1.2, 7.8], fov: 32, near: 0.1, far: 120 }}
     >
       <LoadingReporter onProgress={onProgress} />
-      <Director chapterRef={chapterRef} started={started} controls={controls} />
       <Studio floor={-0.4} shadows={false} />
       <Stars radius={70} depth={40} count={2200} factor={3.2} saturation={0} fade speed={0.4} />
       <FloatingSprinkles count={80} />
-      <Bob>
-        <Cake config={STORY_CAKE} controls={controls} sliceReach={1.5} sliceAngle={0.6} sliceTurn={1.25} />
+      <Director chapterRef={chapterRef} started={started}>
         <Cloud
           seed={3}
           puffs={34}
@@ -168,7 +175,7 @@ export default function StoryScene({
           position={[0, -0.62, 0]}
           color="#a4a7c6"
         />
-      </Bob>
+      </Director>
       <Cloud
         seed={11}
         puffs={22}

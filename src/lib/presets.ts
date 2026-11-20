@@ -1,20 +1,20 @@
 import { normalizeConfig, priceOf, type CakeConfig } from './cake'
 
+/** A house cake. Its name and tagline live in the dictionaries under `cake.presets[id]`. */
 export interface Preset {
-  id: string
-  name: string
-  tagline: string
+  id: PresetId
   config: CakeConfig
 }
+
+export type PresetId =
+  'strawberry-cloud' | 'choco-crush' | 'bestie-bento' | 'taro-dream' | 'caramel-crown' | 'rainbow-birthday'
 
 /** The six cakes in the vitrine. Each one is an ordinary design that can be opened in the builder. */
 export const PRESETS: Preset[] = [
   {
     id: 'strawberry-cloud',
-    name: 'Strawberry Cloud',
-    tagline: 'Vanilla sponge, strawberry jam and a pink cloud of cream.',
     config: normalizeConfig({
-      size: 'classic',
+      size: 's16',
       sponge: 'vanilla',
       filling: 'strawberry-jam',
       frosting: 'strawberry-milk',
@@ -23,11 +23,9 @@ export const PRESETS: Preset[] = [
     }),
   },
   {
-    id: 'midnight-ganache',
-    name: 'Midnight Ganache',
-    tagline: 'Dark cocoa on dark cocoa, finished with cherries.',
+    id: 'choco-crush',
     config: normalizeConfig({
-      size: 'classic',
+      size: 's18',
       sponge: 'chocolate',
       filling: 'chocolate-ganache',
       frosting: 'cocoa',
@@ -36,37 +34,32 @@ export const PRESETS: Preset[] = [
     }),
   },
   {
-    id: 'matcha-garden',
-    name: 'Matcha Garden',
-    tagline: 'Uji matcha, pistachio and a touch of gold.',
+    id: 'bestie-bento',
     config: normalizeConfig({
-      size: 'mini',
-      sponge: 'matcha',
+      size: 'bento',
+      sponge: 'vanilla',
       filling: 'vanilla-cream',
-      frosting: 'pistachio',
-      drip: 'white-chocolate',
-      toppings: ['blueberries', 'gold-leaf'],
+      frosting: 'cloud-white',
+      drip: 'none',
+      toppings: ['sprinkles'],
+      message: 'HPBD bestie',
     }),
   },
   {
-    id: 'ube-dream',
-    name: 'Ube Dream',
-    tagline: 'Purple yam sponge under a lavender sky.',
+    id: 'taro-dream',
     config: normalizeConfig({
-      size: 'mini',
-      sponge: 'ube',
+      size: 's14',
+      sponge: 'taro',
       filling: 'vanilla-cream',
-      frosting: 'lavender',
+      frosting: 'taro-purple',
       drip: 'white-chocolate',
       toppings: ['macarons', 'sprinkles'],
     }),
   },
   {
     id: 'caramel-crown',
-    name: 'Caramel Crown',
-    tagline: 'Two tiers of salted caramel, made for a celebration.',
     config: normalizeConfig({
-      size: 'grand',
+      size: 'tier2',
       sponge: 'vanilla',
       filling: 'salted-caramel',
       frosting: 'butter-yellow',
@@ -75,15 +68,13 @@ export const PRESETS: Preset[] = [
     }),
   },
   {
-    id: 'birthday-confetti',
-    name: 'Birthday Confetti',
-    tagline: 'Rainbow sprinkles, candles and your words on top.',
+    id: 'rainbow-birthday',
     config: normalizeConfig({
-      size: 'classic',
+      size: 's18',
       sponge: 'vanilla',
       filling: 'vanilla-cream',
       frosting: 'cloud-white',
-      drip: 'berry',
+      drip: 'strawberry',
       toppings: ['sprinkles', 'macarons'],
       candles: 5,
       message: 'Happy Birthday',

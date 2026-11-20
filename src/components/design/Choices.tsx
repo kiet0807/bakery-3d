@@ -1,9 +1,17 @@
 'use client'
 
-import type { Choice } from '@/lib/cake'
 import { money } from '@/lib/money'
 
-const priceLabel = (price: number) => (price ? `+${money(price)}` : 'Included')
+/** A choice ready to show: its words from the dictionary and its price for the chosen size. */
+export interface ChoiceView<Id extends string> {
+  id: Id
+  name: string
+  note: string
+  price: number
+  color: string
+}
+
+const priceLabel = (price: number) => (price ? `+${money(price)}` : 'Miễn phí')
 
 function Swatch({ color }: { color: string }) {
   return (
@@ -45,11 +53,11 @@ export function ChoiceGroup<Id extends string>({
   detail,
 }: {
   name: string
-  choices: Choice<Id>[]
+  choices: ChoiceView<Id>[]
   value: Id
   onChange: (id: Id) => void
   swatches?: boolean
-  detail?: (choice: Choice<Id>) => string
+  detail?: (choice: ChoiceView<Id>) => string
 }) {
   return (
     <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
@@ -86,7 +94,7 @@ export function MultiChoiceGroup<Id extends string>({
   max,
   onToggle,
 }: {
-  choices: Choice<Id>[]
+  choices: ChoiceView<Id>[]
   values: Id[]
   max: number
   onToggle: (id: Id) => void

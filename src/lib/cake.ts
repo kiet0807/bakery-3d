@@ -1,15 +1,16 @@
 /**
  * The cake model: every choice a customer can make, what it costs and how it looks.
  * Everything visual in the 3D scenes is derived from a CakeConfig, so this file is the single source of truth.
+ * It holds no words: names and notes live in the dictionaries (`src/i18n/vi/cake.ts` and `src/i18n/en/cake.ts`), keyed by these ids.
  */
 
-export type SizeId = 'mini' | 'classic' | 'grand'
-export type SpongeId = 'vanilla' | 'chocolate' | 'red-velvet' | 'matcha' | 'ube'
+export type SizeId = 'bento' | 's14' | 's16' | 's18' | 's20' | 'tier2'
+export type SpongeId = 'vanilla' | 'chocolate' | 'red-velvet' | 'matcha' | 'taro'
 export type FillingId =
-  'vanilla-cream' | 'strawberry-jam' | 'chocolate-ganache' | 'salted-caramel' | 'mango-curd'
+  'vanilla-cream' | 'strawberry-jam' | 'chocolate-ganache' | 'salted-caramel' | 'fresh-mango'
 export type FrostingId =
-  'cloud-white' | 'strawberry-milk' | 'pistachio' | 'cocoa' | 'lavender' | 'butter-yellow'
-export type DripId = 'none' | 'dark-chocolate' | 'caramel' | 'berry' | 'white-chocolate'
+  'cloud-white' | 'strawberry-milk' | 'pistachio' | 'cocoa' | 'taro-purple' | 'butter-yellow'
+export type DripId = 'none' | 'dark-chocolate' | 'caramel' | 'strawberry' | 'white-chocolate'
 export type ToppingId =
   | 'strawberries'
   | 'blueberries'
@@ -19,6 +20,11 @@ export type ToppingId =
   | 'chocolate-shards'
   | 'sprinkles'
   | 'gold-leaf'
+export type Sweetness = 'less' | 'regular'
+export type Allergen = 'egg' | 'milk' | 'gluten' | 'soy' | 'nuts'
+
+/** Surcharges depend on how big the cake is: small (10–14 cm), large (16–20 cm) or two tiers. */
+export type Band = 'small' | 'large' | 'tiered'
 
 export interface CakeConfig {
   size: SizeId
@@ -27,18 +33,21 @@ export interface CakeConfig {
   frosting: FrostingId
   drip: DripId
   toppings: ToppingId[]
+  sweetness: Sweetness
   candles: number
   message: string
 }
 
+/** Surcharge in whole đồng for each band. All zero means the choice is included. */
+export type BandPrice = Record<Band, number>
+
 export interface Choice<Id extends string> {
   id: Id
-  name: string
-  note: string
-  /** Extra price in whole US dollars. */
-  price: number
+  price: BandPrice
   /** Main colour in sRGB hex, used by the 3D materials and by the swatches in the UI. */
   color: string
+  /** Allergens this choice adds on top of the ones in every cake. */
+  allergens?: Allergen[]
 }
 
 export interface Tier {
@@ -46,137 +55,166 @@ export interface Tier {
   height: number
 }
 
-export interface SizeChoice extends Choice<SizeId> {
-  serves: string
-  /** Tiers from the bottom up, in scene units (1 unit ≈ 10 cm). */
+export interface SizeChoice {
+  id: SizeId
+  band: Band
+  /** Diameters in cm, bottom tier first. */
+  cm: number[]
+  serves: [number, number]
+  /** Base price in đồng: vanilla sponge, cream filling, one frosting colour, lettering, candles, knife and plates. */
+  price: number
+  /** Main colour, for the swatch in the UI. */
+  color: string
+  /** Tiers from the bottom up, in scene units (1 unit = 20 cm of diameter, so radius = cm / 20). */
   tiers: Tier[]
 }
 
 export const MAX_TOPPINGS = 4
 export const MAX_CANDLES = 9
 export const MAX_MESSAGE_LENGTH = 22
-export const CANDLE_PRICE = 1
-export const MESSAGE_PRICE = 3
+
+/** Every cake has these, whatever is chosen. */
+export const BASE_ALLERGENS: Allergen[] = ['egg', 'milk', 'gluten']
+
+const FREE: BandPrice = { small: 0, large: 0, tiered: 0 }
+const band = (small: number, large: number, tiered: number): BandPrice => ({ small, large, tiered })
+
+const SPONGE = '#f3d9a4'
 
 export const SIZES: SizeChoice[] = [
   {
-    id: 'mini',
-    name: 'Mini',
-    note: 'One small tier',
-    serves: '4–6',
-    price: 28,
-    color: '#f3d9a4',
-    tiers: [{ radius: 0.72, height: 0.78 }],
+    id: 'bento',
+    band: 'small',
+    cm: [10],
+    serves: [1, 2],
+    price: 150_000,
+    color: SPONGE,
+    tiers: [{ radius: 0.5, height: 0.62 }],
   },
   {
-    id: 'classic',
-    name: 'Classic',
-    note: 'One tall tier',
-    serves: '10–12',
-    price: 42,
-    color: '#f3d9a4',
+    id: 's14',
+    band: 'small',
+    cm: [14],
+    serves: [2, 4],
+    price: 250_000,
+    color: SPONGE,
+    tiers: [{ radius: 0.7, height: 0.76 }],
+  },
+  {
+    id: 's16',
+    band: 'large',
+    cm: [16],
+    serves: [4, 6],
+    price: 300_000,
+    color: SPONGE,
+    tiers: [{ radius: 0.8, height: 0.84 }],
+  },
+  {
+    id: 's18',
+    band: 'large',
+    cm: [18],
+    serves: [6, 8],
+    price: 370_000,
+    color: SPONGE,
+    tiers: [{ radius: 0.9, height: 0.9 }],
+  },
+  {
+    id: 's20',
+    band: 'large',
+    cm: [20],
+    serves: [8, 10],
+    price: 440_000,
+    color: SPONGE,
     tiers: [{ radius: 1, height: 0.95 }],
   },
   {
-    id: 'grand',
-    name: 'Grand',
-    note: 'Two tiers',
-    serves: '20–25',
-    price: 78,
-    color: '#f3d9a4',
+    id: 'tier2',
+    band: 'tiered',
+    cm: [20, 14],
+    serves: [15, 20],
+    price: 950_000,
+    color: SPONGE,
     tiers: [
-      { radius: 1.08, height: 0.82 },
+      { radius: 1, height: 0.82 },
       { radius: 0.7, height: 0.68 },
     ],
   },
 ]
 
 export const SPONGES: Choice<SpongeId>[] = [
-  { id: 'vanilla', name: 'Vanilla bean', note: 'Light, buttery, classic', price: 0, color: '#f2d59b' },
-  { id: 'chocolate', name: 'Dark cocoa', note: 'Deep and moist', price: 3, color: '#6b4232' },
-  { id: 'red-velvet', name: 'Red velvet', note: 'Soft cocoa with a tang', price: 4, color: '#a8323e' },
-  { id: 'matcha', name: 'Uji matcha', note: 'Grassy, gently bitter', price: 5, color: '#9fbf72' },
-  { id: 'ube', name: 'Ube', note: 'Purple yam, nutty and sweet', price: 5, color: '#9b7bcb' },
+  { id: 'vanilla', price: FREE, color: '#f2d59b' },
+  { id: 'chocolate', price: FREE, color: '#6b4232', allergens: ['soy'] },
+  { id: 'red-velvet', price: band(20_000, 30_000, 60_000), color: '#a8323e' },
+  { id: 'matcha', price: band(20_000, 30_000, 60_000), color: '#9fbf72' },
+  { id: 'taro', price: band(20_000, 30_000, 60_000), color: '#a98bd0' },
 ]
 
 export const FILLINGS: Choice<FillingId>[] = [
-  { id: 'vanilla-cream', name: 'Vanilla cream', note: 'Whipped, not too sweet', price: 0, color: '#fff4de' },
-  {
-    id: 'strawberry-jam',
-    name: 'Strawberry jam',
-    note: 'Made with whole berries',
-    price: 2,
-    color: '#d9405a',
-  },
+  { id: 'vanilla-cream', price: FREE, color: '#fff4de' },
+  { id: 'strawberry-jam', price: FREE, color: '#d9405a' },
   {
     id: 'chocolate-ganache',
-    name: 'Chocolate ganache',
-    note: '70% dark chocolate',
-    price: 3,
+    price: band(20_000, 30_000, 60_000),
     color: '#4a2c22',
+    allergens: ['soy'],
   },
-  {
-    id: 'salted-caramel',
-    name: 'Salted caramel',
-    note: 'Burnt sugar and sea salt',
-    price: 3,
-    color: '#d38d43',
-  },
-  { id: 'mango-curd', name: 'Mango curd', note: 'Bright and tropical', price: 3, color: '#f4b52e' },
+  { id: 'salted-caramel', price: band(20_000, 30_000, 60_000), color: '#d38d43' },
+  { id: 'fresh-mango', price: band(30_000, 50_000, 100_000), color: '#f4b52e' },
 ]
 
 export const FROSTINGS: Choice<FrostingId>[] = [
-  { id: 'cloud-white', name: 'Cloud white', note: 'Swiss meringue buttercream', price: 0, color: '#fbf6ee' },
+  { id: 'cloud-white', price: FREE, color: '#fbf6ee' },
+  { id: 'strawberry-milk', price: FREE, color: '#f6c1cf' },
   {
-    id: 'strawberry-milk',
-    name: 'Strawberry milk',
-    note: 'Freeze-dried berries',
-    price: 0,
-    color: '#f6c1cf',
+    id: 'pistachio',
+    price: band(30_000, 40_000, 80_000),
+    color: '#c8e0ad',
+    allergens: ['nuts'],
   },
-  { id: 'pistachio', name: 'Pistachio', note: 'Roasted Sicilian pistachio', price: 2, color: '#c8e0ad' },
-  { id: 'cocoa', name: 'Cocoa', note: 'Milk chocolate buttercream', price: 0, color: '#8a5a44' },
-  { id: 'lavender', name: 'Lavender', note: 'A hint of honey', price: 0, color: '#d8caf1' },
-  { id: 'butter-yellow', name: 'Butter yellow', note: 'Lemon zest', price: 0, color: '#f8e19c' },
+  { id: 'cocoa', price: FREE, color: '#8a5a44', allergens: ['soy'] },
+  { id: 'taro-purple', price: FREE, color: '#d8caf1' },
+  { id: 'butter-yellow', price: FREE, color: '#f8e19c' },
 ]
 
 export const DRIPS: Choice<DripId>[] = [
-  { id: 'none', name: 'No drip', note: 'Clean edges', price: 0, color: '#ffffff' },
-  { id: 'dark-chocolate', name: 'Dark chocolate', note: 'Glossy ganache', price: 4, color: '#3e2420' },
-  { id: 'caramel', name: 'Caramel', note: 'Slow-cooked', price: 4, color: '#c9813a' },
-  { id: 'berry', name: 'Berry glaze', note: 'Raspberry and cassis', price: 4, color: '#b8174f' },
-  { id: 'white-chocolate', name: 'White chocolate', note: 'Silky and sweet', price: 4, color: '#f3eadb' },
+  { id: 'none', price: FREE, color: '#ffffff' },
+  { id: 'dark-chocolate', price: band(20_000, 30_000, 60_000), color: '#3e2420', allergens: ['soy'] },
+  { id: 'caramel', price: band(20_000, 30_000, 60_000), color: '#c9813a' },
+  { id: 'strawberry', price: band(20_000, 30_000, 60_000), color: '#c8244f' },
+  { id: 'white-chocolate', price: band(20_000, 30_000, 60_000), color: '#f3eadb', allergens: ['soy'] },
 ]
 
 export const TOPPINGS: Choice<ToppingId>[] = [
-  { id: 'strawberries', name: 'Strawberries', note: 'Fresh, hand-picked', price: 6, color: '#e2334d' },
-  { id: 'blueberries', name: 'Blueberries', note: 'Little clusters', price: 5, color: '#3b4c9b' },
-  { id: 'macarons', name: 'Macarons', note: 'Four pastel shells', price: 8, color: '#f5b3c4' },
-  { id: 'cherries', name: 'Cherries', note: 'With their stems', price: 5, color: '#a90f2b' },
-  { id: 'cream-kisses', name: 'Cream kisses', note: 'Piped all around', price: 3, color: '#fff7ea' },
+  { id: 'strawberries', price: band(30_000, 50_000, 100_000), color: '#e2334d' },
+  { id: 'blueberries', price: band(40_000, 60_000, 120_000), color: '#3b4c9b' },
+  { id: 'macarons', price: band(40_000, 40_000, 80_000), color: '#f5b3c4', allergens: ['nuts'] },
+  { id: 'cherries', price: band(40_000, 60_000, 120_000), color: '#a90f2b' },
+  { id: 'cream-kisses', price: FREE, color: '#fff7ea' },
   {
     id: 'chocolate-shards',
-    name: 'Chocolate shards',
-    note: 'Snapped dark chocolate',
-    price: 4,
+    price: band(20_000, 30_000, 60_000),
     color: '#3a2219',
+    allergens: ['soy'],
   },
-  { id: 'sprinkles', name: 'Sprinkles', note: 'A rainbow of them', price: 2, color: '#7cc6f2' },
-  { id: 'gold-leaf', name: 'Gold leaf', note: 'Edible, 24 carat', price: 9, color: '#e2b84e' },
+  { id: 'sprinkles', price: band(10_000, 15_000, 30_000), color: '#7cc6f2' },
+  { id: 'gold-leaf', price: band(50_000, 70_000, 140_000), color: '#e2b84e' },
 ]
 
+export const SWEETNESS: Sweetness[] = ['less', 'regular']
+
 export const DEFAULT_CAKE: CakeConfig = {
-  size: 'classic',
+  size: 's16',
   sponge: 'vanilla',
   filling: 'strawberry-jam',
   frosting: 'strawberry-milk',
   drip: 'none',
   toppings: ['strawberries', 'cream-kisses'],
+  sweetness: 'less',
   candles: 0,
   message: '',
 }
 
-function byId<Id extends string, C extends Choice<Id>>(list: C[], id: Id): C {
+function byId<Id extends string, C extends { id: Id }>(list: C[], id: Id): C {
   const found = list.find((choice) => choice.id === id)
   if (!found) throw new Error(`Unknown choice: ${id}`)
   return found
@@ -189,53 +227,54 @@ export const frostingOf = (config: CakeConfig) => byId(FROSTINGS, config.frostin
 export const dripOf = (config: CakeConfig) => byId(DRIPS, config.drip)
 export const toppingOf = (id: ToppingId) => byId(TOPPINGS, id)
 
-/** Price of one cake in whole US dollars. */
-export function priceOf(config: CakeConfig): number {
-  return (
-    sizeOf(config).price +
-    spongeOf(config).price +
-    fillingOf(config).price +
-    frostingOf(config).price +
-    dripOf(config).price +
-    config.toppings.reduce((sum, id) => sum + toppingOf(id).price, 0) +
-    config.candles * CANDLE_PRICE +
-    (config.message ? MESSAGE_PRICE : 0)
-  )
-}
+/** The surcharge band of a size. */
+export const bandOf = (size: SizeId): Band => byId(SIZES, size).band
 
-/** Each line of the receipt, for the price breakdown in the UI. */
-export function priceLines(config: CakeConfig): { label: string; price: number }[] {
-  const lines = [
-    { label: `${sizeOf(config).name} size`, price: sizeOf(config).price },
-    { label: `${spongeOf(config).name} sponge`, price: spongeOf(config).price },
-    { label: `${fillingOf(config).name} filling`, price: fillingOf(config).price },
-    { label: `${frostingOf(config).name} frosting`, price: frostingOf(config).price },
+/** What a choice adds to a cake of the given size, in đồng. */
+export const surcharge = (choice: { price: BandPrice }, size: SizeId) => choice.price[bandOf(size)]
+
+/** One receipt line. The UI turns `kind` and `id` into words with the dictionary. */
+export type PriceLine =
+  | { kind: 'size'; id: SizeId; price: number }
+  | { kind: 'sponge'; id: SpongeId; price: number }
+  | { kind: 'filling'; id: FillingId; price: number }
+  | { kind: 'frosting'; id: FrostingId; price: number }
+  | { kind: 'drip'; id: DripId; price: number }
+  | { kind: 'topping'; id: ToppingId; price: number }
+
+/** Each line of the receipt, for the price breakdown in the UI. Candles and lettering are free. */
+export function priceLines(config: CakeConfig): PriceLine[] {
+  const size = config.size
+  const lines: PriceLine[] = [
+    { kind: 'size', id: size, price: sizeOf(config).price },
+    { kind: 'sponge', id: config.sponge, price: surcharge(spongeOf(config), size) },
+    { kind: 'filling', id: config.filling, price: surcharge(fillingOf(config), size) },
+    { kind: 'frosting', id: config.frosting, price: surcharge(frostingOf(config), size) },
   ]
   if (config.drip !== 'none')
-    lines.push({ label: `${dripOf(config).name} drip`, price: dripOf(config).price })
-  for (const id of config.toppings) lines.push({ label: toppingOf(id).name, price: toppingOf(id).price })
-  if (config.candles > 0)
-    lines.push({
-      label: `${config.candles} candle${config.candles > 1 ? 's' : ''}`,
-      price: config.candles * CANDLE_PRICE,
-    })
-  if (config.message) lines.push({ label: 'Message', price: MESSAGE_PRICE })
+    lines.push({ kind: 'drip', id: config.drip, price: surcharge(dripOf(config), size) })
+  for (const id of config.toppings) lines.push({ kind: 'topping', id, price: surcharge(toppingOf(id), size) })
   return lines
 }
 
-/** One-line description, e.g. for the cart. */
-export function describe(config: CakeConfig): string {
-  const parts = [
-    `${sizeOf(config).name}`,
-    `${spongeOf(config).name} sponge`,
-    `${fillingOf(config).name}`,
-    `${frostingOf(config).name} frosting`,
+/** Price of one cake in whole đồng. */
+export function priceOf(config: CakeConfig): number {
+  return priceLines(config).reduce((sum, line) => sum + line.price, 0)
+}
+
+/** Allergens in a cake, in a fixed order. */
+export function allergensOf(config: CakeConfig): Allergen[] {
+  const found = new Set<Allergen>(BASE_ALLERGENS)
+  const chosen = [
+    spongeOf(config),
+    fillingOf(config),
+    frostingOf(config),
+    dripOf(config),
+    ...config.toppings.map(toppingOf),
   ]
-  if (config.drip !== 'none') parts.push(`${dripOf(config).name} drip`)
-  if (config.toppings.length) parts.push(config.toppings.map((id) => toppingOf(id).name).join(', '))
-  if (config.candles) parts.push(`${config.candles} candle${config.candles > 1 ? 's' : ''}`)
-  if (config.message) parts.push(`“${config.message}”`)
-  return parts.join(' · ')
+  for (const choice of chosen) for (const allergen of choice.allergens ?? []) found.add(allergen)
+  const order: Allergen[] = ['egg', 'milk', 'gluten', 'soy', 'nuts']
+  return order.filter((allergen) => found.has(allergen))
 }
 
 /** Letters (any script, so Vietnamese works), digits, spaces and a little punctuation. */
@@ -250,12 +289,14 @@ export function cleanMessage(raw: string): string {
     .slice(0, MAX_MESSAGE_LENGTH)
 }
 
-function pick<Id extends string>(list: Choice<Id>[], value: unknown, fallback: Id): Id {
-  return list.some((choice) => choice.id === value) ? (value as Id) : fallback
+function pick<Id extends string>(list: readonly ({ id: Id } | Id)[], value: unknown, fallback: Id): Id {
+  return list.some((choice) => (typeof choice === 'string' ? choice : choice.id) === value)
+    ? (value as Id)
+    : fallback
 }
 
 /**
- * Turns anything (a preset, a saved cart from an older version, a URL) into a valid CakeConfig.
+ * Turns anything (a preset, a saved cart from an older version, a shared link) into a valid CakeConfig.
  * Unknown values fall back to the default cake, toppings are de-duplicated and capped.
  */
 export function normalizeConfig(input: unknown): CakeConfig {
@@ -274,6 +315,7 @@ export function normalizeConfig(input: unknown): CakeConfig {
     frosting: pick(FROSTINGS, raw.frosting, DEFAULT_CAKE.frosting),
     drip: pick(DRIPS, raw.drip, DEFAULT_CAKE.drip),
     toppings,
+    sweetness: pick(SWEETNESS, raw.sweetness, DEFAULT_CAKE.sweetness),
     candles: Math.min(MAX_CANDLES, Math.max(0, candles)),
     message: typeof raw.message === 'string' ? cleanMessage(raw.message).trim() : '',
   }
@@ -288,6 +330,7 @@ export function configKey(config: CakeConfig): string {
     config.frosting,
     config.drip,
     [...config.toppings].sort().join('+'),
+    config.sweetness,
     config.candles,
     config.message,
   ].join('|')

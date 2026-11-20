@@ -43,8 +43,8 @@ export const test = base.extend<{ quality: Quality; consoleErrors: string[] }>({
 
 export { expect }
 
-export const INTRO_KEY = 'crumb-cloud-intro-seen'
-export const CART_KEY = 'crumb-cloud-cart'
+export const INTRO_KEY = 'kais-bakery-intro-seen'
+export const CART_KEY = 'kais-bakery-cart'
 
 /** Skips the welcome screen, as if the visitor had already pressed Start in this browser session. */
 export async function skipIntro(page: Page) {
@@ -65,33 +65,35 @@ export async function clickInBand(target: Locator) {
 }
 
 /** The number in the header's cart button. */
-export const cartCount = (page: Page) => page.getByLabel(/in the cart$/)
+export const cartCount = (page: Page) => page.getByLabel(/(in the cart|trong giỏ)$/)
 
 interface SeedItem {
   id: string
-  name: string
+  presetId?: string
   quantity: number
   config: Record<string, unknown>
 }
 
 export const STRAWBERRY_CLOUD = {
-  size: 'classic',
+  size: 's16',
   sponge: 'vanilla',
   filling: 'strawberry-jam',
   frosting: 'strawberry-milk',
   drip: 'none',
   toppings: ['strawberries', 'cream-kisses'],
+  sweetness: 'less',
   candles: 0,
   message: '',
 }
 
-export const BIRTHDAY_CONFETTI = {
-  size: 'classic',
+export const RAINBOW_BIRTHDAY = {
+  size: 's18',
   sponge: 'vanilla',
   filling: 'vanilla-cream',
   frosting: 'cloud-white',
-  drip: 'berry',
+  drip: 'strawberry',
   toppings: ['sprinkles', 'macarons'],
+  sweetness: 'less',
   candles: 5,
   message: 'Happy Birthday',
 }
@@ -100,7 +102,7 @@ export const BIRTHDAY_CONFETTI = {
 export async function seedCart(page: Page, items: SeedItem[]) {
   await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [
     CART_KEY,
-    JSON.stringify({ state: { items }, version: 1 }),
+    JSON.stringify({ state: { items }, version: 2 }),
   ] as const)
   await page.reload()
 }

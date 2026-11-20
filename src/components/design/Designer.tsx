@@ -4,14 +4,12 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CANDLE_PRICE,
   DRIPS,
   FILLINGS,
   FROSTINGS,
   MAX_CANDLES,
   MAX_MESSAGE_LENGTH,
   MAX_TOPPINGS,
-  MESSAGE_PRICE,
   SIZES,
   SPONGES,
   TOPPINGS,
@@ -19,13 +17,17 @@ import {
   configKey,
   priceLines,
   priceOf,
+  surcharge,
+  type BandPrice,
 } from '@/lib/cake'
+import { lineLabel } from '@/i18n/cake-text'
+import { useDict } from '@/i18n/LangProvider'
 import { money } from '@/lib/money'
 import { PRESETS, presetById } from '@/lib/presets'
 import { useCart, useDesign } from '@/lib/store'
 import { ScenePoster } from '../ScenePoster'
 import type { Capture } from '../three/Capture'
-import { ChoiceGroup, MultiChoiceGroup, Section } from './Choices'
+import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
 
 const DesignScene = dynamic(() => import('../three/scenes/DesignScene'), {
   ssr: false,
@@ -50,6 +52,7 @@ function usePresetFromUrl() {
 
 export function Designer() {
   usePresetFromUrl()
+  const dict = useDict()
   const config = useDesign((state) => state.config)
   const sliced = useDesign((state) => state.sliced)
   const update = useDesign((state) => state.update)
@@ -77,11 +80,24 @@ export function Designer() {
     [config],
   )
 
+  const view = <Id extends string>(
+    list: { id: Id; price: BandPrice; color: string }[],
+    words: Record<Id, { name: string; note: string }>,
+  ): ChoiceView<Id>[] =>
+    list.map((choice) => ({ ...choice, ...words[choice.id], price: surcharge(choice, config.size) }))
+  const sizes: ChoiceView<(typeof SIZES)[number]['id']>[] = SIZES.map((size) => ({
+    id: size.id,
+    color: size.color,
+    price: size.price,
+    ...dict.cake.sizes[size.id],
+  }))
+  const presetName = matchingPreset ? dict.cake.presets[matchingPreset.id].name : dict.cake.yourDesign
+
   const addToCart = () => {
     const snapshot = captureRef.current?.(256) ?? undefined
-    add(config, { name: matchingPreset?.name ?? 'Your design', snapshot })
+    add(config, { presetId: matchingPreset?.id, snapshot })
     setAddedKey(configKey(config))
-    setStatus(`${matchingPreset?.name ?? 'Your cake'} was added to your cart.`)
+    setStatus(`${presetName} was added to your cart.`)
   }
 
   const saveImage = () => {
@@ -211,19 +227,20 @@ export function Designer() {
         <Section title="Size">
           <ChoiceGroup
             name="size"
-            choices={SIZES}
+            choices={sizes}
             value={config.size}
             onChange={(size) => update({ size })}
             swatches={false}
-            detail={(choice) =>
-              `${SIZES.find((s) => s.id === choice.id)?.note}, serves ${SIZES.find((s) => s.id === choice.id)?.serves}`
-            }
+            detail={(choice) => {
+              const size = SIZES.find((s) => s.id === choice.id)
+              return size ? `${choice.note}, ${dict.common.units.serves(size.serves)}` : choice.note
+            }}
           />
         </Section>
         <Section title="Sponge">
           <ChoiceGroup
             name="sponge"
-            choices={SPONGES}
+            choices={view(SPONGES, dict.cake.sponges)}
             value={config.sponge}
             onChange={(sponge) => update({ sponge })}
           />
@@ -231,7 +248,7 @@ export function Designer() {
         <Section title="Filling">
           <ChoiceGroup
             name="filling"
-            choices={FILLINGS}
+            choices={view(FILLINGS, dict.cake.fillings)}
             value={config.filling}
             onChange={(filling) => update({ filling })}
           />
@@ -239,7 +256,7 @@ export function Designer() {
         <Section title="Frosting">
           <ChoiceGroup
             name="frosting"
-            choices={FROSTINGS}
+            choices={view(FROSTINGS, dict.cake.frostings)}
             value={config.frosting}
             onChange={(frosting) => update({ frosting })}
           />
@@ -247,20 +264,20 @@ export function Designer() {
         <Section title="Drip">
           <ChoiceGroup
             name="drip"
-            choices={DRIPS}
+            choices={view(DRIPS, dict.cake.drips)}
             value={config.drip}
             onChange={(drip) => update({ drip })}
           />
         </Section>
         <Section title="Toppings" hint={`${config.toppings.length} of ${MAX_TOPPINGS} chosen`}>
           <MultiChoiceGroup
-            choices={TOPPINGS}
+            choices={view(TOPPINGS, dict.cake.toppings)}
             values={config.toppings}
             max={MAX_TOPPINGS}
             onToggle={toggleTopping}
           />
         </Section>
-        <Section title="Candles" hint={`${money(CANDLE_PRICE)} each`}>
+        <Section title="Candles" hint={dict.common.free}>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -285,7 +302,7 @@ export function Designer() {
             </button>
           </div>
         </Section>
-        <Section title="Message" hint={`${money(MESSAGE_PRICE)}, on a chocolate plaque`}>
+        <Section title="Message" hint={dict.common.free}>
           <label className="block space-y-2">
             <span className="sr-only">Message on the cake</span>
             <input
@@ -307,8 +324,8 @@ export function Designer() {
           <summary className="cursor-pointer font-semibold">Price breakdown</summary>
           <dl className="mt-3 space-y-1.5 text-sm">
             {lines.map((line) => (
-              <div key={line.label} className="flex justify-between gap-4">
-                <dt className="text-mist">{line.label}</dt>
+              <div key={`${line.kind}-${line.id}`} className="flex justify-between gap-4">
+                <dt className="text-mist">{lineLabel(line, dict)}</dt>
                 <dd className="tabular-nums">{line.price ? money(line.price) : 'Included'}</dd>
               </div>
             ))}
@@ -330,7 +347,7 @@ export function Designer() {
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-night/85 px-4 py-3 backdrop-blur-xl lg:sticky lg:bottom-6 lg:rounded-full lg:border lg:bg-abyss/85 lg:py-2.5 lg:pr-2.5 lg:pl-6 lg:shadow-soft">
           <div className="mx-auto flex max-w-xl items-center gap-3 lg:max-w-none">
             <div className="mr-auto leading-tight">
-              <p className="text-xs text-mist">{matchingPreset ? matchingPreset.name : 'Your design'}</p>
+              <p className="text-xs text-mist">{presetName}</p>
               <p className="text-3xl font-light tabular-nums" data-testid="price">
                 {money(price)}
               </p>

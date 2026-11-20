@@ -3,7 +3,9 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
-import { dripOf, fillingOf, frostingOf, sizeOf, spongeOf, toppingOf, type CakeConfig } from '@/lib/cake'
+import { sizeOf, type CakeConfig } from '@/lib/cake'
+import type { Dictionary } from '@/i18n/dictionaries'
+import { useDict } from '@/i18n/LangProvider'
 import { money } from '@/lib/money'
 import { PRESETS, presetPrice } from '@/lib/presets'
 import { useCart } from '@/lib/store'
@@ -17,17 +19,18 @@ const VitrineScene = dynamic(() => import('../three/scenes/VitrineScene'), {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-function specs(config: CakeConfig): { label: string; value: string }[] {
+function specs(config: CakeConfig, dict: Dictionary): { label: string; value: string }[] {
+  const c = dict.cake
   const size = sizeOf(config)
   const rows = [
-    { label: 'Size', value: `${size.name}, serves ${size.serves}` },
-    { label: 'Sponge', value: spongeOf(config).name },
-    { label: 'Filling', value: fillingOf(config).name },
-    { label: 'Frosting', value: frostingOf(config).name },
+    { label: c.kinds.size, value: `${c.sizes[size.id].name}, ${dict.common.units.serves(size.serves)}` },
+    { label: c.kinds.sponge, value: c.sponges[config.sponge].name },
+    { label: c.kinds.filling, value: c.fillings[config.filling].name },
+    { label: c.kinds.frosting, value: c.frostings[config.frosting].name },
   ]
-  if (config.drip !== 'none') rows.push({ label: 'Drip', value: dripOf(config).name })
+  if (config.drip !== 'none') rows.push({ label: c.kinds.drip, value: c.drips[config.drip].name })
   if (config.toppings.length)
-    rows.push({ label: 'Toppings', value: config.toppings.map((id) => toppingOf(id).name).join(', ') })
+    rows.push({ label: c.kinds.topping, value: config.toppings.map((id) => c.toppings[id].name).join(', ') })
   if (config.candles) rows.push({ label: 'Candles', value: String(config.candles) })
   if (config.message) rows.push({ label: 'Message', value: `“${config.message}”` })
   return rows
@@ -38,6 +41,8 @@ function specs(config: CakeConfig): { label: string; value: string }[] {
  * for keyboards and screen readers. Choosing a cake in either place turns the table and lifts its cloche.
  */
 export function Vitrine() {
+  const dict = useDict()
+  const nameOf = (id: (typeof PRESETS)[number]['id']) => dict.cake.presets[id].name
   const [index, setIndex] = useState(0)
   const [sliced, setSliced] = useState(false)
   const [added, setAdded] = useState<string | null>(null)
@@ -53,14 +58,14 @@ export function Vitrine() {
     const wrapped = (next + count) % count
     setIndex(wrapped)
     setSliced(false)
-    setStatus(`${PRESETS[wrapped].name}, ${money(presetPrice(PRESETS[wrapped]))}.`)
+    setStatus(`${nameOf(PRESETS[wrapped].id)}, ${money(presetPrice(PRESETS[wrapped]))}.`)
   }
 
   const addToCart = () => {
     const snapshot = captureRef.current?.(256) ?? undefined
-    add(preset.config, { name: preset.name, snapshot })
+    add(preset.config, { presetId: preset.id, snapshot })
     setAdded(preset.id)
-    setStatus(`${preset.name} was added to your cart.`)
+    setStatus(`${nameOf(preset.id)} was added to your cart.`)
   }
 
   return (
@@ -147,7 +152,7 @@ export function Vitrine() {
                 <span className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-abyss/75 px-3.5 py-2.5 backdrop-blur transition-colors group-hover:border-white/25 peer-checked:border-moon peer-checked:bg-deep/70 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-moon">
                   <span className="font-display text-xs tracking-[0.2em] text-moon">{pad(i + 1)}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium sm:text-base">
-                    {item.name}
+                    {nameOf(item.id)}
                   </span>
                   <span className="hidden text-sm text-mist tabular-nums sm:inline">
                     {money(presetPrice(item))}
@@ -169,12 +174,12 @@ export function Vitrine() {
               {pad(index + 1)} / {pad(count)} · House cake
             </p>
             <h2 id="cake-name" className="text-4xl leading-tight font-light">
-              {preset.name}
+              {nameOf(preset.id)}
             </h2>
-            <p className="leading-relaxed text-mist">{preset.tagline}</p>
+            <p className="leading-relaxed text-mist">{dict.cake.presets[preset.id].tagline}</p>
           </div>
           <dl className="space-y-1.5 border-t border-white/10 pt-4 text-sm">
-            {specs(preset.config).map((row) => (
+            {specs(preset.config, dict).map((row) => (
               <div key={row.label} className="flex justify-between gap-4">
                 <dt className="text-haze">{row.label}</dt>
                 <dd className="text-right">{row.value}</dd>

@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { priceOf } from '@/lib/cake'
+import { cakeName } from '@/i18n/cake-text'
+import { useDict } from '@/i18n/LangProvider'
 import type { CartItem } from '@/lib/cart'
 import { money } from '@/lib/money'
 import { formatPickupDay, type Order } from '@/lib/order'
@@ -21,6 +23,7 @@ export interface PlacedOrder extends Order {
 
 /** The end of the demo: the first cake boxed up in 3D, and a receipt that says plainly nothing was charged. */
 export function OrderDone({ order }: { order: PlacedOrder }) {
+  const dict = useDict()
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
   const count = order.items.reduce((sum, item) => sum + item.quantity, 0)
@@ -56,7 +59,8 @@ export function OrderDone({ order }: { order: PlacedOrder }) {
             {order.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-4">
                 <span>
-                  {item.name} <span className="text-mist tabular-nums">× {item.quantity}</span>
+                  {cakeName(item.presetId, dict)}{' '}
+                  <span className="text-mist tabular-nums">× {item.quantity}</span>
                 </span>
                 <span className="tabular-nums">{money(priceOf(item.config) * item.quantity)}</span>
               </li>

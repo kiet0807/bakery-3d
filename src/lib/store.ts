@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import { DEFAULT_CAKE, MAX_TOPPINGS, normalizeConfig, type CakeConfig, type ToppingId } from './cake'
 import { addItem, removeItem, restoreItems, setQuantity, type CartItem } from './cart'
+import type { PresetId } from './presets'
 
 /**
  * localStorage can be missing or throw (private windows, blocked site data, full quota).
@@ -63,8 +64,8 @@ export const useDesign = create<DesignState>()(
       setSliced: (sliced) => set({ sliced }),
     }),
     {
-      name: 'crumb-cloud-design',
-      version: 1,
+      name: 'kais-bakery-design',
+      version: 2,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ config: state.config }),
       merge: (persisted, current) => ({
@@ -78,7 +79,7 @@ export const useDesign = create<DesignState>()(
 
 interface CartState {
   items: CartItem[]
-  add: (config: CakeConfig, options?: { name?: string; snapshot?: string }) => void
+  add: (config: CakeConfig, options?: { presetId?: PresetId; snapshot?: string }) => void
   setQuantity: (id: string, quantity: number) => void
   remove: (id: string) => void
   clear: () => void
@@ -102,8 +103,8 @@ export const useCart = create<CartState>()(
       clear: () => set({ items: [] }),
     }),
     {
-      name: 'crumb-cloud-cart',
-      version: 1,
+      name: 'kais-bakery-cart',
+      version: 2,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ items: state.items }),
       merge: (persisted, current) => ({

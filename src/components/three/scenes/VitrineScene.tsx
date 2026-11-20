@@ -6,6 +6,7 @@ import type { EffectComposer as Composer } from 'postprocessing'
 import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
+import { useDict } from '@/i18n/LangProvider'
 import type { Preset } from '@/lib/presets'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
@@ -249,11 +250,12 @@ export default function VitrineScene({
   captureRef: RefObject<Capture | null>
 }) {
   const composer = useRef<Composer | null>(null)
+  const presetLabel = useDict().cake.presets[presets[index].id].name
   const step = TAU / presets.length
   return (
     <CanvasShell
       className="h-full w-full"
-      label={`A turning glass vitrine with ${presets.length} cakes on porcelain stands. ${presets[index].name} is at the front, its glass cloche lifted.`}
+      label={`A turning glass vitrine with ${presets.length} cakes on porcelain stands. ${presetLabel} is at the front, its glass cloche lifted.`}
       camera={{ position: [0, 2.2, 9], fov: 34, near: 0.1, far: 60 }}
     >
       <fog attach="fog" args={['#060814', 11, 19]} />

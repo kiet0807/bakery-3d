@@ -1,5 +1,5 @@
 import {
-  BIRTHDAY_CONFETTI,
+  RAINBOW_BIRTHDAY,
   CART_KEY,
   STRAWBERRY_CLOUD,
   cartCount,
@@ -11,8 +11,8 @@ import {
 } from './fixtures'
 
 const TWO_LINES = [
-  { id: 'line-strawberry', name: 'Strawberry Cloud', quantity: 2, config: STRAWBERRY_CLOUD },
-  { id: 'line-birthday', name: 'Birthday Confetti', quantity: 1, config: BIRTHDAY_CONFETTI },
+  { id: 'line-strawberry', presetId: 'strawberry-cloud', quantity: 2, config: STRAWBERRY_CLOUD },
+  { id: 'line-birthday', presetId: 'rainbow-birthday', quantity: 1, config: RAINBOW_BIRTHDAY },
 ]
 
 test.describe('cart and demo checkout', () => {
@@ -43,7 +43,7 @@ test.describe('cart and demo checkout', () => {
     await expect(order.getByRole('button', { name: /Place demo order/ })).toContainText('$181')
 
     await page.getByRole('button', { name: 'Remove Birthday Confetti' }).click()
-    await expect(page.getByRole('heading', { level: 2, name: 'Birthday Confetti' })).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 2, name: 'Sinh Nhật Cầu Vồng' })).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1, name: /1 cake/ })).toBeVisible()
     await expect(cartCount(page)).toHaveText('1')
 

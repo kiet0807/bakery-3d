@@ -1,5 +1,8 @@
-import Link from 'next/link'
+import type { Metadata } from 'next'
 import { HomeExperience } from '@/components/home/HomeExperience'
+import { dictionaries } from '@/i18n/dictionaries'
+import { LocalLink } from '@/i18n/LangProvider'
+import { langFrom, pageMetadata } from '@/i18n/metadata'
 import { frostingOf, spongeOf } from '@/lib/cake'
 import { money } from '@/lib/money'
 import { PRESETS, presetPrice } from '@/lib/presets'
@@ -31,7 +34,14 @@ const CRAFT = [
   },
 ]
 
-export default function Home() {
+export async function generateMetadata({ params }: PageProps<'/[lang]'>): Promise<Metadata> {
+  const lang = await langFrom(params)
+  return pageMetadata(lang, '/', dictionaries[lang].home.meta, { absoluteTitle: true })
+}
+
+export default async function Home({ params }: PageProps<'/[lang]'>) {
+  const lang = await langFrom(params)
+  const dict = dictionaries[lang]
   return (
     <>
       <HomeExperience />
@@ -68,17 +78,17 @@ export default function Home() {
               Six house cakes, <span className="text-accent">ready to change.</span>
             </h2>
           </div>
-          <Link
+          <LocalLink
             href="/menu"
             className="rounded-full border border-white/40 px-6 py-3 text-sm font-medium tracking-[0.12em] uppercase transition-colors hover:border-moon hover:text-moon"
           >
             See them in 3D
-          </Link>
+          </LocalLink>
         </div>
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PRESETS.map((preset) => (
             <li key={preset.id}>
-              <Link
+              <LocalLink
                 href={`/design?preset=${preset.id}`}
                 className="group glass flex h-full flex-col gap-4 rounded-3xl p-6 transition-colors hover:border-moon/50"
               >
@@ -91,15 +101,17 @@ export default function Home() {
                     />
                   ))}
                 </span>
-                <span className="text-2xl font-light">{preset.name}</span>
-                <span className="flex-1 leading-relaxed text-mist">{preset.tagline}</span>
+                <span className="text-2xl font-light">{dict.cake.presets[preset.id].name}</span>
+                <span className="flex-1 leading-relaxed text-mist">
+                  {dict.cake.presets[preset.id].tagline}
+                </span>
                 <span className="flex items-center justify-between text-sm">
-                  <span className="tabular-nums">{money(presetPrice(preset))}</span>
+                  <span className="tabular-nums">{money(presetPrice(preset), lang)}</span>
                   <span className="text-moon transition-transform group-hover:translate-x-1">
                     Make it yours →
                   </span>
                 </span>
-              </Link>
+              </LocalLink>
             </li>
           ))}
         </ul>

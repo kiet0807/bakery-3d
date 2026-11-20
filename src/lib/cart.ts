@@ -1,4 +1,5 @@
 import { configKey, normalizeConfig, priceOf, type CakeConfig } from './cake'
+import { presetById, type PresetId } from './presets'
 
 export const MAX_QUANTITY = 20
 /** Only the newest few lines keep their picture, so the saved cart stays small. */
@@ -6,7 +7,8 @@ export const MAX_SNAPSHOTS = 6
 
 export interface CartItem {
   id: string
-  name: string
+  /** Set when the cake is one of the house cakes, so its name can be shown in the visitor's language. */
+  presetId?: PresetId
   config: CakeConfig
   quantity: number
   /** Small JPEG data URL of the cake as it was designed, if the browser could take one. */
@@ -15,7 +17,7 @@ export interface CartItem {
 
 export interface AddOptions {
   id: string
-  name?: string
+  presetId?: PresetId
   snapshot?: string
 }
 
@@ -36,7 +38,7 @@ export function addItem(items: CartItem[], config: CakeConfig, options: AddOptio
   }
   const added: CartItem = {
     id: options.id,
-    name: options.name ?? 'Your design',
+    ...(options.presetId ? { presetId: options.presetId } : {}),
     config,
     quantity: 1,
     snapshot: options.snapshot,
@@ -74,10 +76,11 @@ export function restoreItems(input: unknown): CartItem[] {
     if (typeof item.id !== 'string') return []
     const snapshot =
       typeof item.snapshot === 'string' && item.snapshot.startsWith('data:image/') ? item.snapshot : undefined
+    const preset = presetById(typeof item.presetId === 'string' ? item.presetId : undefined)
     return [
       {
         id: item.id,
-        name: typeof item.name === 'string' ? item.name.slice(0, 60) : 'Your design',
+        ...(preset ? { presetId: preset.id } : {}),
         config: normalizeConfig(item.config),
         quantity: Math.min(MAX_QUANTITY, Math.max(1, Math.round(Number(item.quantity) || 1))),
         snapshot,

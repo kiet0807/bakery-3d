@@ -19,10 +19,10 @@ describe('cart', () => {
     let items: CartItem[] = []
     items = addItem(items, DEFAULT_CAKE, { id: 'a' })
     items = addItem(items, { ...DEFAULT_CAKE, toppings: [...DEFAULT_CAKE.toppings].reverse() }, { id: 'b' })
-    items = addItem(items, chocolate, { id: 'c', name: 'Midnight' })
-    expect(items.map((i) => [i.id, i.quantity, i.name])).toEqual([
-      ['a', 2, 'Your design'],
-      ['c', 1, 'Midnight'],
+    items = addItem(items, chocolate, { id: 'c', presetId: 'choco-crush' })
+    expect(items.map((i) => [i.id, i.quantity, i.presetId])).toEqual([
+      ['a', 2, undefined],
+      ['c', 1, 'choco-crush'],
     ])
     expect(countItems(items)).toBe(3)
     expect(subtotal(items)).toBe(2 * priceOf(DEFAULT_CAKE) + priceOf(chocolate))
@@ -48,14 +48,23 @@ describe('cart', () => {
 
   it('restores a saved cart and drops what no longer fits', () => {
     const restored = restoreItems([
-      { id: 'ok', name: 'Mine', config: { size: 'mini' }, quantity: 3, snapshot: 'javascript:alert(1)' },
+      {
+        id: 'ok',
+        presetId: 'taro-dream',
+        config: { size: 's14' },
+        quantity: 3,
+        snapshot: 'javascript:alert(1)',
+      },
       { name: 'no id' },
       'junk',
-      { id: 'big', config: {}, quantity: 999 },
+      { id: 'big', presetId: 'not-a-cake', name: 'Old name', config: { size: 'mini' }, quantity: 999 },
     ])
     expect(restored).toHaveLength(2)
-    expect(restored[0]).toMatchObject({ id: 'ok', name: 'Mine', quantity: 3, snapshot: undefined })
-    expect(restored[0].config.size).toBe('mini')
+    expect(restored[0]).toMatchObject({ id: 'ok', presetId: 'taro-dream', quantity: 3, snapshot: undefined })
+    expect(restored[0].config.size).toBe('s14')
+    expect(restored[1].presetId).toBeUndefined()
+    expect(restored[1]).not.toHaveProperty('name')
+    expect(restored[1].config.size).toBe(DEFAULT_CAKE.size)
     expect(restored[1].quantity).toBe(MAX_QUANTITY)
     expect(restoreItems('nope')).toEqual([])
   })

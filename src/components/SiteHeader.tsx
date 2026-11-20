@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSyncExternalStore } from 'react'
 import { countItems } from '@/lib/cart'
 import { useCart } from '@/lib/store'
 import { Logo } from './Logo'
@@ -12,11 +13,25 @@ const LINKS = [
   { href: '/#story', label: 'Story', hideOnSmall: true },
 ]
 
+function subscribeScroll(onChange: () => void) {
+  window.addEventListener('scroll', onChange, { passive: true })
+  return () => window.removeEventListener('scroll', onChange)
+}
+const readScrolled = () => window.scrollY > 8
+
 export function SiteHeader() {
   const pathname = usePathname()
   const count = useCart((state) => countItems(state.items))
+  // Once the page moves, the header gets a frosted backing so content never runs under the links.
+  const scrolled = useSyncExternalStore(subscribeScroll, readScrolled, () => false)
   return (
-    <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-night/80 via-night/40 to-transparent">
+    <header
+      className={`fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,backdrop-filter] duration-300 ${
+        scrolled
+          ? 'border-b border-white/[0.06] bg-night/75 backdrop-blur-xl'
+          : 'border-b border-transparent bg-gradient-to-b from-night/80 via-night/40 to-transparent'
+      }`}
+    >
       <nav
         aria-label="Main"
         className="mx-auto flex h-16 max-w-7xl items-center gap-1 px-4 sm:h-20 sm:gap-3 sm:px-8"

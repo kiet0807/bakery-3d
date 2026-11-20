@@ -24,7 +24,7 @@ import { money } from '@/lib/money'
 import { PRESETS, presetById } from '@/lib/presets'
 import { useCart, useDesign } from '@/lib/store'
 import { ScenePoster } from '../ScenePoster'
-import type { Capture } from '../three/scenes/DesignScene'
+import type { Capture } from '../three/Capture'
 import { ChoiceGroup, MultiChoiceGroup, Section } from './Choices'
 
 const DesignScene = dynamic(() => import('../three/scenes/DesignScene'), {
@@ -91,7 +91,7 @@ export function Designer() {
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 px-3 pt-20 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
-      <div className="sticky top-16 z-10 -mx-3 h-[44svh] border-b border-white/10 bg-night/70 backdrop-blur sm:mx-0 sm:rounded-[2rem] sm:border lg:top-24 lg:h-[calc(100svh-7.5rem)] lg:bg-white/[0.03]">
+      <div className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b border-white/10 bg-night/70 backdrop-blur sm:mx-0 sm:rounded-[2rem] sm:border lg:top-24 lg:h-[calc(100svh-7.5rem)] lg:bg-white/[0.03]">
         <DesignScene config={config} sliced={sliced} captureRef={captureRef} />
         <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-center gap-2">
           <button
@@ -112,7 +112,7 @@ export function Designer() {
         </div>
       </div>
 
-      <div className="space-y-10 pb-32">
+      <div className="space-y-10 pb-32 lg:pb-10">
         <header className="space-y-2">
           <p className="eyebrow">Cake builder</p>
           <h1 className="text-5xl font-light tracking-tight sm:text-6xl">Build your cake</h1>
@@ -239,33 +239,33 @@ export function Designer() {
         >
           Start again from the house cake
         </button>
-      </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/70 bg-night/80 px-4 py-3 backdrop-blur-xl lg:inset-x-auto lg:right-6 lg:bottom-6 lg:w-[420px] lg:rounded-full lg:border lg:shadow-soft">
-        <div className="mx-auto flex max-w-xl items-center gap-3">
-          <div className="mr-auto leading-tight">
-            <p className="text-xs text-mist">{matchingPreset ? matchingPreset.name : 'Your design'}</p>
-            <p className="text-3xl font-light tabular-nums" data-testid="price">
-              {money(price)}
-            </p>
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-night/85 px-4 py-3 backdrop-blur-xl lg:sticky lg:bottom-6 lg:rounded-full lg:border lg:bg-abyss/85 lg:py-2.5 lg:pr-2.5 lg:pl-6 lg:shadow-soft">
+          <div className="mx-auto flex max-w-xl items-center gap-3 lg:max-w-none">
+            <div className="mr-auto leading-tight">
+              <p className="text-xs text-mist">{matchingPreset ? matchingPreset.name : 'Your design'}</p>
+              <p className="text-3xl font-light tabular-nums" data-testid="price">
+                {money(price)}
+              </p>
+            </div>
+            {justAdded ? (
+              <Link href="/cart" className="rounded-full bg-ink px-5 py-3 font-semibold text-night">
+                View cart →
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={addToCart}
+                className="rounded-full bg-glow px-5 py-3 font-semibold text-night shadow-warm transition-transform hover:-translate-y-0.5"
+              >
+                Add to cart
+              </button>
+            )}
           </div>
-          {justAdded ? (
-            <Link href="/cart" className="rounded-full bg-ink px-5 py-3 font-semibold text-night">
-              View cart →
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={addToCart}
-              className="rounded-full bg-glow px-5 py-3 font-semibold text-night shadow-warm transition-transform hover:-translate-y-0.5"
-            >
-              Add to cart
-            </button>
-          )}
+          <p role="status" aria-live="polite" className="sr-only">
+            {status}
+          </p>
         </div>
-        <p role="status" aria-live="polite" className="sr-only">
-          {status}
-        </p>
       </div>
     </div>
   )

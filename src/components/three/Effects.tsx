@@ -1,19 +1,20 @@
 'use client'
 
 import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
-import { ToneMappingMode } from 'postprocessing'
+import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
+import type { Ref } from 'react'
 import { useQuality } from './motion'
 
 /**
  * The photographic finish: ambient occlusion so toppings sit in the cream instead of floating on it, a
  * gentle bloom on candle flames, a light vignette, and filmic tone mapping. Skipped on the "low" tier, where
- * the renderer's own tone mapping gives the same colours.
+ * the renderer's own tone mapping gives the same colours. Pair it with `ShadowBlob`, not ContactShadows.
  */
-export function Effects({ ao = 1 }: { ao?: number }) {
+export function Effects({ ao = 1, ref }: { ao?: number; ref?: Ref<Composer | null> }) {
   const quality = useQuality()
   if (quality !== 'high') return null
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={4} ref={ref}>
       <N8AO
         aoRadius={0.32}
         distanceFalloff={0.55}

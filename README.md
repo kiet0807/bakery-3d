@@ -40,6 +40,19 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
 
 <img src="docs/screenshots/phone-menu.jpg" width="300" alt="The vitrine on a phone: the 3D table on top, the list of cakes below">
 
+### Four colour sets
+
+A switch in the header recolours the whole shop, 3D scenes included, and the browser remembers the choice.
+
+| Set                           | Feel                                                          |
+| ----------------------------- | ------------------------------------------------------------- |
+| **G1 · Matcha Dâu** (default) | matcha milk and strawberry: soft greens, a strawberry "Kai's" |
+| **B · Bơ Bạc Hà**             | butter and mint, the first palette: a peach-orange buy button |
+| **G2 · Lá Dứa Dừa**           | pandan and coconut: the freshest green                        |
+| **G3 · Rừng Kem**             | forest and cream: deep green ink and logo                     |
+
+![The home page in the four colour sets](docs/screenshots/palettes.jpg)
+
 ## How it is built
 
 ### Two languages, one set of pages
@@ -87,6 +100,19 @@ unless the visitor asked for reduced motion.
   ambient occlusion, a soft bloom and neutral tone mapping, which keeps the pastel colours true.
 - Scenes load with `next/dynamic` and `ssr: false`; every page is prerendered as static HTML.
 
+### Four palettes without a flash
+
+- `src/lib/palettes.ts` is the only place colours are defined: four sets of the same 21 roles (ink and muted
+  carry text, leaf is links and focus, buy is only for buying, brand is the "Kai's" script, the rest is
+  decoration). `globals.css` holds the default set in `@theme` so Tailwind knows the tokens; a test keeps the
+  two equal.
+- The root layout writes one `:root[data-palette="…"]` rule per set and a tiny inline script that applies the
+  saved set before the first paint, so pages stay static HTML and never flash the default colours.
+- Shadows, background blobs, selection and focus rings are mixed from the tokens (`color-mix`), and the
+  background sprinkles are drawn per set.
+- The 3D scenes read the same set: switching recolours the live scene (sky, light tints, table, box ribbon and
+  print) without a reload, and saved pictures use the chosen sky.
+
 ### Studio photo (path tracing)
 
 On a desktop, "Studio photo" hands the builder's canvas to
@@ -117,8 +143,8 @@ All of these rules have unit tests (`src/lib/*.test.ts`).
 - Real form controls throughout, a skip link, visible focus, and focus moved to the first invalid field or to
   the confirmation heading.
 - With reduced motion: no idle animation, no smooth scrolling, the box scene starts closed.
-- Every text colour pair passes WCAG AA, and a unit test measures them again from the CSS
-  (`src/lib/contrast.test.ts`).
+- Every text colour pair passes WCAG AA in all four colour sets, and a unit test measures them again
+  (`src/lib/contrast.test.ts`). The colour switch is a keyboard-friendly radio group.
 
 ## Tech stack
 

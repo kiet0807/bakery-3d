@@ -1,6 +1,6 @@
 import { frostingOf, spongeOf, type CakeConfig } from '@/lib/cake'
 
-/** The picture taken when the cake was added, or two colour swatches when there is none. */
+/** The picture taken when the cake was added, or a little drawn cake in its colours when there is none. */
 export function CakeThumb({
   config,
   snapshot,
@@ -20,24 +20,28 @@ export function CakeThumb({
         alt=""
         width={256}
         height={256}
-        className={`${className} shrink-0 rounded-2xl border border-white/10 bg-abyss object-cover`}
+        className={`${className} shrink-0 rounded-2xl border-2 border-ink bg-soft object-cover`}
       />
     )
   }
+  const frosting = frostingOf(config).color
+  const sponge = spongeOf(config).color
   return (
     <span
       aria-hidden
-      className={`${className} grid shrink-0 place-items-center rounded-2xl border border-white/10 bg-abyss`}
+      className={`${className} grid shrink-0 place-items-center rounded-2xl border-2 border-ink bg-soft`}
     >
-      <span className="flex -space-x-2">
-        {[frostingOf(config).color, spongeOf(config).color].map((color, i) => (
-          <span
-            key={`${color}-${i}`}
-            className="h-6 w-6 rounded-full border border-white/20 sm:h-8 sm:w-8"
-            style={{ background: color }}
-          />
-        ))}
-      </span>
+      <svg viewBox="0 0 48 48" className="h-3/4 w-3/4" fill="none" strokeLinejoin="round">
+        <rect x="8" y="20" width="32" height="20" rx="5" fill={sponge} stroke="#1f3d36" strokeWidth="2" />
+        <path d="M8 30h32" stroke={frosting} strokeWidth="3" />
+        <path
+          d="M8 25c0-3 2-5 5-5h22c3 0 5 2 5 5v1c-2 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-3.4 2.4-5.4 0z"
+          fill={frosting}
+          stroke="#1f3d36"
+          strokeWidth="2"
+        />
+        <circle cx="24" cy="14" r="4" fill="#f2789f" stroke="#1f3d36" strokeWidth="2" />
+      </svg>
     </span>
   )
 }

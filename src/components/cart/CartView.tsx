@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
+import { useDict, useLang, LocalLink } from '@/i18n/LangProvider'
 import { countItems, subtotal } from '@/lib/cart'
 import { money } from '@/lib/money'
 import type { Order } from '@/lib/order'
@@ -12,54 +12,51 @@ import { Checkout } from './Checkout'
 import { OrderDone, type PlacedOrder } from './OrderDone'
 
 const layout =
-  'mx-auto grid max-w-7xl gap-8 px-4 pt-24 sm:px-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(340px,1fr)] lg:gap-12 lg:pt-32'
+  'mx-auto grid max-w-7xl gap-8 px-4 pt-24 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,1fr)] lg:gap-12 lg:pt-32'
 
 /** Shown for the moment it takes to read the saved cart, in the same shape as the cart. */
 function CartSkeleton() {
+  const { cart } = useDict()
   return (
     <div className={layout} aria-busy="true">
       <p className="sr-only" role="status">
-        Loading your cart…
+        {cart.loading}
       </p>
       <div className="space-y-4" aria-hidden>
-        <div className="h-4 w-24 animate-pulse rounded-full bg-white/10" />
-        <div className="h-14 w-3/4 animate-pulse rounded-2xl bg-white/10" />
-        <div className="h-40 animate-pulse rounded-3xl bg-white/[0.06]" />
+        <div className="h-4 w-28 animate-pulse rounded-full bg-cream-deep" />
+        <div className="h-14 w-3/4 animate-pulse rounded-2xl bg-cream-deep" />
+        <div className="h-40 animate-pulse rounded-3xl bg-surface" />
       </div>
-      <div className="h-96 animate-pulse rounded-3xl bg-white/[0.06]" aria-hidden />
+      <div className="h-96 animate-pulse rounded-3xl bg-surface" aria-hidden />
     </div>
   )
 }
 
 function EmptyCart() {
+  const { cart } = useDict()
+  const t = cart.empty
   return (
     <section className="mx-auto max-w-3xl px-4 pt-36 text-center sm:px-8 sm:pt-44">
-      <p className="eyebrow mb-4">Your cart</p>
-      <h1 className="text-[clamp(2.4rem,6vw,4.2rem)] leading-[1.04] font-light tracking-tight">
-        Nothing in the box <span className="text-accent">yet.</span>
+      <p className="eyebrow mb-4">{t.eyebrow}</p>
+      <h1 className="font-display text-[clamp(2.6rem,6.5vw,4.6rem)] leading-[1.02] font-extrabold">
+        {t.title} <span className="mark">{t.titleMark}</span>
       </h1>
-      <p className="mx-auto mt-5 max-w-md leading-relaxed text-mist">
-        Build a cake layer by layer, or pick one of the six house cakes from the vitrine.
-      </p>
+      <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-muted">{t.body}</p>
       <div className="mt-9 flex flex-wrap justify-center gap-3">
-        <Link
-          href="/design"
-          className="inline-flex min-h-12 items-center rounded-full bg-ink px-6 font-semibold text-night transition-transform hover:-translate-y-0.5"
-        >
-          Build a cake
-        </Link>
-        <Link
-          href="/menu"
-          className="inline-flex min-h-12 items-center rounded-full border border-white/40 px-6 font-medium transition-colors hover:border-moon hover:text-moon"
-        >
-          Browse the vitrine
-        </Link>
+        <LocalLink href="/design" className="btn btn-buy">
+          {t.design}
+        </LocalLink>
+        <LocalLink href="/menu" className="btn btn-ghost">
+          {t.menu}
+        </LocalLink>
       </div>
     </section>
   )
 }
 
 export function CartView() {
+  const { cart } = useDict()
+  const lang = useLang()
   const hydrated = useCartHydrated()
   const items = useCart((state) => state.items)
   const [order, setOrder] = useState<PlacedOrder | null>(null)
@@ -70,9 +67,10 @@ export function CartView() {
 
   const count = countItems(items)
   const total = subtotal(items)
+  const t = cart.summary
 
   const placed = (placedOrder: Order) => {
-    setOrder({ ...placedOrder, items, total })
+    setOrder({ ...placedOrder, items })
     useCart.getState().clear()
     window.scrollTo({ top: 0 })
   }
@@ -81,40 +79,41 @@ export function CartView() {
     <div className={layout}>
       <div className="space-y-8">
         <header className="space-y-3">
-          <p className="eyebrow">Your cart</p>
-          <h1 className="text-[clamp(2.4rem,5.4vw,4rem)] leading-[1.04] font-light tracking-tight">
-            {count} {count === 1 ? 'cake' : 'cakes'}, <span className="text-accent">ready for the box.</span>
+          <p className="eyebrow">{cart.eyebrow}</p>
+          <h1 className="font-display text-[clamp(2.4rem,5.4vw,4rem)] leading-[1.04] font-extrabold">
+            {cart.title(count)} <span className="mark">{cart.titleMark}</span>
           </h1>
         </header>
-        <ul className="space-y-4" aria-label="Cakes in your cart">
+        <ul className="space-y-4" aria-label={cart.linesLabel}>
           {items.map((item) => (
             <CartLine key={item.id} item={item} />
           ))}
         </ul>
-        <Link href="/design" className="inline-block text-sm text-moon underline-offset-4 hover:underline">
-          ← Add another cake
-        </Link>
+        <LocalLink
+          href="/design"
+          className="inline-flex items-center gap-1.5 font-semibold text-leaf underline-offset-4 hover:underline"
+        >
+          <span aria-hidden>←</span> {cart.addAnother}
+        </LocalLink>
       </div>
 
-      <aside
-        className="glass space-y-6 self-start rounded-3xl p-6 sm:p-7 lg:sticky lg:top-28"
-        aria-label="Order"
-      >
+      <aside className="sticker space-y-6 self-start p-6 sm:p-7 lg:sticky lg:top-28" aria-label={t.label}>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="text-mist">Subtotal</dt>
-            <dd className="tabular-nums">{money(total)}</dd>
+            <dt className="text-muted">{t.subtotal}</dt>
+            <dd className="tabular-nums">{money(total, lang)}</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-mist">Pickup at the bakery</dt>
-            <dd>Free</dd>
+            <dt className="text-muted">{t.shipping}</dt>
+            <dd>{t.shippingValue}</dd>
           </div>
-          <div className="flex items-baseline justify-between gap-4 border-t border-white/10 pt-3">
-            <dt className="font-medium">Total</dt>
-            <dd className="text-3xl font-light tabular-nums">{money(total)}</dd>
+          <div className="flex items-baseline justify-between gap-4 border-t-2 border-dashed border-line pt-3">
+            <dt className="font-display font-bold">{t.total}</dt>
+            <dd className="font-display text-3xl font-extrabold tabular-nums">{money(total, lang)}</dd>
           </div>
         </dl>
-        <Checkout total={total} onPlaced={placed} />
+        <p className="text-xs leading-relaxed text-muted">{t.shipNote}</p>
+        <Checkout items={items} total={total} onPlaced={placed} />
       </aside>
     </div>
   )

@@ -4,7 +4,7 @@ import { Bloom, EffectComposer, N8AO, ToneMapping } from '@react-three/postproce
 import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
 import type { Ref } from 'react'
 import { useQuality } from './motion'
-import { SCENE } from './theme'
+import { useScene } from './theme'
 
 /**
  * Only light brighter than this blooms. In this daylight scene sunlit white board and porcelain go well past 1
@@ -22,6 +22,7 @@ export const BLOOM_FROM = 2.5
  */
 export function Effects({ ao = 1, ref }: { ao?: number; ref?: Ref<Composer | null> }) {
   const quality = useQuality()
+  const { occlusion } = useScene()
   if (quality !== 'high') return null
   return (
     <EffectComposer multisampling={4} ref={ref}>
@@ -30,7 +31,7 @@ export function Effects({ ao = 1, ref }: { ao?: number; ref?: Ref<Composer | nul
         distanceFalloff={0.55}
         intensity={1.9 * ao}
         quality="medium"
-        color={SCENE.occlusion}
+        color={occlusion}
         halfRes={false}
       />
       <Bloom luminanceThreshold={BLOOM_FROM} luminanceSmoothing={0.2} intensity={0.45} mipmapBlur />

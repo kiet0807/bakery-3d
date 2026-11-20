@@ -7,7 +7,7 @@ import { createRandom } from '@/lib/random'
 import { shared } from './cake/shared'
 import { useReducedMotionScene } from './motion'
 import { SPRINKLE_COLORS } from './palette'
-import { SCENE } from './theme'
+import { useScene } from './theme'
 
 /** Sprinkles drifting up through the morning air, like confetti that forgot to fall. */
 export function FloatingSprinkles({
@@ -21,6 +21,7 @@ export function FloatingSprinkles({
 }) {
   const mesh = useRef<THREE.InstancedMesh>(null)
   const still = useReducedMotionScene()
+  const { sprinkleGlow } = useScene()
   const seeds = useMemo(() => {
     const random = createRandom(7)
     return Array.from({ length: count }, () => ({
@@ -57,7 +58,7 @@ export function FloatingSprinkles({
   })
   return (
     <instancedMesh ref={mesh} args={[shared().sprinkle, undefined, count]} frustumCulled={false}>
-      <meshStandardMaterial roughness={0.45} emissive={SCENE.sprinkleGlow} emissiveIntensity={0.08} />
+      <meshStandardMaterial roughness={0.45} emissive={sprinkleGlow} emissiveIntensity={0.08} />
     </instancedMesh>
   )
 }

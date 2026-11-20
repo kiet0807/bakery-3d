@@ -13,7 +13,7 @@ import { Effects } from '../Effects'
 import { FloatingSprinkles } from '../FloatingSprinkles'
 import { useReducedMotionScene } from '../motion'
 import { Studio } from '../Studio'
-import { SCENE } from '../theme'
+import { useScene } from '../theme'
 
 /**
  * The cake of the story: pink, glazed in white chocolate, fully dressed. 20 cm has the exact shape of the old
@@ -168,6 +168,7 @@ export default function StoryScene({
   onProgress: (percent: number) => void
 }) {
   const { scenes } = useDict()
+  const { cloud } = useScene()
   const startedAt = useRef<number | null>(null)
   // Without WebGL the 2D drawing is all there is to load.
   const done = useCallback(() => onProgress(100), [onProgress])
@@ -189,7 +190,7 @@ export default function StoryScene({
           height={0.36}
           depth={1.55}
           position={[0, -0.62, 0]}
-          color={SCENE.cloud.near}
+          color={cloud.near}
         />
       </Director>
       <Cloud
@@ -199,7 +200,7 @@ export default function StoryScene({
         height={0.5}
         depth={1}
         position={[-5.4, -1.5, -4]}
-        color={SCENE.cloud.far}
+        color={cloud.far}
       />
       <Cloud
         seed={19}
@@ -208,7 +209,7 @@ export default function StoryScene({
         height={0.45}
         depth={0.9}
         position={[5.8, -0.6, -6]}
-        color={SCENE.cloud.peach}
+        color={cloud.peach}
       />
       <Cloud
         seed={27}
@@ -217,7 +218,7 @@ export default function StoryScene({
         height={0.4}
         depth={0.8}
         position={[-7.5, 3.4, -12]}
-        color={SCENE.cloud.far}
+        color={cloud.far}
       />
       <Cloud
         seed={41}
@@ -227,7 +228,7 @@ export default function StoryScene({
         depth={0.7}
         position={[3.9, -2.3, 1.2]}
         scale={0.8}
-        color={SCENE.cloud.near}
+        color={cloud.near}
       />
       <Effects />
     </CanvasShell>

@@ -8,7 +8,8 @@
  * - B "Bơ Bạc Hà" is the first palette the owner chose; G2 and G3 are the other green sets from the comparison
  *   page. All are Kai's own colours, not taken from any real shop.
  * - Roles are the same in every set: ink and muted carry text, leaf is links and focus, buy is only for buying,
- *   brand is the "Kai's" script (large text, 3:1), the rest is decoration.
+ *   brand is the "Kai's" script (large text, 3:1) and brand-shadow its sticker shadow (the ink, except where the
+ *   brand already is the ink), the rest is decoration.
  */
 export const PALETTE_IDS = ['g1', 'b', 'g2', 'g3'] as const
 export type PaletteId = (typeof PALETTE_IDS)[number]
@@ -35,6 +36,7 @@ export const UI_TOKENS = [
   'buy-deep',
   'leaf',
   'brand',
+  'brand-shadow',
   'mint',
   'peach',
   'berry',
@@ -63,6 +65,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     'buy-deep': '#335b22',
     leaf: '#2c6b45',
     brand: '#d24a6a',
+    'brand-shadow': '#1d3424',
     mint: '#a8cf8e',
     peach: '#f7a8b8',
     berry: '#e0607e',
@@ -87,6 +90,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     'buy-deep': '#a53a17',
     leaf: '#1c7560',
     brand: '#c24620',
+    'brand-shadow': '#1f3d36',
     mint: '#8ed9c2',
     peach: '#ffb38a',
     berry: '#f2789f',
@@ -111,6 +115,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     'buy-deep': '#18652d',
     leaf: '#1d6b45',
     brand: '#1f7a37',
+    'brand-shadow': '#163a20',
     mint: '#8fd99a',
     peach: '#ffb38a',
     berry: '#f2789f',
@@ -135,6 +140,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     'buy-deep': '#9a3b18',
     leaf: '#21684a',
     brand: '#173d2b',
+    'brand-shadow': '#9cc8a8',
     mint: '#9cc8a8',
     peach: '#f2b48f',
     berry: '#e9879f',

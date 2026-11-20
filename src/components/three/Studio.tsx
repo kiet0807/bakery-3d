@@ -3,13 +3,16 @@
 import { ContactShadows, Environment, Lightformer } from '@react-three/drei'
 import { Suspense } from 'react'
 import { useQuality } from './motion'
-import { SCENE } from './theme'
+import { useScene, type Scene } from './theme'
 
 /** "Comfy Café" by Sergej Majboroda, Poly Haven (CC0): the light of every high-tier scene and of photos. */
 export const CAFE_HDRI = '/hdri/comfy_cafe_1k.hdr'
 
-/** Soft panels around the cake: shaped highlights on glaze and porcelain. Rendered once, no download. */
-function Panels() {
+/**
+ * Soft panels around the cake: shaped highlights on glaze and porcelain. Rendered once, no download. A new
+ * palette gives new children, and drei's Environment renders its cube again (once) when its children change.
+ */
+function Panels({ light }: { light: Scene['light'] }) {
   return (
     <>
       <Lightformer
@@ -22,7 +25,7 @@ function Panels() {
       <Lightformer
         form="rect"
         intensity={1.2}
-        color={SCENE.light.panelWarm}
+        color={light.panelWarm}
         position={[-5, 1.5, 2]}
         rotation-y={Math.PI / 2}
         scale={[4, 3, 1]}
@@ -30,7 +33,7 @@ function Panels() {
       <Lightformer
         form="rect"
         intensity={1.1}
-        color={SCENE.light.panelMint}
+        color={light.panelMint}
         position={[5, 1, -1]}
         rotation-y={-Math.PI / 2}
         scale={[3, 4, 1]}
@@ -39,7 +42,7 @@ function Panels() {
       <Lightformer
         form="rect"
         intensity={0.55}
-        color={SCENE.light.panelFloor}
+        color={light.panelFloor}
         position={[0, -4, 0]}
         rotation-x={-Math.PI / 2}
         scale={[10, 10, 1]}
@@ -64,13 +67,15 @@ export function Studio({
 }) {
   const quality = useQuality()
   const high = quality === 'high'
+  const { light, ink } = useScene()
   return (
     <>
-      <hemisphereLight args={[SCENE.light.sky, SCENE.light.ground, high ? 1.05 : 1.35]} />
+      {/* Colours as props, not args: a palette change recolours the light instead of replacing it. */}
+      <hemisphereLight color={light.sky} groundColor={light.ground} intensity={high ? 1.05 : 1.35} />
       <directionalLight
         position={[3, 5.5, 4.5]}
         intensity={high ? 2.5 : 2.3}
-        color={SCENE.light.key}
+        color={light.key}
         castShadow={high}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
@@ -82,15 +87,15 @@ export function Studio({
         shadow-camera-near={1}
         shadow-camera-far={16}
       />
-      <directionalLight position={[-4, 3, -4]} intensity={high ? 1.3 : 1.1} color={SCENE.light.fill} />
-      <pointLight position={[-2.5, -0.5, 2.5]} intensity={2.2} distance={8} color={SCENE.light.bounce} />
+      <directionalLight position={[-4, 3, -4]} intensity={high ? 1.3 : 1.1} color={light.fill} />
+      <pointLight position={[-2.5, -0.5, 2.5]} intensity={2.2} distance={8} color={light.bounce} />
       <Environment resolution={256} frames={1} environmentIntensity={0.85}>
-        <Panels />
+        <Panels light={light} />
       </Environment>
       {high && (
         <Suspense fallback={null}>
           <Environment files={CAFE_HDRI} environmentIntensity={0.7} resolution={256}>
-            <Panels />
+            <Panels light={light} />
           </Environment>
         </Suspense>
       )}
@@ -102,7 +107,7 @@ export function Studio({
           blur={2.4}
           far={1.6}
           resolution={512}
-          color={SCENE.ink}
+          color={ink}
         />
       )}
     </>

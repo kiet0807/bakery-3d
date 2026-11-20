@@ -32,15 +32,24 @@ export function CakeThumb({
       className={`${className} grid shrink-0 place-items-center rounded-2xl border-2 border-ink bg-soft`}
     >
       <svg viewBox="0 0 48 48" className="h-3/4 w-3/4" fill="none" strokeLinejoin="round">
-        <rect x="8" y="20" width="32" height="20" rx="5" fill={sponge} stroke="#1f3d36" strokeWidth="2" />
+        <rect
+          x="8"
+          y="20"
+          width="32"
+          height="20"
+          rx="5"
+          fill={sponge}
+          className="stroke-ink"
+          strokeWidth="2"
+        />
         <path d="M8 30h32" stroke={frosting} strokeWidth="3" />
         <path
           d="M8 25c0-3 2-5 5-5h22c3 0 5 2 5 5v1c-2 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-4 2.4-5.4 0-1.4 2.4-3.4 2.4-5.4 0z"
           fill={frosting}
-          stroke="#1f3d36"
+          className="stroke-ink"
           strokeWidth="2"
         />
-        <circle cx="24" cy="14" r="4" fill="#f2789f" stroke="#1f3d36" strokeWidth="2" />
+        <circle cx="24" cy="14" r="4" className="fill-berry stroke-ink" strokeWidth="2" />
       </svg>
     </span>
   )

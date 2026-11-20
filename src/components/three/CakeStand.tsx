@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
-import { SCENE } from './theme'
+import { useScene } from './theme'
 
 export const STAND_HEIGHT = 0.66
 
 /** A porcelain cake stand whose plate top sits at y = 0. */
 export function CakeStand({ radius }: { radius: number }) {
+  const { porcelain } = useScene()
   const geometry = useMemo(() => {
     const plate = radius + 0.3
     const points = [
@@ -32,12 +33,7 @@ export function CakeStand({ radius }: { radius: number }) {
   useEffect(() => () => geometry.dispose(), [geometry])
   return (
     <mesh geometry={geometry} receiveShadow castShadow>
-      <meshPhysicalMaterial
-        color={SCENE.porcelain}
-        roughness={0.22}
-        clearcoat={0.8}
-        clearcoatRoughness={0.15}
-      />
+      <meshPhysicalMaterial color={porcelain} roughness={0.22} clearcoat={0.8} clearcoatRoughness={0.15} />
     </mesh>
   )
 }

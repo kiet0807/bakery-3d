@@ -54,6 +54,10 @@ describe.each(PALETTE_IDS)('palette %s', (id) => {
     expect(contrast('#ffffff', palette['buy-deep'])).toBeGreaterThanOrEqual(4.5)
   })
 
+  it('keeps the "Kai\'s" sticker shadow apart from the letters', () => {
+    expect(contrast(palette.brand, palette['brand-shadow'])).toBeGreaterThanOrEqual(2)
+  })
+
   it('has every token as a six-digit hex colour', () => {
     for (const token of UI_TOKENS) expect(palette[token]).toMatch(/^#[0-9a-f]{6}$/)
   })

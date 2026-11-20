@@ -96,7 +96,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
                     <span className="font-display text-2xl font-extrabold tabular-nums">
                       {money(presetPrice(preset), lang)}
                     </span>
-                    <span className="font-display font-bold text-buy transition-transform group-hover:translate-x-1">
+                    <span className="font-display font-bold text-leaf transition-transform group-hover:translate-x-1">
                       {home.cakes.cta} <span aria-hidden>→</span>
                     </span>
                   </span>

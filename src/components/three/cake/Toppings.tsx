@@ -21,7 +21,7 @@ import { useQuality, useReducedMotionScene } from '../motion'
 import { stripeTexture } from './geometry'
 import type { CakeLayout, Part, Placement } from './layout'
 import { glowTexture, shared } from './shared'
-import { SCENE } from '../theme'
+import { CANDLE } from '../theme'
 
 const only = (list: Placement[], part: Part) => list.filter((p) => p.part === part)
 
@@ -180,7 +180,7 @@ function GoldLeaf({ p }: { p: Placement }) {
 }
 
 /** The flame in high dynamic range: well over the high tier's bloom threshold (BLOOM_FROM in Effects). */
-const FLAME_HDR = new THREE.Color(SCENE.candle.flame).multiplyScalar(6)
+const FLAME_HDR = new THREE.Color(CANDLE.flame).multiplyScalar(6)
 
 function Candle({ p, lit }: { p: Placement; lit: boolean }) {
   const g = shared()
@@ -204,12 +204,12 @@ function Candle({ p, lit }: { p: Placement; lit: boolean }) {
         <meshStandardMaterial map={texture} roughness={0.5} />
       </mesh>
       <mesh geometry={g.wick} position-y={0.285}>
-        <meshStandardMaterial color={SCENE.candle.wick} />
+        <meshStandardMaterial color={CANDLE.wick} />
       </mesh>
       {lit && (
         <group ref={flame} position-y={0.296}>
           <mesh geometry={g.flame}>
-            <meshBasicMaterial color={high ? FLAME_HDR : SCENE.candle.flame} toneMapped={false} />
+            <meshBasicMaterial color={high ? FLAME_HDR : CANDLE.flame} toneMapped={false} />
           </mesh>
           {glow && (
             <sprite position-y={0.035} scale={0.2}>

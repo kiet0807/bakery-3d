@@ -64,14 +64,14 @@ export function IntroGate({
       }`}
     >
       <div aria-hidden className="absolute inset-0 -z-10 bg-cream">
-        <div className="absolute -top-1/4 -left-1/4 h-[70vmax] w-[70vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(142_217_194/0.55),transparent)] blur-2xl" />
-        <div className="absolute -right-1/4 -bottom-1/4 h-[65vmax] w-[65vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_179_138/0.45),transparent)] blur-2xl [animation-delay:-6s]" />
-        <div className="absolute top-1/4 right-1/5 h-[36vmax] w-[36vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_201_77/0.4),transparent)] blur-2xl [animation-delay:-11s]" />
+        <div className="absolute -top-1/4 -left-1/4 h-[70vmax] w-[70vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-mint)_55%,transparent),transparent)] blur-2xl" />
+        <div className="absolute -right-1/4 -bottom-1/4 h-[65vmax] w-[65vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-peach)_45%,transparent),transparent)] blur-2xl [animation-delay:-6s]" />
+        <div className="absolute top-1/4 right-1/5 h-[36vmax] w-[36vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-butter)_40%,transparent),transparent)] blur-2xl [animation-delay:-11s]" />
       </div>
       <Logo className="h-24 w-24 animate-rise" />
       <h2 id="intro-title" className="animate-rise font-display [animation-delay:120ms]">
         <span className="block text-2xl font-bold text-muted sm:text-3xl">{t.welcome}</span>
-        <span className="block font-script text-[clamp(3.6rem,13vw,7.5rem)] leading-[1.15] font-normal text-buy">
+        <span className="block font-script text-[clamp(3.6rem,13vw,7.5rem)] leading-[1.15] font-normal text-brand">
           Kai&apos;s Bakery
         </span>
       </h2>

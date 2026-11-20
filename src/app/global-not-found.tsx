@@ -46,7 +46,7 @@ export default function GlobalNotFound() {
       <body>
         <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
           <Logo className="h-20 w-20 animate-wiggle" />
-          <p className="font-display text-7xl font-extrabold text-buy">404</p>
+          <p className="font-display text-7xl font-extrabold text-brand">404</p>
           <h1 className="font-display text-4xl leading-tight font-extrabold">{vi.title}</h1>
           <p className="max-w-md text-lg leading-relaxed text-muted">{vi.body}</p>
           <p className="flex flex-wrap justify-center gap-3">

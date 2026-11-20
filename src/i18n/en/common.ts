@@ -16,7 +16,7 @@ export const common: CommonDict = {
   },
   palette: {
     label: 'Shop colours',
-    current: (name: string) => `Shop colours: ${name}. Tap to change`,
+    current: (name: string) => `Shop colours, now ${name}`,
     hint: 'Pick the look you love; the shop remembers it next visit.',
     sets: {
       g1: { name: 'Matcha Strawberry', note: 'Matcha latte with strawberries, cuteness overload' },

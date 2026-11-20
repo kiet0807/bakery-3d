@@ -21,7 +21,8 @@ export const common = {
   /** The colour switch in the header. Names and notes follow `PALETTE_IDS`. */
   palette: {
     label: 'Đổi màu tiệm',
-    current: (name: string) => `Màu tiệm: ${name}. Bấm để đổi`,
+    /** The button's accessible name: starts with the visible label (WCAG 2.5.3), then the set in use. */
+    current: (name: string) => `Đổi màu tiệm, đang dùng ${name}`,
     hint: 'Chọn tông bạn mê, lần sau ghé tiệm vẫn nhớ nha.',
     sets: {
       g1: { name: 'Matcha Dâu', note: 'Matcha latte thêm dâu, xinh xỉu luôn' },

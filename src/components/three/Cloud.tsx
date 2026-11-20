@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { createRandom } from '@/lib/random'
-import { SCENE } from './theme'
+import { useScene } from './theme'
 
 const sphere = new THREE.SphereGeometry(1, 28, 18)
 /**
@@ -19,6 +19,7 @@ export interface CloudProps {
   width?: number
   height?: number
   depth?: number
+  /** Defaults to the set's near-cloud white. */
   color?: string
   position?: [number, number, number]
   scale?: number
@@ -34,10 +35,11 @@ export function Cloud({
   width = 1.8,
   height = 0.5,
   depth = 1.2,
-  color = SCENE.cloud.near,
+  color,
   position,
   scale = 1,
 }: CloudProps) {
+  const { cloud } = useScene()
   const mesh = useRef<THREE.InstancedMesh>(null)
   const items = useMemo(() => {
     const random = createRandom(seed)
@@ -77,12 +79,12 @@ export function Cloud({
       receiveShadow
     >
       <meshPhysicalMaterial
-        color={color}
-        emissive={SCENE.cloud.glow}
+        color={color ?? cloud.near}
+        emissive={cloud.glow}
         emissiveIntensity={CLOUD_GLOW}
         roughness={1}
         sheen={0.7}
-        sheenColor={SCENE.cloud.sheen}
+        sheenColor={cloud.sheen}
         sheenRoughness={0.8}
       />
     </instancedMesh>

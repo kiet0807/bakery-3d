@@ -18,14 +18,12 @@ import { Effects } from '../Effects'
 import { useQuality, useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
-import { SCENE } from '../theme'
+import { useScene } from '../theme'
 
 const TAU = Math.PI * 2
 /** Distance from the centre of the turntable to each cake. The front cake sits at the origin. */
 const RADIUS = 3.7
 const FLOOR = -STAND_HEIGHT
-const MARK_REST = new THREE.Color(SCENE.table.markRest)
-const MARK_CHOSEN = new THREE.Color(SCENE.table.markChosen)
 /** On the light tier, cakes further back than this (world z) are not drawn: the fog hides them anyway. */
 const BACK_CUTOFF = -RADIUS * 1.2
 /** Half the width and the full height of a classic cake on its stand: what the camera keeps in view. */
@@ -71,6 +69,12 @@ function Showcase({
 }) {
   const still = useReducedMotionScene()
   const low = useQuality() === 'low'
+  const { table, glass: glassColours } = useScene()
+  // The ring under each cake blends from the rest colour to the chosen one as it comes to the front.
+  const marks = useMemo(
+    () => ({ rest: new THREE.Color(table.markRest), chosen: new THREE.Color(table.markChosen) }),
+    [table],
+  )
   const size = useMemo(() => clocheSize(preset.config), [preset.config])
   const geometry = useMemo(() => clocheGeometry(size.radius, size.height), [size])
   useEffect(() => () => geometry.dispose(), [geometry])
@@ -95,7 +99,7 @@ function Showcase({
       cloche.current.visible = ease < 0.98
       glass.current.opacity = 0.2 * (1 - ease)
     }
-    if (ring.current) ring.current.color.copy(MARK_REST).lerp(MARK_CHOSEN, ease)
+    if (ring.current) ring.current.color.copy(marks.rest).lerp(marks.chosen, ease)
     if (root.current) {
       // Slow devices skip the cakes at the back of the table (about half of the draw calls).
       root.current.visible = !low || root.current.getWorldPosition(where).z > BACK_CUTOFF
@@ -139,7 +143,7 @@ function Showcase({
         <mesh geometry={geometry} renderOrder={2}>
           <meshPhysicalMaterial
             ref={glass}
-            color={SCENE.glass.body}
+            color={glassColours.body}
             roughness={0.04}
             metalness={0}
             clearcoat={1}
@@ -153,7 +157,7 @@ function Showcase({
         <mesh position-y={size.height + 0.05}>
           <sphereGeometry args={[0.07, 20, 14]} />
           <meshPhysicalMaterial
-            color={SCENE.glass.knob}
+            color={glassColours.knob}
             roughness={0.1}
             clearcoat={1}
             transparent
@@ -172,6 +176,7 @@ function Showcase({
 /** A porcelain turntable with a mint line around its edge, like the trim on a cake box. */
 function Turntable() {
   const quality = useQuality()
+  const { table } = useScene()
   const radius = RADIUS + 1.9
   return (
     <group position-y={FLOOR}>
@@ -187,17 +192,17 @@ function Turntable() {
             depthScale={1.1}
             minDepthThreshold={0.4}
             maxDepthThreshold={1.3}
-            color={SCENE.table.top}
+            color={table.top}
             metalness={0.05}
             mirror={0}
           />
         ) : (
-          <meshStandardMaterial color={SCENE.table.top} roughness={0.5} metalness={0} />
+          <meshStandardMaterial color={table.top} roughness={0.5} metalness={0} />
         )}
       </mesh>
       <mesh position-y={0.006} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[radius - 0.06, radius, 192]} />
-        <meshBasicMaterial color={SCENE.table.rim} toneMapped={false} />
+        <meshBasicMaterial color={table.rim} toneMapped={false} />
       </mesh>
     </group>
   )
@@ -269,6 +274,7 @@ export default function VitrineScene({
 }) {
   const composer = useRef<Composer | null>(null)
   const dict = useDict()
+  const { page } = useScene()
   const presetLabel = dict.cake.presets[presets[index].id].name
   const step = TAU / presets.length
   return (
@@ -278,7 +284,8 @@ export default function VitrineScene({
       camera={{ position: [0, 2.2, 9], fov: 34, near: 0.1, far: 60 }}
       lowDpr={1}
     >
-      <fog attach="fog" args={[SCENE.page, 11, 19]} />
+      {/* Fixed args and the colour as a prop: a palette change recolours the fog instead of replacing it. */}
+      <fog attach="fog" args={['#ffffff', 11, 19]} color={page} />
       <Studio floor={FLOOR} shadows={false} />
       <Rig index={index} count={presets.length}>
         <Turntable />

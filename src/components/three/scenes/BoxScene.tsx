@@ -14,14 +14,10 @@ import { Effects } from '../Effects'
 import { useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
-import { SCENE } from '../theme'
+import { useScene } from '../theme'
 
 /** Board thickness. */
 const T = 0.025
-const BOARD = SCENE.box.board
-const RIBBON = SCENE.box.ribbon
-const SHEEN = SCENE.box.ribbonSheen
-const INK = SCENE.box.print
 /** Seconds from the start until everything has landed; the box then only turns. */
 const END = 3.9
 const OPEN = Math.PI / 2
@@ -70,40 +66,48 @@ function fitDistance(camera: THREE.PerspectiveCamera, aspect: number, radius: nu
  * drawing as the logo in the header, in flat shapes that cost a handful of triangles.
  */
 function LidSticker({ size }: { size: number }) {
+  const { box } = useScene()
   return (
     <group>
       <mesh rotation-x={-Math.PI / 2}>
         <circleGeometry args={[size, 40]} />
-        <meshStandardMaterial color={INK} roughness={0.8} />
+        <meshStandardMaterial color={box.print} roughness={0.8} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position-y={0.0006}>
         <circleGeometry args={[size * 0.86, 40]} />
-        <meshStandardMaterial color={BOARD} roughness={0.8} />
+        <meshStandardMaterial color={box.board} roughness={0.8} />
       </mesh>
       {/* Cake body, frosting and cherry, seen from above the lid as a flat print. */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.0012, size * 0.18]}>
         <planeGeometry args={[size * 1.05, size * 0.5]} />
-        <meshStandardMaterial color={SCENE.box.ribbonSheen} roughness={0.8} />
+        <meshStandardMaterial color={box.stickerBody} roughness={0.8} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.0016, -size * 0.1]}>
         <planeGeometry args={[size * 1.05, size * 0.22]} />
-        <meshStandardMaterial color={SCENE.box.stickerMint} roughness={0.8} />
+        <meshStandardMaterial color={box.stickerMint} roughness={0.8} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.002, -size * 0.42]}>
         <circleGeometry args={[size * 0.17, 24]} />
-        <meshStandardMaterial color={SCENE.box.stickerCherry} roughness={0.6} />
+        <meshStandardMaterial color={box.stickerCherry} roughness={0.6} />
       </mesh>
     </group>
   )
 }
 
 function Board({ size }: { size: [number, number, number] }) {
+  const { box } = useScene()
   return (
     <mesh castShadow receiveShadow>
       <boxGeometry args={size} />
-      <meshStandardMaterial color={BOARD} roughness={0.78} />
+      <meshStandardMaterial color={box.board} roughness={0.78} />
     </mesh>
   )
+}
+
+/** Satin ribbon in the set's colour. */
+function RibbonMaterial() {
+  const { box } = useScene()
+  return <meshPhysicalMaterial color={box.ribbon} roughness={0.35} sheen={1} sheenColor={box.ribbonSheen} />
 }
 
 /** A ribbon band down one outer side; it grows from the lid towards the table. */
@@ -126,7 +130,7 @@ function SideBand({
       <group ref={bandRef} position={[offset, height + T, width / 2 + 0.004]}>
         <mesh position-y={-(height + T) / 2}>
           <boxGeometry args={[0.14, height + T, 0.006]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
+          <RibbonMaterial />
         </mesh>
       </group>
     </group>
@@ -145,12 +149,12 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
           castShadow
         >
           <torusGeometry args={[0.15, 0.042, 14, 40]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
+          <RibbonMaterial />
         </mesh>
       ))}
       <mesh position-y={0.045} castShadow>
         <sphereGeometry args={[0.065, 20, 16]} />
-        <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
+        <RibbonMaterial />
       </mesh>
     </group>
   )
@@ -164,6 +168,7 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
  */
 function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefObject<number | null> }) {
   const { scenes } = useDict()
+  const { box } = useScene()
   const still = useReducedMotionScene()
   const { width: W, height: H } = useMemo(() => boxSize(config), [config])
   const turn = useRef<THREE.Group>(null)
@@ -260,7 +265,7 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
                           position={[W * 0.05, 0, -W * 0.02]}
                           anchorX="center"
                           anchorY="middle"
-                          color={SCENE.box.printAccent}
+                          color={box.printAccent}
                         >
                           {scenes.boxName}
                         </Text>
@@ -271,7 +276,7 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
                           position={[W * 0.06, 0, W * 0.065]}
                           anchorX="center"
                           anchorY="middle"
-                          color={INK}
+                          color={box.print}
                         >
                           {scenes.boxLine}
                         </Text>
@@ -287,11 +292,11 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
       <group ref={lidBands} position-y={H + T + 0.004} visible={false}>
         <mesh position-z={rz}>
           <boxGeometry args={[W + 0.012, 0.006, 0.14]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
+          <RibbonMaterial />
         </mesh>
         <mesh position-x={rx}>
           <boxGeometry args={[0.14, 0.006, W + 0.012]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
+          <RibbonMaterial />
         </mesh>
       </group>
       {SIDES.map((angle, i) => (

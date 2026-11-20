@@ -24,9 +24,14 @@ function readSeen() {
   }
 }
 
-/** Keeps dark ink text readable over a bright, busy 3D scene (written out in full so Tailwind sees them). */
-const halo = '[text-shadow:0_1px_1px_rgb(255_248_229/0.95),0_0_18px_rgb(255_248_229/0.95)]'
-const haloFromSm = 'sm:[text-shadow:0_1px_1px_rgb(255_248_229/0.95),0_0_18px_rgb(255_248_229/0.95)]'
+/**
+ * Keeps dark ink text readable over a bright, busy 3D scene: a glow in the page's cream, whatever the palette
+ * (written out in full so Tailwind sees them).
+ */
+const halo =
+  '[text-shadow:0_1px_1px_color-mix(in_srgb,var(--color-cream)_95%,transparent),0_0_18px_color-mix(in_srgb,var(--color-cream)_95%,transparent)]'
+const haloFromSm =
+  'sm:[text-shadow:0_1px_1px_color-mix(in_srgb,var(--color-cream)_95%,transparent),0_0_18px_color-mix(in_srgb,var(--color-cream)_95%,transparent)]'
 
 /**
  * The home page: a sticky 3D stage behind a column of chapters. Scrolling sets a continuous chapter number
@@ -161,7 +166,8 @@ export function HomeExperience() {
           <span className="mb-1 chip rotate-[-3deg] border border-ink/80 px-3 py-1 text-sm sm:text-base">
             {home.stage.subtitle}
           </span>
-          <span className="font-script text-[clamp(4.4rem,min(15vw,19svh),12rem)] leading-[1] text-buy [text-shadow:4px_4px_0_var(--color-ink)]">
+          {/* A sticker shadow: the ink, or a lighter green where the set's brand colour is its ink (G3). */}
+          <span className="font-script text-[clamp(4.4rem,min(15vw,19svh),12rem)] leading-[1] text-brand [text-shadow:4px_4px_0_var(--color-brand-shadow)]">
             {home.stage.script}
           </span>
           <span className="-mt-[0.15em] font-display text-[clamp(3rem,min(11vw,14svh),9rem)] leading-[0.9] font-extrabold tracking-tight text-ink uppercase">

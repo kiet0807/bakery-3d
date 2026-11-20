@@ -3,7 +3,7 @@
 import { useThree } from '@react-three/fiber'
 import type { EffectComposer as Composer } from 'postprocessing'
 import { useEffect, type RefObject } from 'react'
-import { SCENE } from './theme'
+import { useScene } from './theme'
 
 /** Takes a square picture of the scene as a data URL, or null when the browser cannot. */
 export type Capture = (size: number, type?: 'image/png' | 'image/jpeg', quality?: number) => string | null
@@ -30,6 +30,7 @@ export function CaptureBridge({
   const gl = useThree((state) => state.gl)
   const scene = useThree((state) => state.scene)
   const camera = useThree((state) => state.camera)
+  const { sky: colours } = useScene()
   useEffect(() => {
     captureRef.current = (size, type = 'image/jpeg', quality = 0.86) => {
       const draw = drawRef?.current
@@ -43,11 +44,12 @@ export function CaptureBridge({
       canvas.height = size
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
-      // The site's morning sky behind the transparent canvas: butter cream in the middle, mint at the edges.
+      // The site's morning sky behind the transparent canvas, in the set in use: cream in the middle, the set's
+      // sky colour at the edges.
       const sky = ctx.createRadialGradient(size / 2, size * 0.42, 0, size / 2, size / 2, size * 0.78)
-      sky.addColorStop(0, SCENE.sky.glow)
-      sky.addColorStop(0.55, SCENE.sky.bottom)
-      sky.addColorStop(1, SCENE.sky.top)
+      sky.addColorStop(0, colours.glow)
+      sky.addColorStop(0.55, colours.bottom)
+      sky.addColorStop(1, colours.top)
       ctx.fillStyle = sky
       ctx.fillRect(0, 0, size, size)
       const side = Math.min(source.width, source.height) * crop
@@ -71,6 +73,6 @@ export function CaptureBridge({
     return () => {
       captureRef.current = null
     }
-  }, [gl, scene, camera, captureRef, composerRef, drawRef, crop])
+  }, [gl, scene, camera, captureRef, composerRef, drawRef, crop, colours])
   return null
 }

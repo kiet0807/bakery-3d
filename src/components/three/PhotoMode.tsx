@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { GradientEquirectTexture, WebGLPathTracer } from 'three-gpu-pathtracer'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { usePerformanceHold } from './motion'
-import { SCENE } from './theme'
+import { useScene, type Scene } from './theme'
 import { CAFE_HDRI } from './Studio'
 
 /** Samples per pixel for a finished photo: clean enough on glaze and cream, about 15–25 s on a laptop GPU. */
@@ -198,7 +198,12 @@ async function textPlane(text: TroikaText): Promise<THREE.Mesh | null> {
  * the site's morning-sky gradient behind it. Shared geometry and materials are reused; only what is made here is
  * disposed afterwards.
  */
-async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: THREE.Texture) {
+async function buildPhotoScene(
+  scene: THREE.Scene,
+  floorY: number,
+  environment: THREE.Texture,
+  colours: Scene['photo'],
+) {
   scene.updateMatrixWorld(true)
   const photo = new THREE.Scene()
   const owned: { dispose: () => void }[] = []
@@ -238,7 +243,7 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(6, 128),
     new THREE.MeshStandardMaterial({
-      color: SCENE.photo.floor,
+      color: colours.floor,
       map: fadingFloorTexture(),
       transparent: true,
       roughness: 0.3,
@@ -251,8 +256,8 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
   photo.add(floor)
 
   const sky = new GradientEquirectTexture(256)
-  sky.topColor.set(SCENE.photo.skyTop)
-  sky.bottomColor.set(SCENE.photo.skyBottom)
+  sky.topColor.set(colours.skyTop)
+  sky.bottomColor.set(colours.skyBottom)
   sky.exponent = 1.2
   sky.update()
   owned.push(sky)
@@ -298,13 +303,15 @@ function PathTracedPhoto({ floorY, drawRef, onProgress, onError, samples = PHOTO
   const gl = useThree((state) => state.gl)
   const scene = useThree((state) => state.scene)
   const camera = useThree((state) => state.camera)
+  // A palette change mid-photo starts the photo again, in the new set's colours.
+  const { photo: colours } = useScene()
   const tracer = useRef<WebGLPathTracer | null>(null)
   const reported = useRef(-1)
 
   useEffect(() => {
     let cancelled = false
     let cleanup = () => {}
-    buildPhotoScene(scene, floorY, environment)
+    buildPhotoScene(scene, floorY, environment, colours)
       .then(({ photo, dispose }) => {
         if (cancelled) {
           dispose()
@@ -351,7 +358,7 @@ function PathTracedPhoto({ floorY, drawRef, onProgress, onError, samples = PHOTO
     }
     // onError is read when it is needed, not a reason to rebuild the photo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gl, scene, camera, floorY, drawRef, environment])
+  }, [gl, scene, camera, floorY, drawRef, environment, colours])
 
   // Priority 1: while photo mode is on, this is the only thing that draws to the canvas.
   useFrame(() => {

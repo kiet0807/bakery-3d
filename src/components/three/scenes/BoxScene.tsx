@@ -207,7 +207,7 @@ function FoldingBox({ config }: { config: CakeConfig }) {
                   <group rotation-y={Math.PI} position-y={T / 2 + 0.002}>
                     <Suspense fallback={null}>
                       <Text
-                        font="/fonts/Pacifico-Regular.ttf"
+                        font="/fonts/Pacifico-Subset.woff"
                         fontSize={W * 0.075}
                         rotation-x={-Math.PI / 2}
                         position={[(-W / 2 + rx) / 2, 0, (W / 2 + rz) / 2]}

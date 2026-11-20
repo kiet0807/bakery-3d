@@ -109,7 +109,7 @@ let fontReady: Promise<boolean> | null = null
 
 /** Pacifico for the canvas copy of the message, loaded once. */
 function loadPhotoFont(): Promise<boolean> {
-  fontReady ??= new FontFace('Crumb Photo Pacifico', 'url(/fonts/Pacifico-Regular.ttf)')
+  fontReady ??= new FontFace('Crumb Photo Pacifico', 'url(/fonts/Pacifico-Subset.woff)')
     .load()
     .then((face) => {
       document.fonts.add(face)

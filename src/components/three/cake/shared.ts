@@ -44,8 +44,19 @@ let cache: SharedGeometry | null = null
 
 export function shared(): SharedGeometry {
   if (cache) return cache
-  const dripColumn = new THREE.CylinderGeometry(0.034, 0.036, 1, 10, 1, true)
-  dripColumn.translate(0, -0.5, 0)
+  // A drip of glaze, from its bulb (y = -1, scaled by its length per instance) up to the edge (y = 0): wide
+  // where it leaves the edge, thinning as it runs, swelling a little into the bulb. Listed bottom to top, so
+  // the lathe's faces point outwards.
+  const dripProfile = [
+    [0.037, -1],
+    [0.036, -0.92],
+    [0.033, -0.75],
+    [0.035, -0.4],
+    [0.038, -0.1],
+    [0.044, 0],
+    [0.05, 0.02],
+  ].map(([r, y]) => new THREE.Vector2(r, y))
+  const dripColumn = new THREE.LatheGeometry(dripProfile, 12)
   const macaronShell = new THREE.SphereGeometry(0.085, 22, 12)
   macaronShell.scale(1, 0.4, 1)
   const blueberry = new THREE.SphereGeometry(0.04, 14, 10)
@@ -63,7 +74,7 @@ export function shared(): SharedGeometry {
     sprinkle: new THREE.CapsuleGeometry(0.0085, 0.03, 2, 6),
     flakes: [5, 13, 29, 47].map(flakeGeometry),
     dripColumn,
-    dripBulb: new THREE.SphereGeometry(0.043, 12, 10),
+    dripBulb: new THREE.SphereGeometry(0.041, 12, 10),
     candle: new THREE.CylinderGeometry(0.02, 0.02, 0.3, 14),
     wick: new THREE.CylinderGeometry(0.0035, 0.0035, 0.03, 4),
     flame: flameGeometry(),

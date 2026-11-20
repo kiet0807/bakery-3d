@@ -25,15 +25,19 @@ export const STORY_CAKE = normalizeConfig({
 
 type Vec = [number, number, number]
 
-/** One camera shot per chapter. `shift` moves the cake right on wide screens, leaving room for the text. */
-const SHOTS: { position: Vec; target: Vec; shift: number }[] = [
-  { position: [0, 1.05, 7.6], target: [0, 1.0, 0], shift: 0 },
+/**
+ * One camera shot per chapter. `shift` moves the cake right on wide screens, leaving room for the text.
+ * `portrait` is how much the shot pulls back on tall screens: close-ups of the wide slice need more room than
+ * the whole cake does.
+ */
+const SHOTS: { position: Vec; target: Vec; shift: number; portrait: number }[] = [
+  { position: [0, 1.05, 7.6], target: [0, 1.0, 0], shift: 0, portrait: 1.25 },
   // The slice slides out to the front right and turns its cut face towards these two cameras.
-  { position: [-0.25, 0.95, 3.3], target: [1.26, 0.5, 1.66], shift: 0.2 },
-  { position: [0.47, 0.74, 2.5], target: [1.26, 0.45, 1.66], shift: 0.2 },
-  { position: [-3.0, 1.25, 3.2], target: [0, 0.55, 0], shift: 0.18 },
-  { position: [0.35, 4.3, 1.8], target: [0, 0.85, 0], shift: 0.18 },
-  { position: [0, 1.15, 7.4], target: [0, 0.2, 0], shift: 0 },
+  { position: [-1.4, 1.3, 4.56], target: [1.26, 0.5, 1.66], shift: 0.2, portrait: 0.6 },
+  { position: [-0.73, 1.19, 3.77], target: [1.26, 0.45, 1.66], shift: 0.2, portrait: 1 },
+  { position: [-3.0, 1.25, 3.2], target: [0, 0.55, 0], shift: 0.18, portrait: 1.6 },
+  { position: [0.35, 4.3, 1.8], target: [0, 0.85, 0], shift: 0.18, portrait: 1.4 },
+  { position: [0, 1.15, 7.4], target: [0, 0.2, 0], shift: 0, portrait: 1.25 },
 ]
 
 /** Reused every frame instead of allocating new vectors. */
@@ -85,7 +89,7 @@ function Director({
 
     const aspect = size.width / size.height
     // Pull back on tall screens so the cake still fits across.
-    const pullBack = aspect < 1 ? 1 + (1 - aspect) * 1.25 : 1
+    const pullBack = aspect < 1 ? 1 + (1 - aspect) * THREE.MathUtils.lerp(from.portrait, to.portrait, f) : 1
     target.copy(a.fromArray(from.target).lerp(b.fromArray(to.target), f))
     position
       .copy(a.fromArray(from.position).lerp(b.fromArray(to.position), f))

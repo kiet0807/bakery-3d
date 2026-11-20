@@ -141,13 +141,15 @@ function Drips({ drips, color }: { drips: Drip[]; color: string }) {
     if (!columns.current || !bulbs.current) return
     const dummy = new THREE.Object3D()
     drips.forEach((d, i) => {
+      // Short drips are thin trickles; long ones carry more glaze.
+      const width = 0.8 + Math.min(1, d.length / 0.38) * 0.24 + (i % 3) * 0.03
       dummy.position.set(d.x, d.top, d.z)
       dummy.rotation.set(0, 0, 0)
-      dummy.scale.set(1, d.length, 1)
+      dummy.scale.set(width, d.length, width)
       dummy.updateMatrix()
       columns.current!.setMatrixAt(i, dummy.matrix)
       dummy.position.set(d.x, d.top - d.length, d.z)
-      dummy.scale.setScalar(0.9 + (i % 3) * 0.08)
+      dummy.scale.set(width, width * 1.08, width)
       dummy.updateMatrix()
       bulbs.current!.setMatrixAt(i, dummy.matrix)
     })
@@ -187,7 +189,7 @@ function Plaque({ layout, message }: { layout: CakeLayout; message: string }) {
       ))}
       <Suspense fallback={null}>
         <Text
-          font="/fonts/Pacifico-Regular.ttf"
+          font="/fonts/Pacifico-Subset.woff"
           fontSize={0.072}
           maxWidth={width * 0.9}
           lineHeight={1.05}

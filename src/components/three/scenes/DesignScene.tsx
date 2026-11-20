@@ -10,6 +10,7 @@ import { CanvasShell } from '../CanvasShell'
 import { CaptureBridge, type Capture } from '../Capture'
 import { Effects } from '../Effects'
 import { FitCamera } from '../FitCamera'
+import { PhotoMode } from '../PhotoMode'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
@@ -18,12 +19,20 @@ export default function DesignScene({
   config,
   sliced,
   captureRef,
+  photo = false,
+  onPhotoProgress = () => {},
+  onPhotoError = () => {},
 }: {
   config: CakeConfig
   sliced: boolean
   captureRef: RefObject<Capture | null>
+  /** Path-traced photo mode: the camera is held still while the picture develops. */
+  photo?: boolean
+  onPhotoProgress?: (progress: number) => void
+  onPhotoError?: (error: unknown) => void
 }) {
   const composer = useRef<Composer | null>(null)
+  const draw = useRef<(() => void) | null>(null)
   const tiers = sizeOf(config).tiers
   const radius = tiers[0].radius + FROSTING
   const cakeHeight = tiers.reduce((sum, tier) => sum + tier.height, 0)
@@ -56,13 +65,23 @@ export default function DesignScene({
         maxPolarAngle={Math.PI / 2 - 0.08}
         minDistance={2.6}
         maxDistance={11}
+        enabled={!photo}
       />
       <Studio floor={-STAND_HEIGHT} shadows={false} />
       <ShadowBlob radius={radius + 0.9} y={-STAND_HEIGHT} />
       <CakeStand radius={radius} />
       <Cake config={config} sliced={sliced} />
-      <Effects ref={composer} />
-      <CaptureBridge captureRef={captureRef} composerRef={composer} />
+      {photo ? (
+        <PhotoMode
+          floorY={-STAND_HEIGHT}
+          drawRef={draw}
+          onProgress={onPhotoProgress}
+          onError={onPhotoError}
+        />
+      ) : (
+        <Effects ref={composer} />
+      )}
+      <CaptureBridge captureRef={captureRef} composerRef={composer} drawRef={draw} />
     </CanvasShell>
   )
 }

@@ -35,7 +35,14 @@ export function ShadowBlob({ radius, y, opacity = 1 }: { radius: number; y: numb
   const geometry = useMemo(() => new THREE.PlaneGeometry(radius * 2, radius * 2), [radius])
   useEffect(() => () => geometry.dispose(), [geometry])
   return (
-    <mesh geometry={geometry} position-y={y + 0.003} rotation-x={-Math.PI / 2} renderOrder={1}>
+    <mesh
+      geometry={geometry}
+      position-y={y + 0.003}
+      rotation-x={-Math.PI / 2}
+      renderOrder={1}
+      // The path-traced photo casts real shadows on its own floor.
+      userData={{ noPhoto: true }}
+    >
       <meshBasicMaterial map={map} transparent opacity={opacity} depthWrite={false} toneMapped={false} />
     </mesh>
   )

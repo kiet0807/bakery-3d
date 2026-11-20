@@ -4,6 +4,9 @@ import { ContactShadows, Environment, Lightformer } from '@react-three/drei'
 import { Suspense } from 'react'
 import { useQuality } from './motion'
 
+/** "Comfy Café" by Sergej Majboroda, Poly Haven (CC0): the light of every high-tier scene and of photos. */
+export const CAFE_HDRI = '/hdri/comfy_cafe_1k.hdr'
+
 /** Soft panels around the cake: shaped highlights on glaze and porcelain. Rendered once, no download. */
 function Panels() {
   return (
@@ -76,7 +79,7 @@ export function Studio({
       </Environment>
       {high && (
         <Suspense fallback={null}>
-          <Environment files="/hdri/comfy_cafe_1k.hdr" environmentIntensity={0.6} resolution={256}>
+          <Environment files={CAFE_HDRI} environmentIntensity={0.6} resolution={256}>
             <Panels />
           </Environment>
         </Suspense>

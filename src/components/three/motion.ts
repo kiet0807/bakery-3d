@@ -16,3 +16,15 @@ export type Quality = 'high' | 'low'
 export const QualityContext = createContext<Quality>('high')
 
 export const useQuality = () => useContext(QualityContext)
+
+/**
+ * Lets a scene hold the quality tier where it is during deliberate heavy work (the path-traced photo drops the
+ * frame rate on purpose). `hold()` returns its own release.
+ */
+export interface PerformanceHold {
+  hold: () => () => void
+}
+
+export const PerformanceHoldContext = createContext<PerformanceHold>({ hold: () => () => {} })
+
+export const usePerformanceHold = () => useContext(PerformanceHoldContext)

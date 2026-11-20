@@ -16,10 +16,13 @@ export type Capture = (size: number, type?: 'image/png' | 'image/jpeg', quality?
 export function CaptureBridge({
   captureRef,
   composerRef,
+  drawRef,
   crop = 1,
 }: {
   captureRef: RefObject<Capture | null>
   composerRef?: RefObject<Composer | null>
+  /** Draws the frame instead, when set (photo mode puts the path-traced picture on the canvas). */
+  drawRef?: RefObject<(() => void) | null>
   /** Part of the canvas's shorter side to keep, around the centre (1 = the largest centred square). */
   crop?: number
 }) {
@@ -28,8 +31,10 @@ export function CaptureBridge({
   const camera = useThree((state) => state.camera)
   useEffect(() => {
     captureRef.current = (size, type = 'image/jpeg', quality = 0.86) => {
+      const draw = drawRef?.current
       const composer = composerRef?.current
-      if (composer) composer.render(0)
+      if (draw) draw()
+      else if (composer) composer.render(0)
       else gl.render(scene, camera)
       const source = gl.domElement
       const canvas = document.createElement('canvas')
@@ -64,6 +69,6 @@ export function CaptureBridge({
     return () => {
       captureRef.current = null
     }
-  }, [gl, scene, camera, captureRef, composerRef, crop])
+  }, [gl, scene, camera, captureRef, composerRef, drawRef, crop])
   return null
 }

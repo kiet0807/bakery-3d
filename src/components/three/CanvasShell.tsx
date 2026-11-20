@@ -2,10 +2,16 @@
 
 import { PerformanceMonitor } from '@react-three/drei'
 import { Canvas, type CanvasProps } from '@react-three/fiber'
-import { Component, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { Component, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { CakeFallback } from '../CakeFallback'
-import { QualityContext, ReducedMotionContext, type Quality } from './motion'
+import {
+  PerformanceHoldContext,
+  QualityContext,
+  ReducedMotionContext,
+  type PerformanceHold,
+  type Quality,
+} from './motion'
 
 let webglSupport: boolean | null = null
 
@@ -76,6 +82,23 @@ export function CanvasShell({
   const [inView, setInView] = useState(true)
   const [dpr, setDpr] = useState(1.5)
   const reduced = useReducedMotion()
+  // While something holds the tier (photo mode), frame-rate changes are ignored.
+  const holds = useRef(0)
+  const performanceHold = useMemo<PerformanceHold>(
+    () => ({
+      hold: () => {
+        holds.current += 1
+        let released = false
+        return () => {
+          if (released) return
+          released = true
+          // Give the frame rate a moment to recover before the monitor counts again.
+          window.setTimeout(() => (holds.current -= 1), 2500)
+        }
+      },
+    }),
+    [],
+  )
 
   useEffect(() => {
     const element = wrapper.current
@@ -109,15 +132,22 @@ export function CanvasShell({
                 aria-hidden
               >
                 <PerformanceMonitor
-                  onIncline={() => setDpr(2)}
+                  onIncline={() => {
+                    if (!holds.current) setDpr(2)
+                  }}
                   onDecline={() => {
+                    if (holds.current) return
                     setDpr(1)
                     setDowngraded(true)
                   }}
                   flipflops={3}
-                  onFallback={() => setDowngraded(true)}
+                  onFallback={() => {
+                    if (!holds.current) setDowngraded(true)
+                  }}
                 />
-                {children}
+                <PerformanceHoldContext.Provider value={performanceHold}>
+                  {children}
+                </PerformanceHoldContext.Provider>
               </Canvas>
             </QualityContext.Provider>
           </ReducedMotionContext.Provider>

@@ -61,6 +61,14 @@ export function Designer() {
   const [status, setStatus] = useState('')
   const [addedKey, setAddedKey] = useState<string | null>(null)
   const justAdded = addedKey === configKey(config)
+  // Photo mode belongs to the scene it started on: any change to the cake ends it.
+  const sceneKey = `${configKey(config)}|${sliced}`
+  const [photoFor, setPhotoFor] = useState<string | null>(null)
+  const [photoProgress, setPhotoProgress] = useState(0)
+  const [photoNote, setPhotoNote] = useState('')
+  if (photoFor !== null && photoFor !== sceneKey) setPhotoFor(null)
+  const photo = photoFor === sceneKey
+  const developed = photo && photoProgress >= 1
 
   const price = priceOf(config)
   const lines = useMemo(() => priceLines(config), [config])
@@ -84,31 +92,110 @@ export function Designer() {
     }
     const link = document.createElement('a')
     link.href = url
-    link.download = 'crumb-and-cloud-cake.png'
+    link.download = photo ? 'crumb-and-cloud-studio-photo.png' : 'crumb-and-cloud-cake.png'
     link.click()
-    setStatus('Picture saved.')
+    setStatus(photo ? 'Studio photo saved.' : 'Picture saved.')
+  }
+
+  const startPhoto = () => {
+    setPhotoProgress(0)
+    setPhotoNote('')
+    setPhotoFor(sceneKey)
+    setStatus('Developing a path-traced studio photo. This takes a few seconds.')
+  }
+
+  const photoFailed = (error: unknown) => {
+    console.warn('Path tracing failed, back to the live view.', error)
+    setPhotoFor(null)
+    setPhotoNote('Studio photos are not available on this device.')
+    setStatus('Studio photos are not available on this device.')
   }
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 px-3 pt-20 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
       <div className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b border-white/10 bg-night/70 backdrop-blur sm:mx-0 sm:rounded-[2rem] sm:border lg:top-24 lg:h-[calc(100svh-7.5rem)] lg:bg-white/[0.03]">
-        <DesignScene config={config} sliced={sliced} captureRef={captureRef} />
-        <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            aria-pressed={sliced}
-            onClick={() => setSliced(!sliced)}
-            className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-night shadow-soft transition-transform hover:-translate-y-0.5"
-          >
-            {sliced ? 'Put the slice back' : 'Slice it'}
-          </button>
-          <button
-            type="button"
-            onClick={saveImage}
-            className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur transition-transform hover:-translate-y-0.5"
-          >
-            Save picture
-          </button>
+        <DesignScene
+          config={config}
+          sliced={sliced}
+          captureRef={captureRef}
+          photo={photo}
+          onPhotoProgress={setPhotoProgress}
+          onPhotoError={photoFailed}
+        />
+        <div className="absolute inset-x-3 bottom-3 flex flex-col items-center gap-2">
+          {photoNote && !photo && (
+            <p className="rounded-full bg-night/80 px-3 py-1 text-xs text-mist backdrop-blur">{photoNote}</p>
+          )}
+          {photo && !developed ? (
+            <div className="glass flex w-full max-w-sm items-center gap-3 rounded-full py-2 pr-2 pl-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-mist">Developing the studio photo</p>
+                <div
+                  role="progressbar"
+                  aria-label="Studio photo"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(photoProgress * 100)}
+                  className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/15"
+                >
+                  <div
+                    className="h-full rounded-full bg-moon transition-[width] duration-300"
+                    style={{ width: `${Math.round(photoProgress * 100)}%` }}
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPhotoFor(null)}
+                className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : developed ? (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={saveImage}
+                className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-night shadow-soft transition-transform hover:-translate-y-0.5"
+              >
+                Download photo
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhotoFor(null)}
+                className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur transition-transform hover:-translate-y-0.5"
+              >
+                Back to 3D
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                aria-pressed={sliced}
+                onClick={() => setSliced(!sliced)}
+                className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-night shadow-soft transition-transform hover:-translate-y-0.5"
+              >
+                {sliced ? 'Put the slice back' : 'Slice it'}
+              </button>
+              <button
+                type="button"
+                onClick={saveImage}
+                className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur transition-transform hover:-translate-y-0.5"
+              >
+                Save picture
+              </button>
+              {/* Path tracing is a desktop-GPU job; phones keep the instant picture. */}
+              <button
+                type="button"
+                onClick={startPhoto}
+                className="hidden rounded-full bg-white/10 px-4 py-2 text-sm font-semibold shadow-soft backdrop-blur transition-transform hover:-translate-y-0.5 md:inline-flex"
+              >
+                Studio photo
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

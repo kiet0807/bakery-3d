@@ -5,6 +5,12 @@
  * public as they are; the shop's address is only a neighbourhood on purpose.
  */
 
+/**
+ * The site's public address, for canonical links, the sitemap, robots.txt and social previews. Set
+ * NEXT_PUBLIC_SITE_URL when deploying; the fallback is the planned Vercel address.
+ */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bakery-3d.vercel.app'
+
 /** False while the shop is a showcase: checkout ends in a demo and says plainly that nothing was sent. */
 export const ORDERING_OPEN = false
 
@@ -28,6 +34,14 @@ export const SHOP = {
   maker: { name: 'Kai', url: 'https://kietnguyen.io.vn' },
   source: 'https://github.com/kiet0807/bakery-3d',
 } as const
+
+/** The shop's own links, in the order every page shows them. */
+export const SHOP_LINKS = [
+  { href: SHOP.zalo, label: 'Zalo' },
+  { href: SHOP.social.facebook, label: 'Facebook' },
+  { href: SHOP.social.instagram, label: 'Instagram' },
+  { href: SHOP.social.tiktok, label: 'TikTok' },
+] as const
 
 /** The old inner-city districts the shop delivers to (names people still use after the 2025 merger). */
 export const DELIVERY_AREAS = [

@@ -4,6 +4,7 @@ export const common: CommonDict = {
   langName: 'English',
   otherLang: { short: 'VI', name: 'Tiếng Việt', label: 'Xem trang bằng tiếng Việt' },
   skip: 'Skip to content',
+  newTab: '(opens in a new tab)',
   nav: {
     label: 'Main',
     home: "Kai's Bakery, home",
@@ -35,7 +36,7 @@ export const common: CommonDict = {
       faq: 'FAQ',
     },
     hours: 'Open 6:30–22:45, every single day',
-    delivery: 'Delivery 8:00–21:30 across inner Ho Chi Minh City',
+    delivery: 'Delivery 8:00–21:30 across the old inner districts of Ho Chi Minh City',
     hotline: 'Hotline & Zalo',
     contactNote: "The shop isn't open for real, but Kai still reads every message.",
     madeBy: 'Website by Kai',

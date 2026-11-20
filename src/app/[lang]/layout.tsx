@@ -8,24 +8,24 @@ import { LOCALES, OG_LOCALE, hasLocale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LangProvider } from '@/i18n/LangProvider'
 import { langFrom } from '@/i18n/metadata'
-import { SHOP } from '@/lib/shop'
+import { SHOP, SITE_URL } from '@/lib/shop'
 import '../globals.css'
 
+// `subsets` only decides what is preloaded; every subset stays available through `unicode-range`. Latin plus
+// the Vietnamese subset covers every letter of both languages (đ, ơ, ư included), so latin-ext is not preloaded.
 const baloo = Baloo_2({
   weight: ['500', '600', '700', '800'],
-  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-baloo',
   display: 'swap',
 })
 
 const beVietnam = Be_Vietnam_Pro({
   weight: ['400', '500', '600', '700'],
-  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-be-vietnam',
   display: 'swap',
 })
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bakery-3d.vercel.app'
 
 export function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }))
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: LayoutProps<'/[lang]'>): Prom
   const lang = await langFrom(params)
   const { meta } = dictionaries[lang].common
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: new URL(SITE_URL),
     title: { default: meta.siteTitle, template: meta.titleTemplate },
     description: meta.description,
     applicationName: SHOP.name,

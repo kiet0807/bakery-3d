@@ -6,6 +6,8 @@ export const common = {
   /** The switch is labelled in the language it switches to (the link carries that `lang`). */
   otherLang: { short: 'EN', name: 'English', label: 'Switch to English' },
   skip: 'Vào nội dung chính',
+  /** Read after a link that opens a new tab (screen readers only). */
+  newTab: '(mở tab mới)',
   nav: {
     label: 'Điều hướng chính',
     home: "Kai's Bakery, về trang chủ",

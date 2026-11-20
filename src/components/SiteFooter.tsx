@@ -1,7 +1,7 @@
 import type { Locale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LocalLink } from '@/i18n/LangProvider'
-import { SHOP } from '@/lib/shop'
+import { SHOP, SHOP_LINKS } from '@/lib/shop'
 import { Logo, Wordmark } from './Logo'
 
 /** The year the copyright line names. Fixed, so the footer can be prerendered with no clock. */
@@ -10,12 +10,6 @@ const YEAR = 2026
 export function SiteFooter({ lang }: { lang: Locale }) {
   const { common } = dictionaries[lang]
   const f = common.footer
-  const external = [
-    { href: SHOP.zalo, label: 'Zalo' },
-    { href: SHOP.social.facebook, label: 'Facebook' },
-    { href: SHOP.social.instagram, label: 'Instagram' },
-    { href: SHOP.social.tiktok, label: 'TikTok' },
-  ]
   return (
     <footer aria-label={f.label} className="relative mx-auto mt-24 max-w-7xl px-4 pb-10 sm:px-8">
       <div className="sticker relative overflow-hidden p-6 sm:p-10">
@@ -90,7 +84,7 @@ export function SiteFooter({ lang }: { lang: Locale }) {
               </a>
             </p>
             <ul className="flex flex-wrap gap-2">
-              {external.map((link) => (
+              {SHOP_LINKS.map((link) => (
                 <li key={link.label}>
                   <a
                     className="inline-flex rounded-full border-2 border-ink/20 px-3 py-1 text-sm font-semibold transition-colors hover:border-ink hover:bg-soft"
@@ -99,6 +93,7 @@ export function SiteFooter({ lang }: { lang: Locale }) {
                     rel="noopener noreferrer"
                   >
                     {link.label}
+                    <span className="sr-only"> {common.newTab}</span>
                   </a>
                 </li>
               ))}

@@ -36,7 +36,8 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             {home.why.items.map((item, index) => (
               <li
                 key={item.title}
-                className={`card flex gap-4 p-6 ${index % 2 ? 'lg:translate-y-4' : ''} transition-transform motion-safe:hover:-rotate-1`}
+                // Three columns from lg: the whole middle column sits a little lower, so the gaps stay even.
+                className={`card flex gap-4 p-6 ${index % 3 === 1 ? 'lg:translate-y-6' : ''} transition-transform motion-safe:hover:-rotate-1`}
               >
                 <span
                   aria-hidden
@@ -147,43 +148,6 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
             titleId="notice-title"
             linkLabel={home.notice.more}
           />
-        </section>
-
-        <section aria-labelledby="tech-title" className="mx-auto max-w-7xl px-4 pt-28 sm:px-8">
-          <div className="rounded-[2rem] bg-soft p-6 sm:p-10">
-            <SectionHeading
-              id="tech-title"
-              eyebrow={home.tech.eyebrow}
-              title={home.tech.title}
-              accent={home.tech.accent}
-            >
-              <p className="max-w-2xl text-lg leading-relaxed text-muted">{home.tech.lead}</p>
-            </SectionHeading>
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {home.tech.cards.map((card) => (
-                <li key={card.title} className="space-y-2 rounded-2xl bg-surface p-5">
-                  <span aria-hidden className="text-2xl">
-                    {card.icon}
-                  </span>
-                  <h3 className="font-display text-lg font-bold">{card.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted">{card.body}</p>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8">
-              <h3 className="sr-only">{home.tech.stackLabel}</h3>
-              <ul aria-label={home.tech.stackLabel} className="flex flex-wrap gap-2">
-                {home.tech.stack.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-full border border-ink/15 bg-surface px-3 py-1 text-sm font-semibold"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
         </section>
 
         <section aria-labelledby="final-title" className="mx-auto max-w-5xl px-4 pt-28 sm:px-8">

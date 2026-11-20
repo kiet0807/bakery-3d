@@ -17,12 +17,16 @@ import { Effects } from '../Effects'
 import { useQuality, useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
+import { SCENE } from '../theme'
 
 const TAU = Math.PI * 2
 /** Distance from the centre of the turntable to each cake. The front cake sits at the origin. */
 const RADIUS = 3.7
 const FLOOR = -STAND_HEIGHT
-const MOON = new THREE.Color('#8ea2ff')
+const MARK_REST = new THREE.Color(SCENE.table.markRest)
+const MARK_CHOSEN = new THREE.Color(SCENE.table.markChosen)
+/** On the light tier, cakes further back than this (world z) are not drawn: the fog hides them anyway. */
+const BACK_CUTOFF = -RADIUS * 1.2
 /** Half the width and the full height of a classic cake on its stand: what the camera keeps in view. */
 const CAKE_HALF_WIDTH = 1.45
 const CAKE_HEIGHT = 2.5
@@ -66,11 +70,14 @@ function Showcase({
   onSelect: () => void
 }) {
   const still = useReducedMotionScene()
+  const low = useQuality() === 'low'
   const size = useMemo(() => clocheSize(preset.config), [preset.config])
   const geometry = useMemo(() => clocheGeometry(size.radius, size.height), [size])
   useEffect(() => () => geometry.dispose(), [geometry])
   const standRadius = sizeOf(preset.config).tiers[0].radius + FROSTING
 
+  const root = useRef<THREE.Group>(null)
+  const where = useMemo(() => new THREE.Vector3(), [])
   const cloche = useRef<THREE.Group>(null)
   const glass = useRef<THREE.MeshPhysicalMaterial>(null)
   const spin = useRef<THREE.Group>(null)
@@ -88,7 +95,11 @@ function Showcase({
       cloche.current.visible = ease < 0.98
       glass.current.opacity = 0.2 * (1 - ease)
     }
-    if (ring.current) ring.current.color.copy(MOON).multiplyScalar(0.25 + ease * 2.2)
+    if (ring.current) ring.current.color.copy(MARK_REST).lerp(MARK_CHOSEN, ease)
+    if (root.current) {
+      // Slow devices skip the cakes at the back of the table (about half of the draw calls).
+      root.current.visible = !low || root.current.getWorldPosition(where).z > BACK_CUTOFF
+    }
     const group = spin.current
     if (group) {
       if (selected && !sliced && !still) group.rotation.y += dt * 0.22
@@ -107,6 +118,7 @@ function Showcase({
 
   return (
     <group
+      ref={root}
       position={[Math.sin(angle) * RADIUS, 0, Math.cos(angle) * RADIUS]}
       rotation-y={angle}
       onClick={select}
@@ -127,7 +139,7 @@ function Showcase({
         <mesh geometry={geometry} renderOrder={2}>
           <meshPhysicalMaterial
             ref={glass}
-            color="#dfe6ff"
+            color={SCENE.glass.body}
             roughness={0.04}
             metalness={0}
             clearcoat={1}
@@ -140,18 +152,24 @@ function Showcase({
         </mesh>
         <mesh position-y={size.height + 0.05}>
           <sphereGeometry args={[0.07, 20, 14]} />
-          <meshPhysicalMaterial color="#e8ecff" roughness={0.1} clearcoat={1} transparent opacity={0.5} />
+          <meshPhysicalMaterial
+            color={SCENE.glass.knob}
+            roughness={0.1}
+            clearcoat={1}
+            transparent
+            opacity={0.6}
+          />
         </mesh>
       </group>
       <mesh position-y={FLOOR + 0.004} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[standRadius * 0.5, standRadius * 0.5 + 0.025, 96]} />
+        <ringGeometry args={[standRadius * 0.5, standRadius * 0.5 + 0.035, 96]} />
         <meshBasicMaterial ref={ring} toneMapped={false} />
       </mesh>
     </group>
   )
 }
 
-/** The dark lacquered turntable, with a thin line of light around its edge. */
+/** A porcelain turntable with a mint line around its edge, like the trim on a cake box. */
 function Turntable() {
   const quality = useQuality()
   const radius = RADIUS + 1.9
@@ -164,22 +182,22 @@ function Turntable() {
             blur={[320, 90]}
             resolution={512}
             mixBlur={1}
-            mixStrength={1.4}
-            roughness={0.85}
+            mixStrength={0.55}
+            roughness={0.7}
             depthScale={1.1}
             minDepthThreshold={0.4}
             maxDepthThreshold={1.3}
-            color="#0d1027"
-            metalness={0.55}
+            color={SCENE.table.top}
+            metalness={0.05}
             mirror={0}
           />
         ) : (
-          <meshStandardMaterial color="#0d1027" roughness={0.55} metalness={0.4} />
+          <meshStandardMaterial color={SCENE.table.top} roughness={0.5} metalness={0} />
         )}
       </mesh>
       <mesh position-y={0.006} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[radius - 0.03, radius, 192]} />
-        <meshBasicMaterial color={MOON.clone().multiplyScalar(1.6)} toneMapped={false} />
+        <ringGeometry args={[radius - 0.06, radius, 192]} />
+        <meshBasicMaterial color={SCENE.table.rim} toneMapped={false} />
       </mesh>
     </group>
   )
@@ -222,7 +240,7 @@ function Rig({ index, count, children }: { index: number; count: number; childre
       THREE.MathUtils.damp(camera.position.z, distance, 3, dt),
     )
     if (scene.fog instanceof THREE.Fog) {
-      // The cakes at the back fade into the night, whatever the distance.
+      // The cakes at the back fade into the page's cream, whatever the distance.
       scene.fog.near = distance + 2
       scene.fog.far = distance + 10
     }
@@ -250,15 +268,17 @@ export default function VitrineScene({
   captureRef: RefObject<Capture | null>
 }) {
   const composer = useRef<Composer | null>(null)
-  const presetLabel = useDict().cake.presets[presets[index].id].name
+  const dict = useDict()
+  const presetLabel = dict.cake.presets[presets[index].id].name
   const step = TAU / presets.length
   return (
     <CanvasShell
       className="h-full w-full"
-      label={`A turning glass vitrine with ${presets.length} cakes on porcelain stands. ${presetLabel} is at the front, its glass cloche lifted.`}
+      label={dict.scenes.vitrine(presets.length, presetLabel)}
       camera={{ position: [0, 2.2, 9], fov: 34, near: 0.1, far: 60 }}
+      lowDpr={1}
     >
-      <fog attach="fog" args={['#060814', 11, 19]} />
+      <fog attach="fog" args={[SCENE.page, 11, 19]} />
       <Studio floor={FLOOR} shadows={false} />
       <Rig index={index} count={presets.length}>
         <Turntable />

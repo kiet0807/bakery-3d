@@ -4,6 +4,7 @@ import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useMemo, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
+import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
@@ -12,12 +13,14 @@ import { Effects } from '../Effects'
 import { useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
+import { SCENE } from '../theme'
 
 /** Board thickness. */
 const T = 0.025
-const BOARD = '#f0eee9'
-const RIBBON = '#ff8ab4'
-const INK = '#5b7cff'
+const BOARD = SCENE.box.board
+const RIBBON = SCENE.box.ribbon
+const SHEEN = SCENE.box.ribbonSheen
+const INK = SCENE.box.print
 /** Seconds from the start until everything has landed; the box then only turns. */
 const END = 3.9
 const OPEN = Math.PI / 2
@@ -52,6 +55,38 @@ function fitDistance(camera: THREE.PerspectiveCamera, aspect: number, radius: nu
   return Math.max(height / 2 / Math.tan(vertical / 2), radius / Math.tan(horizontal / 2))
 }
 
+/**
+ * The shop's little mark printed on the lid: a round sticker with a mint-frosted cake and a cherry, the same
+ * drawing as the logo in the header, in flat shapes that cost a handful of triangles.
+ */
+function LidSticker({ size }: { size: number }) {
+  return (
+    <group>
+      <mesh rotation-x={-Math.PI / 2}>
+        <circleGeometry args={[size, 40]} />
+        <meshStandardMaterial color={INK} roughness={0.8} />
+      </mesh>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.0006}>
+        <circleGeometry args={[size * 0.86, 40]} />
+        <meshStandardMaterial color={BOARD} roughness={0.8} />
+      </mesh>
+      {/* Cake body, frosting and cherry, seen from above the lid as a flat print. */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.0012, size * 0.18]}>
+        <planeGeometry args={[size * 1.05, size * 0.5]} />
+        <meshStandardMaterial color={SCENE.box.ribbonSheen} roughness={0.8} />
+      </mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.0016, -size * 0.1]}>
+        <planeGeometry args={[size * 1.05, size * 0.22]} />
+        <meshStandardMaterial color={SCENE.box.stickerMint} roughness={0.8} />
+      </mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.002, -size * 0.42]}>
+        <circleGeometry args={[size * 0.17, 24]} />
+        <meshStandardMaterial color={SCENE.box.stickerCherry} roughness={0.6} />
+      </mesh>
+    </group>
+  )
+}
+
 function Board({ size }: { size: [number, number, number] }) {
   return (
     <mesh castShadow receiveShadow>
@@ -81,7 +116,7 @@ function SideBand({
       <group ref={bandRef} position={[offset, height + T, width / 2 + 0.004]}>
         <mesh position-y={-(height + T) / 2}>
           <boxGeometry args={[0.14, height + T, 0.006]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor="#ffd1e2" />
+          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
         </mesh>
       </group>
     </group>
@@ -100,12 +135,12 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
           castShadow
         >
           <torusGeometry args={[0.15, 0.042, 14, 40]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor="#ffd1e2" />
+          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
         </mesh>
       ))}
       <mesh position-y={0.045} castShadow>
         <sphereGeometry args={[0.065, 20, 16]} />
-        <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor="#ffd1e2" />
+        <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
       </mesh>
     </group>
   )
@@ -116,6 +151,7 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
  * ties it all up. Driven by the time since the scene appeared; with reduced motion it starts at the end.
  */
 function FoldingBox({ config }: { config: CakeConfig }) {
+  const { scenes } = useDict()
   const still = useReducedMotionScene()
   const { width: W, height: H } = useMemo(() => boxSize(config), [config])
   const startedAt = useRef<number | null>(null)
@@ -205,19 +241,36 @@ function FoldingBox({ config }: { config: CakeConfig }) {
                   <Board size={[W, T, W]} />
                   {/* Turned back to face the front, so the name reads from the camera. */}
                   <group rotation-y={Math.PI} position-y={T / 2 + 0.002}>
-                    <Suspense fallback={null}>
-                      <Text
-                        font="/fonts/Pacifico-Subset.woff"
-                        fontSize={W * 0.075}
-                        rotation-x={-Math.PI / 2}
-                        position={[(-W / 2 + rx) / 2, 0, (W / 2 + rz) / 2]}
-                        anchorX="center"
-                        anchorY="middle"
-                        color={INK}
-                      >
-                        Crumb & Cloud
-                      </Text>
-                    </Suspense>
+                    {/* The free corner of the lid: front left of the ribbon's cross. */}
+                    <group position={[(-W / 2 + rx) / 2, 0, (W / 2 + rz) / 2]}>
+                      <group position={[-W * 0.17, 0, 0]}>
+                        <LidSticker size={W * 0.075} />
+                      </group>
+                      <Suspense fallback={null}>
+                        <Text
+                          font="/fonts/Pacifico-Subset.woff"
+                          fontSize={W * 0.08}
+                          rotation-x={-Math.PI / 2}
+                          position={[W * 0.05, 0, -W * 0.02]}
+                          anchorX="center"
+                          anchorY="middle"
+                          color={INK}
+                        >
+                          {scenes.boxName}
+                        </Text>
+                        <Text
+                          font="/fonts/Pacifico-Subset.woff"
+                          fontSize={W * 0.042}
+                          rotation-x={-Math.PI / 2}
+                          position={[W * 0.06, 0, W * 0.065]}
+                          anchorX="center"
+                          anchorY="middle"
+                          color={RIBBON}
+                        >
+                          {scenes.boxLine}
+                        </Text>
+                      </Suspense>
+                    </group>
                   </group>
                 </group>
               </group>
@@ -228,11 +281,11 @@ function FoldingBox({ config }: { config: CakeConfig }) {
       <group ref={lidBands} position-y={H + T + 0.004} visible={false}>
         <mesh position-z={rz}>
           <boxGeometry args={[W + 0.012, 0.006, 0.14]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor="#ffd1e2" />
+          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
         </mesh>
         <mesh position-x={rx}>
           <boxGeometry args={[0.14, 0.006, W + 0.012]} />
-          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor="#ffd1e2" />
+          <meshPhysicalMaterial color={RIBBON} roughness={0.35} sheen={1} sheenColor={SHEEN} />
         </mesh>
       </group>
       {SIDES.map((angle, i) => (
@@ -253,11 +306,12 @@ function FoldingBox({ config }: { config: CakeConfig }) {
 }
 
 export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
+  const { scenes } = useDict()
   return (
     <CanvasShell
       className="h-full w-full"
       mode="always"
-      label="Your cake is lowered into a white Crumb & Cloud box. The sides fold up, the lid closes and a pink ribbon ties it."
+      label={scenes.box}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}
     >
       <Studio floor={-T} shadows={false} />

@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { GradientEquirectTexture, WebGLPathTracer } from 'three-gpu-pathtracer'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { usePerformanceHold } from './motion'
+import { SCENE } from './theme'
 import { CAFE_HDRI } from './Studio'
 
 /** Samples per pixel for a finished photo: clean enough on glaze and cream, about 15–25 s on a laptop GPU. */
@@ -109,7 +110,7 @@ let fontReady: Promise<boolean> | null = null
 
 /** Pacifico for the canvas copy of the message, loaded once. */
 function loadPhotoFont(): Promise<boolean> {
-  fontReady ??= new FontFace('Crumb Photo Pacifico', 'url(/fonts/Pacifico-Subset.woff)')
+  fontReady ??= new FontFace('Kai Photo Pacifico', 'url(/fonts/Pacifico-Subset.woff)')
     .load()
     .then((face) => {
       document.fonts.add(face)
@@ -134,7 +135,7 @@ async function textPlane(text: TroikaText): Promise<THREE.Mesh | null> {
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
   const size = text.fontSize * scale
-  ctx.font = `${size}px "Crumb Photo Pacifico", cursive`
+  ctx.font = `${size}px "Kai Photo Pacifico", cursive`
   ctx.fillStyle = new THREE.Color(text.color).getStyle()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -165,7 +166,7 @@ async function textPlane(text: TroikaText): Promise<THREE.Mesh | null> {
 
 /**
  * Copies what the camera sees into a still scene the path tracer understands, plus a studio floor and
- * the night-sky gradient behind it. Shared geometry and materials are reused; only what is made here is
+ * the site's morning-sky gradient behind it. Shared geometry and materials are reused; only what is made here is
  * disposed afterwards.
  */
 async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: THREE.Texture) {
@@ -213,7 +214,7 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(6, 128),
     new THREE.MeshStandardMaterial({
-      color: '#262c63',
+      color: SCENE.photo.floor,
       map: fadingFloorTexture(),
       transparent: true,
       roughness: 0.3,
@@ -226,9 +227,9 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
   photo.add(floor)
 
   const sky = new GradientEquirectTexture(256)
-  sky.topColor.set('#2c3576')
-  sky.bottomColor.set('#0b0e26')
-  sky.exponent = 1.4
+  sky.topColor.set(SCENE.photo.skyTop)
+  sky.bottomColor.set(SCENE.photo.skyBottom)
+  sky.exponent = 1.2
   sky.update()
   owned.push(sky)
   photo.background = sky

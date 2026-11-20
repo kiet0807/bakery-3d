@@ -1,9 +1,10 @@
 'use client'
 
-import { Stars, useProgress } from '@react-three/drei'
+import { useProgress } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
+import { useDict } from '@/i18n/LangProvider'
 import { normalizeConfig } from '@/lib/cake'
 import { Cake, type CakeControls } from '../cake/Cake'
 import { CanvasShell } from '../CanvasShell'
@@ -12,10 +13,14 @@ import { Effects } from '../Effects'
 import { FloatingSprinkles } from '../FloatingSprinkles'
 import { useReducedMotionScene } from '../motion'
 import { Studio } from '../Studio'
+import { SCENE } from '../theme'
 
-/** The cake of the story: pink, glazed in white chocolate, fully dressed. */
+/**
+ * The cake of the story: pink, glazed in white chocolate, fully dressed. 20 cm has the exact shape of the old
+ * "classic" size the camera shots were tuned on.
+ */
 export const STORY_CAKE = normalizeConfig({
-  size: 'classic',
+  size: 's20',
   sponge: 'vanilla',
   filling: 'strawberry-jam',
   frosting: 'strawberry-milk',
@@ -159,18 +164,18 @@ export default function StoryScene({
   started: boolean
   onProgress: (percent: number) => void
 }) {
+  const { scenes } = useDict()
   // Without WebGL the 2D drawing is all there is to load.
   const done = useCallback(() => onProgress(100), [onProgress])
   return (
     <CanvasShell
       className="h-full w-full"
-      label="A strawberry layer cake resting on a cloud under the night sky. As the page scrolls the camera moves around it and a slice slides out to show the layers inside."
+      label={scenes.story}
       camera={{ position: [0, 1.2, 7.8], fov: 32, near: 0.1, far: 120 }}
       onFallback={done}
     >
       <LoadingReporter onProgress={onProgress} />
       <Studio floor={-0.4} shadows={false} />
-      <Stars radius={70} depth={40} count={2200} factor={3.2} saturation={0} fade speed={0.4} />
       <FloatingSprinkles count={80} />
       <Director chapterRef={chapterRef} started={started}>
         <Cloud
@@ -180,7 +185,7 @@ export default function StoryScene({
           height={0.36}
           depth={1.55}
           position={[0, -0.62, 0]}
-          color="#a4a7c6"
+          color={SCENE.cloud.near}
         />
       </Director>
       <Cloud
@@ -190,7 +195,7 @@ export default function StoryScene({
         height={0.5}
         depth={1}
         position={[-5.4, -1.5, -4]}
-        color="#8a8db0"
+        color={SCENE.cloud.far}
       />
       <Cloud
         seed={19}
@@ -199,7 +204,7 @@ export default function StoryScene({
         height={0.45}
         depth={0.9}
         position={[5.8, -0.6, -6]}
-        color="#8a8db0"
+        color={SCENE.cloud.peach}
       />
       <Cloud
         seed={27}
@@ -208,7 +213,7 @@ export default function StoryScene({
         height={0.4}
         depth={0.8}
         position={[-7.5, 3.4, -12]}
-        color="#787c9f"
+        color={SCENE.cloud.far}
       />
       <Cloud
         seed={41}
@@ -218,7 +223,7 @@ export default function StoryScene({
         depth={0.7}
         position={[3.9, -2.3, 1.2]}
         scale={0.8}
-        color="#9497b8"
+        color={SCENE.cloud.near}
       />
       <Effects />
     </CanvasShell>

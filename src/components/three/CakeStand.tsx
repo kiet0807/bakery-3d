@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
-import { PORCELAIN } from './palette'
+import { SCENE } from './theme'
 
 export const STAND_HEIGHT = 0.66
 
@@ -32,7 +32,12 @@ export function CakeStand({ radius }: { radius: number }) {
   useEffect(() => () => geometry.dispose(), [geometry])
   return (
     <mesh geometry={geometry} receiveShadow castShadow>
-      <meshPhysicalMaterial color={PORCELAIN} roughness={0.22} clearcoat={0.8} clearcoatRoughness={0.15} />
+      <meshPhysicalMaterial
+        color={SCENE.porcelain}
+        roughness={0.22}
+        clearcoat={0.8}
+        clearcoatRoughness={0.15}
+      />
     </mesh>
   )
 }

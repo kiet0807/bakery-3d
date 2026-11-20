@@ -13,6 +13,7 @@ import { FitCamera } from '../FitCamera'
 import { PhotoMode } from '../PhotoMode'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
+import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 
 export default function DesignScene({
@@ -31,6 +32,7 @@ export default function DesignScene({
   onPhotoProgress?: (progress: number) => void
   onPhotoError?: (error: unknown) => void
 }) {
+  const { scenes } = useDict()
   const composer = useRef<Composer | null>(null)
   const draw = useRef<(() => void) | null>(null)
   const tiers = sizeOf(config).tiers
@@ -45,7 +47,7 @@ export default function DesignScene({
   return (
     <CanvasShell
       className="h-full w-full cursor-grab active:cursor-grabbing"
-      label="Your cake in 3D. Drag to look around it, scroll or pinch to zoom."
+      label={scenes.design}
       camera={{ position: [0, 2, 7], fov: 32 }}
     >
       <FitCamera
@@ -63,7 +65,8 @@ export default function DesignScene({
         dampingFactor={0.08}
         minPolarAngle={0.25}
         maxPolarAngle={Math.PI / 2 - 0.08}
-        minDistance={2.6}
+        // Small cakes (a 10 cm bento) may come closer than big ones.
+        minDistance={Math.min(2.6, frame.radius * 2.2)}
         maxDistance={11}
         enabled={!photo}
       />

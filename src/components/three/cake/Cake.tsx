@@ -171,27 +171,41 @@ function Drips({ drips, color }: { drips: Drip[]; color: string }) {
   )
 }
 
+/** The part of troika's Text mesh that the plaque reads to fit long messages. */
+interface SyncedText extends THREE.Object3D {
+  textRenderInfo?: { blockBounds: [number, number, number, number] } | null
+}
+
 function Plaque({ layout, message }: { layout: CakeLayout; message: string }) {
   if (!layout.plaque) return null
-  const { y, z, width } = layout.plaque
-  const height = 0.27
+  const { y, z, width, scale, lift } = layout.plaque
+  const height = 0.27 * scale
+  // Long messages on small plaques shrink until they fit inside the chocolate, instead of spilling over it.
+  const fit = (text: SyncedText) => {
+    const bounds = text.textRenderInfo?.blockBounds
+    if (!bounds) return
+    const [x0, y0, x1, y1] = bounds
+    const k = Math.min(1, (width * 0.9) / Math.max(1e-6, x1 - x0), (height * 0.84) / Math.max(1e-6, y1 - y0))
+    text.scale.setScalar(k)
+  }
   return (
-    <group position={[0, y + height / 2 + 0.03, z]} rotation-x={-0.3}>
+    <group position={[0, y + height / 2 + 0.03 + lift, z]} rotation-x={-0.3}>
       <mesh castShadow>
         <boxGeometry args={[width, height, 0.024]} />
         <meshPhysicalMaterial color={MILK_CHOCOLATE} roughness={0.3} clearcoat={0.6} />
       </mesh>
       {[-width * 0.3, width * 0.3].map((x) => (
-        <mesh key={x} position={[x, -height / 2 - 0.04, 0]}>
-          <cylinderGeometry args={[0.008, 0.008, 0.1, 6]} />
+        <mesh key={x} position={[x, -height / 2 - 0.04 - lift / 2, 0]}>
+          <cylinderGeometry args={[0.008, 0.008, 0.1 + lift, 6]} />
           <meshStandardMaterial color={MILK_CHOCOLATE} />
         </mesh>
       ))}
       <Suspense fallback={null}>
         <Text
           font="/fonts/Pacifico-Subset.woff"
-          fontSize={0.072}
+          fontSize={0.072 * scale}
           maxWidth={width * 0.9}
+          onSync={fit}
           lineHeight={1.05}
           textAlign="center"
           anchorX="center"

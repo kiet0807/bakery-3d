@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { shadowRgba } from './theme'
 
 let texture: THREE.CanvasTexture | null = null
 
@@ -14,10 +15,11 @@ function blobTexture() {
   canvas.height = size
   const ctx = canvas.getContext('2d')!
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-  gradient.addColorStop(0, 'rgba(0, 3, 16, 0.85)')
-  gradient.addColorStop(0.35, 'rgba(0, 3, 16, 0.55)')
-  gradient.addColorStop(0.7, 'rgba(0, 3, 16, 0.18)')
-  gradient.addColorStop(1, 'rgba(0, 3, 16, 0)')
+  // Brand ink, thinned: on a cream page a soft green-grey shadow looks like daylight, black looks like a hole.
+  gradient.addColorStop(0, shadowRgba(0.42))
+  gradient.addColorStop(0.35, shadowRgba(0.26))
+  gradient.addColorStop(0.7, shadowRgba(0.08))
+  gradient.addColorStop(1, shadowRgba(0))
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, size, size)
   texture = new THREE.CanvasTexture(canvas)

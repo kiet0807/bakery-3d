@@ -44,7 +44,11 @@ export interface CakeLayout {
   sprinkles: Placement[]
   goldLeaf: Placement[]
   candles: Placement[]
-  plaque: { y: number; z: number; width: number } | null
+  /**
+   * `scale` shrinks the plaque and its lettering on small cakes; `lift` raises it on longer sticks, like a cake
+   * topper, so the words clear the candles on a small top.
+   */
+  plaque: { y: number; z: number; width: number; scale: number; lift: number } | null
 }
 
 const RING_TOPPINGS = [
@@ -73,8 +77,12 @@ export interface LayoutOptions {
   light?: boolean
 }
 
+/** Toppings shrink a little on small cakes (a 10 cm bento), so they keep their proportions. */
+const toppingScale = (radius: number) => Math.min(1, Math.max(0.72, radius / 0.85))
+
 export function computeLayout(config: CakeConfig, { light = false }: LayoutOptions = {}): CakeLayout {
-  const seed = hashString(configKey(config))
+  // Sweetness does not show on the cake, so changing it must not reshuffle the sprinkles.
+  const seed = hashString(configKey({ ...config, sweetness: 'less' }))
   const random = createRandom(seed)
   let base = 0
   const tiers = sizeOf(config).tiers.map((tier) => {
@@ -85,6 +93,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   const top = tiers[tiers.length - 1]
   const topY = top.base + top.height
   const maxRadius = tiers[0].radius + FROSTING
+  const small = toppingScale(top.radius)
 
   // Drips run down the top edge of every tier.
   const drips: Drip[] = []
@@ -147,7 +156,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
         // Macarons and shards turn their flat face outwards; fruit is turned at random.
         yaw: kind === 'macarons' || kind === 'chocolate-shards' ? angle : random() * Math.PI * 2,
         tilt: kind === 'macarons' ? 0.45 : kind === 'chocolate-shards' ? 0.25 + random() * 0.2 : 0,
-        scale: 0.9 + random() * 0.2,
+        scale: (0.9 + random() * 0.2) * small,
         part: partAt(angle),
         variant: i,
       })
@@ -183,7 +192,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
 
   const goldLeaf: Placement[] = []
   if (config.toppings.includes('gold-leaf')) {
-    const count = light ? 8 : 14
+    const count = Math.round((light ? 8 : 14) * small)
     for (let i = 0; i < count; i++) {
       const angle = random() * Math.PI * 2
       const onTop = random() > 0.45
@@ -195,19 +204,21 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
         y: onTop ? topY + 0.004 : top.base + top.height * (0.55 + random() * 0.35),
         yaw: onTop ? random() * Math.PI : angle,
         tilt: onTop ? 0 : 1,
-        scale: 0.6 + random() * 0.7,
+        scale: (0.6 + random() * 0.7) * small,
         part: partAt(angle),
         variant: Math.floor(random() * 4),
       })
     }
   }
 
+  // With a message, the candles stand in a wide arc in front of the plaque (which sits further back), so the
+  // words stay readable even with nine candles on a 10 cm bento.
   const candles: Placement[] = []
+  const lone = config.candles === 1 && !config.message
   for (let i = 0; i < config.candles; i++) {
-    const spread = config.message ? Math.PI * 0.9 : Math.PI * 2
-    const angle =
-      config.candles === 1 && !config.message ? 0 : -spread / 2 + (spread * (i + 0.5)) / config.candles
-    const r = config.candles === 1 && !config.message ? 0 : top.radius * 0.42
+    const spread = config.message ? Math.PI * 1.1 : Math.PI * 2
+    const angle = lone ? 0 : -spread / 2 + (spread * (i + 0.5)) / config.candles
+    const r = lone ? 0 : top.radius * (config.message ? 0.5 : 0.42)
     const { x, z } = polar(r, angle)
     candles.push({
       x,
@@ -215,14 +226,20 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
       y: topY,
       yaw: 0,
       tilt: 0,
-      scale: 1,
+      scale: small,
       part: r === 0 ? 'body' : partAt(angle),
       variant: i,
     })
   }
 
   const plaque = config.message
-    ? { y: topY, z: -top.radius * 0.3, width: Math.min(1.05, top.radius * 1.15) }
+    ? {
+        y: topY,
+        z: -top.radius * 0.38,
+        width: Math.min(1.05, top.radius * 1.15),
+        scale: Math.min(1, Math.max(0.78, top.radius / 0.8)),
+        lift: config.candles > 0 && top.radius < 0.75 ? 0.24 * small : 0,
+      }
     : null
 
   return {

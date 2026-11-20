@@ -7,8 +7,9 @@ import { createRandom } from '@/lib/random'
 import { shared } from './cake/shared'
 import { useReducedMotionScene } from './motion'
 import { SPRINKLE_COLORS } from './palette'
+import { SCENE } from './theme'
 
-/** Sprinkles drifting up through the night air, like plankton in deep water. */
+/** Sprinkles drifting up through the morning air, like confetti that forgot to fall. */
 export function FloatingSprinkles({
   count = 90,
   spread = 9,
@@ -56,7 +57,7 @@ export function FloatingSprinkles({
   })
   return (
     <instancedMesh ref={mesh} args={[shared().sprinkle, undefined, count]} frustumCulled={false}>
-      <meshStandardMaterial roughness={0.4} emissive="#ffffff" emissiveIntensity={0.15} />
+      <meshStandardMaterial roughness={0.45} emissive={SCENE.sprinkleGlow} emissiveIntensity={0.08} />
     </instancedMesh>
   )
 }

@@ -3,6 +3,7 @@
 import { useThree } from '@react-three/fiber'
 import type { EffectComposer as Composer } from 'postprocessing'
 import { useEffect, type RefObject } from 'react'
+import { SCENE } from './theme'
 
 /** Takes a square picture of the scene as a data URL, or null when the browser cannot. */
 export type Capture = (size: number, type?: 'image/png' | 'image/jpeg', quality?: number) => string | null
@@ -42,10 +43,11 @@ export function CaptureBridge({
       canvas.height = size
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
-      // The night sky of the site, lighter in the middle, behind the transparent canvas.
-      const sky = ctx.createRadialGradient(size / 2, size * 0.42, 0, size / 2, size / 2, size * 0.75)
-      sky.addColorStop(0, '#1b2147')
-      sky.addColorStop(1, '#060814')
+      // The site's morning sky behind the transparent canvas: butter cream in the middle, mint at the edges.
+      const sky = ctx.createRadialGradient(size / 2, size * 0.42, 0, size / 2, size / 2, size * 0.78)
+      sky.addColorStop(0, SCENE.sky.glow)
+      sky.addColorStop(0.55, SCENE.sky.bottom)
+      sky.addColorStop(1, SCENE.sky.top)
       ctx.fillStyle = sky
       ctx.fillRect(0, 0, size, size)
       const side = Math.min(source.width, source.height) * crop

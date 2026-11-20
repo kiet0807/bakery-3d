@@ -3,6 +3,7 @@
 import { PerformanceMonitor } from '@react-three/drei'
 import { Canvas, type CanvasProps } from '@react-three/fiber'
 import { Component, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import * as THREE from 'three'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { CakeFallback } from '../CakeFallback'
 import {
@@ -65,6 +66,8 @@ export interface CanvasShellProps {
   onCreated?: CanvasProps['onCreated']
   /** Called when the 2D drawing is shown instead: no WebGL, or the scene crashed. */
   onFallback?: () => void
+  /** Pixel ratio on the light tier. Scenes with many objects (the vitrine) can go lower. */
+  lowDpr?: number
 }
 
 /**
@@ -79,6 +82,7 @@ export function CanvasShell({
   mode = 'always',
   onCreated,
   onFallback,
+  lowDpr = 1.25,
 }: CanvasShellProps) {
   const wrapper = useRef<HTMLDivElement>(null)
   // Device facts are read after hydration (the server renders no canvas at all).
@@ -135,12 +139,17 @@ export function CanvasShell({
             <QualityContext.Provider value={quality}>
               <Canvas
                 key={quality}
-                dpr={Math.min(high ? dpr : 1.25, maxDpr)}
+                dpr={Math.min(high ? dpr : lowDpr, maxDpr)}
                 shadows={high ? 'percentage' : false}
                 camera={camera}
                 frameloop={inView ? mode : 'never'}
                 gl={{ antialias: !high, alpha: true, powerPreference: 'high-performance' }}
-                onCreated={onCreated}
+                onCreated={(state) => {
+                  // Neutral tone mapping keeps pastel frosting true on a light page; the high tier's effect chain
+                  // applies the same curve itself.
+                  state.gl.toneMapping = THREE.NeutralToneMapping
+                  onCreated?.(state)
+                }}
                 aria-hidden
               >
                 <PerformanceMonitor

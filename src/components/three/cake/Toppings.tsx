@@ -19,6 +19,7 @@ import { useReducedMotionScene } from '../motion'
 import { stripeTexture } from './geometry'
 import type { CakeLayout, Part, Placement } from './layout'
 import { glowTexture, shared } from './shared'
+import { SCENE } from '../theme'
 
 const only = (list: Placement[], part: Part) => list.filter((p) => p.part === part)
 
@@ -191,17 +192,17 @@ function Candle({ p, lit }: { p: Placement; lit: boolean }) {
     flame.current.rotation.z = Math.sin(t * 0.7) * 0.06
   })
   return (
-    <group position={[p.x, p.y, p.z]}>
+    <group position={[p.x, p.y, p.z]} scale={p.scale}>
       <mesh geometry={g.candle} position-y={0.12} castShadow>
         <meshStandardMaterial map={texture} roughness={0.5} />
       </mesh>
       <mesh geometry={g.wick} position-y={0.285}>
-        <meshStandardMaterial color="#2b211c" />
+        <meshStandardMaterial color={SCENE.candle.wick} />
       </mesh>
       {lit && (
         <group ref={flame} position-y={0.296}>
           <mesh geometry={g.flame}>
-            <meshBasicMaterial color="#ffc861" toneMapped={false} />
+            <meshBasicMaterial color={SCENE.candle.flame} toneMapped={false} />
           </mesh>
           {glow && (
             <sprite position-y={0.035} scale={0.2}>

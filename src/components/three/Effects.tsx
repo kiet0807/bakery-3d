@@ -1,14 +1,17 @@
 'use client'
 
-import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { Bloom, EffectComposer, N8AO, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode, type EffectComposer as Composer } from 'postprocessing'
 import type { Ref } from 'react'
 import { useQuality } from './motion'
+import { SCENE } from './theme'
 
 /**
- * The photographic finish: ambient occlusion so toppings sit in the cream instead of floating on it, a
- * gentle bloom on candle flames, a light vignette, and filmic tone mapping. Skipped on the "low" tier, where
- * the renderer's own tone mapping gives the same colours. Pair it with `ShadowBlob`, not ContactShadows.
+ * The photographic finish: warm ambient occlusion so toppings sit in the cream instead of floating on it, a
+ * small bloom kept for candle flames only, and neutral tone mapping, which keeps pastel frosting the colour
+ * the customer picked (filmic curves grey it out on a light page). No vignette: on a bright, transparent canvas
+ * it reads as a smudge. Skipped on the "low" tier, where the renderer applies the same tone mapping.
+ * Pair it with `ShadowBlob`, not ContactShadows.
  */
 export function Effects({ ao = 1, ref }: { ao?: number; ref?: Ref<Composer | null> }) {
   const quality = useQuality()
@@ -18,14 +21,13 @@ export function Effects({ ao = 1, ref }: { ao?: number; ref?: Ref<Composer | nul
       <N8AO
         aoRadius={0.32}
         distanceFalloff={0.55}
-        intensity={2.4 * ao}
+        intensity={1.9 * ao}
         quality="medium"
-        color="#2a1a2a"
+        color={SCENE.occlusion}
         halfRes={false}
       />
-      <Bloom luminanceThreshold={1} luminanceSmoothing={0.2} intensity={0.85} mipmapBlur />
-      <Vignette offset={0.32} darkness={0.28} />
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <Bloom luminanceThreshold={1} luminanceSmoothing={0.2} intensity={0.45} mipmapBlur />
+      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
     </EffectComposer>
   )
 }

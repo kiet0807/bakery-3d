@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "src/components/design/Designer.tsx"
+        ],
+        "createdAt": "2026-11-20T07:36:01.300Z",
+        "reason": "Claude: the 3D stage and price bar use the full 2px ink sticker outline on all sides at sm/lg (globals.css sticker style); the one-side border appears only at phone width, where the panels run edge to edge with no radius"
+      }
+    ]
+  }
+}

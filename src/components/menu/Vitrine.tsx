@@ -1,29 +1,31 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
 import { useRef, useState } from 'react'
-import { sizeOf, type CakeConfig } from '@/lib/cake'
 import type { Dictionary } from '@/i18n/dictionaries'
-import { useDict } from '@/i18n/LangProvider'
+import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
+import { allergensOf, sizeOf, type CakeConfig } from '@/lib/cake'
+import { LEAD_HOURS, leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
-import { PRESETS, presetPrice } from '@/lib/presets'
+import { PRESETS, presetPrice, type Preset } from '@/lib/presets'
 import { useCart } from '@/lib/store'
 import { ScenePoster } from '../ScenePoster'
 import type { Capture } from '../three/Capture'
 
+function VitrineLoading() {
+  return <ScenePoster label={useDict().menu.loading} />
+}
+
 const VitrineScene = dynamic(() => import('../three/scenes/VitrineScene'), {
   ssr: false,
-  loading: () => <ScenePoster label="Polishing the glass…" />,
+  loading: () => <VitrineLoading />,
 })
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
 function specs(config: CakeConfig, dict: Dictionary): { label: string; value: string }[] {
   const c = dict.cake
-  const size = sizeOf(config)
   const rows = [
-    { label: c.kinds.size, value: `${c.sizes[size.id].name}, ${dict.common.units.serves(size.serves)}` },
     { label: c.kinds.sponge, value: c.sponges[config.sponge].name },
     { label: c.kinds.filling, value: c.fillings[config.filling].name },
     { label: c.kinds.frosting, value: c.frostings[config.frosting].name },
@@ -31,9 +33,21 @@ function specs(config: CakeConfig, dict: Dictionary): { label: string; value: st
   if (config.drip !== 'none') rows.push({ label: c.kinds.drip, value: c.drips[config.drip].name })
   if (config.toppings.length)
     rows.push({ label: c.kinds.topping, value: config.toppings.map((id) => c.toppings[id].name).join(', ') })
-  if (config.candles) rows.push({ label: 'Candles', value: String(config.candles) })
-  if (config.message) rows.push({ label: 'Message', value: `“${config.message}”` })
+  if (config.candles) rows.push({ label: c.kinds.candles, value: c.candles(config.candles) })
+  if (config.message) rows.push({ label: c.kinds.message, value: c.quoted(config.message) })
+  rows.push({
+    label: dict.common.contains,
+    value: allergensOf(config)
+      .map((allergen) => dict.common.allergens[allergen])
+      .join(', '),
+  })
   return rows
+}
+
+/** "16 cm · 4–6 người" for a house cake. */
+function sizeLine(preset: Preset, dict: Dictionary) {
+  const size = sizeOf(preset.config)
+  return `${dict.cake.sizes[size.id].name} · ${dict.common.units.serves(size.serves)}`
 }
 
 /**
@@ -42,7 +56,9 @@ function specs(config: CakeConfig, dict: Dictionary): { label: string; value: st
  */
 export function Vitrine() {
   const dict = useDict()
-  const nameOf = (id: (typeof PRESETS)[number]['id']) => dict.cake.presets[id].name
+  const lang = useLang()
+  const m = dict.menu
+  const nameOf = (preset: Preset) => dict.cake.presets[preset.id].name
   const [index, setIndex] = useState(0)
   const [sliced, setSliced] = useState(false)
   const [added, setAdded] = useState<string | null>(null)
@@ -53,36 +69,34 @@ export function Vitrine() {
 
   const preset = PRESETS[index]
   const count = PRESETS.length
+  const leadHours = LEAD_HOURS[leadKind(preset.config, preset.id)]
 
   const choose = (next: number) => {
     const wrapped = (next + count) % count
     setIndex(wrapped)
     setSliced(false)
-    setStatus(`${nameOf(PRESETS[wrapped].id)}, ${money(presetPrice(PRESETS[wrapped]))}.`)
+    setStatus(m.status.chosen(nameOf(PRESETS[wrapped]), money(presetPrice(PRESETS[wrapped]), lang)))
   }
 
   const addToCart = () => {
     const snapshot = captureRef.current?.(256) ?? undefined
     add(preset.config, { presetId: preset.id, snapshot })
     setAdded(preset.id)
-    setStatus(`${nameOf(preset.id)} was added to your cart.`)
+    setStatus(m.status.added(nameOf(preset)))
   }
 
   return (
     <div className="relative grid gap-6 xl:h-[100svh] xl:min-h-[720px] xl:grid-cols-[19rem_minmax(0,1fr)_23rem] xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-x-8 xl:px-8 xl:pt-24 xl:pb-8">
       <header className="relative z-10 space-y-3 px-4 pt-20 sm:px-8 xl:col-start-1 xl:row-start-1 xl:p-0">
-        <p className="eyebrow">The vitrine</p>
-        <h1 className="text-[clamp(2.6rem,4vw,3.4rem)] leading-[0.98] font-light tracking-tight">
-          Six house cakes, <span className="text-accent">under glass.</span>
+        <p className="eyebrow">{m.eyebrow}</p>
+        <h1 className="font-display text-[clamp(2.4rem,4vw,3.2rem)] leading-[1.02] font-extrabold">
+          {m.titleLead} <span className="mark">{m.titleMark}</span>
         </h1>
-        <p className="max-w-sm text-mist">
-          Pick one to bring it to the front. Peek inside, take it as it is, or open it in the builder and make
-          it yours.
-        </p>
+        <p className="max-w-sm leading-relaxed text-muted">{m.intro}</p>
       </header>
 
       <div
-        className="sticky top-16 z-20 h-[46svh] min-h-[300px] touch-pan-y border-y border-white/10 bg-night/80 backdrop-blur sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-transparent xl:backdrop-blur-none"
+        className="sticky top-16 z-20 h-[46svh] min-h-[300px] touch-pan-y border-y-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-none"
         onPointerDown={(event) => {
           if (event.pointerType !== 'mouse') swipe.current = { x: event.clientX, y: event.clientY }
         }}
@@ -102,17 +116,17 @@ export function Vitrine() {
           onSelect={choose}
           captureRef={captureRef}
         />
-        {/* Wide screens: the cakes at the sides fade behind the title and the card, so the text stays clear. */}
+        {/* Wide screens: the cakes at the sides fade into the cream page, so the title and the card stay clear. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(6_8_20/0.88)_0%,rgb(6_8_20/0.45)_24%,transparent_40%,transparent_62%,rgb(6_8_20/0.45)_76%,rgb(6_8_20/0.85)_100%)] xl:block"
+          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgb(255_248_229/0.94)_0%,rgb(255_248_229/0.55)_24%,transparent_40%,transparent_62%,rgb(255_248_229/0.55)_76%,rgb(255_248_229/0.94)_100%)] xl:block"
         />
         <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3 xl:bottom-10">
           <button
             type="button"
             onClick={() => choose(index - 1)}
-            aria-label="Previous cake"
-            className="glass grid h-12 w-12 place-items-center rounded-full text-xl transition-colors hover:border-moon hover:text-moon"
+            aria-label={m.prev}
+            className="btn btn-ghost h-12 w-12 p-0 text-xl"
           >
             <span aria-hidden>←</span>
           </button>
@@ -120,15 +134,15 @@ export function Vitrine() {
             type="button"
             aria-pressed={sliced}
             onClick={() => setSliced(!sliced)}
-            className="h-12 rounded-full bg-ink px-5 text-sm font-semibold text-night shadow-soft transition-transform hover:-translate-y-0.5"
+            className="btn btn-ghost h-12 px-5 text-sm aria-pressed:bg-butter"
           >
-            {sliced ? 'Close it up' : 'Peek inside'}
+            {sliced ? m.close : m.peek}
           </button>
           <button
             type="button"
             onClick={() => choose(index + 1)}
-            aria-label="Next cake"
-            className="glass grid h-12 w-12 place-items-center rounded-full text-xl transition-colors hover:border-moon hover:text-moon"
+            aria-label={m.next}
+            className="btn btn-ghost h-12 w-12 p-0 text-xl"
           >
             <span aria-hidden>→</span>
           </button>
@@ -136,8 +150,8 @@ export function Vitrine() {
       </div>
 
       <fieldset className="relative z-10 px-4 sm:px-8 xl:col-start-1 xl:row-start-2 xl:self-start xl:p-0">
-        <legend className="sr-only">Choose a cake</legend>
-        <ul className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-1">
+        <legend className="sr-only">{m.listLabel}</legend>
+        <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-1">
           {PRESETS.map((item, i) => (
             <li key={item.id}>
               <label className="group block cursor-pointer">
@@ -149,13 +163,20 @@ export function Vitrine() {
                   onChange={() => choose(i)}
                   className="peer sr-only"
                 />
-                <span className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-abyss/75 px-3.5 py-2.5 backdrop-blur transition-colors group-hover:border-white/25 peer-checked:border-moon peer-checked:bg-deep/70 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-moon">
-                  <span className="font-display text-xs tracking-[0.2em] text-moon">{pad(i + 1)}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium sm:text-base">
-                    {nameOf(item.id)}
+                <span className="flex min-h-14 items-center gap-3 rounded-2xl border-2 border-line bg-surface px-3 py-2.5 transition-[border-color,background-color,box-shadow] group-hover:border-edge peer-checked:border-ink peer-checked:bg-butter-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf">
+                  <span
+                    aria-hidden
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-ink bg-surface font-display text-xs font-bold group-has-checked:bg-ink group-has-checked:text-cream"
+                  >
+                    {pad(i + 1)}
                   </span>
-                  <span className="hidden text-sm text-mist tabular-nums sm:inline">
-                    {money(presetPrice(item))}
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-2 block font-display text-[0.95rem] leading-tight font-bold sm:text-base">
+                      {nameOf(item)}
+                    </span>
+                    <span className="block truncate text-xs text-muted">
+                      {money(presetPrice(item), lang)}
+                    </span>
                   </span>
                 </span>
               </label>
@@ -168,45 +189,55 @@ export function Vitrine() {
         aria-labelledby="cake-name"
         className="relative z-10 px-4 sm:px-8 xl:col-start-3 xl:row-span-2 xl:row-start-1 xl:self-end xl:p-0"
       >
-        <div className="space-y-5 rounded-3xl border border-white/10 bg-abyss/80 p-6 shadow-soft backdrop-blur-xl">
+        <div className="sticker space-y-5 p-6">
           <div className="space-y-2">
             <p className="eyebrow">
-              {pad(index + 1)} / {pad(count)} · House cake
+              {m.counter(index + 1, count)} · {m.houseCake}
             </p>
-            <h2 id="cake-name" className="text-4xl leading-tight font-light">
-              {nameOf(preset.id)}
+            <h2 id="cake-name" className="font-display text-4xl leading-tight font-extrabold">
+              {nameOf(preset)}
             </h2>
-            <p className="leading-relaxed text-mist">{dict.cake.presets[preset.id].tagline}</p>
+            <p className="leading-relaxed text-muted">{dict.cake.presets[preset.id].tagline}</p>
           </div>
-          <dl className="space-y-1.5 border-t border-white/10 pt-4 text-sm">
+          <p className="flex flex-wrap gap-2">
+            <span className="chip rotate-[-2deg] bg-soft">{sizeLine(preset, dict)}</span>
+            <span className="chip rotate-[2deg] border border-ink/70" data-testid="lead-time">
+              <span aria-hidden>⏰</span> {m.lead(leadHours)}
+            </span>
+          </p>
+          <dl className="space-y-1.5 border-t-2 border-line pt-4 text-sm">
             {specs(preset.config, dict).map((row) => (
               <div key={row.label} className="flex justify-between gap-4">
-                <dt className="text-haze">{row.label}</dt>
+                <dt className="shrink-0 text-muted">{row.label}</dt>
                 <dd className="text-right">{row.value}</dd>
               </div>
             ))}
           </dl>
-          <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
-            <p className="mr-auto text-3xl font-light tabular-nums">{money(presetPrice(preset))}</p>
-            <Link
-              href={`/design?preset=${preset.id}`}
-              className="rounded-full border border-white/30 px-4 py-3 text-sm font-medium transition-colors hover:border-moon hover:text-moon"
-            >
-              Make it yours
-            </Link>
-            {added === preset.id ? (
-              <Link href="/cart" className="rounded-full bg-ink px-5 py-3 text-sm font-semibold text-night">
-                View cart →
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={addToCart}
-                className="rounded-full bg-glow px-5 py-3 text-sm font-semibold text-night shadow-warm transition-transform hover:-translate-y-0.5"
+          <div className="space-y-3 border-t-2 border-line pt-4">
+            <p className="font-display text-3xl font-extrabold tabular-nums">
+              {money(presetPrice(preset), lang)}
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              <LocalLink
+                href={`/design?preset=${preset.id}`}
+                className="btn btn-ghost flex-1 px-4 text-sm whitespace-nowrap"
               >
-                Add to cart
-              </button>
-            )}
+                {m.makeItYours}
+              </LocalLink>
+              {added === preset.id ? (
+                <LocalLink href="/cart" className="btn btn-ghost flex-1 px-4 text-sm whitespace-nowrap">
+                  {m.viewCart}
+                </LocalLink>
+              ) : (
+                <button
+                  type="button"
+                  onClick={addToCart}
+                  className="btn btn-buy flex-1 px-4 text-sm whitespace-nowrap"
+                >
+                  {m.add}
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <p role="status" className="sr-only">

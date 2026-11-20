@@ -8,64 +8,84 @@ test.describe('vitrine', () => {
 
   test('the list and the buttons choose the cake on show', async ({ page }) => {
     await page.goto('/menu')
-    await expect(page.getByRole('heading', { level: 1, name: /Six house cakes/ })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: /6 mẫu bánh/ })).toBeVisible()
     const cakes = page.getByRole('radio')
     await expect(cakes).toHaveCount(6)
-    await expect(page.getByRole('radio', { name: /Strawberry Cloud/ })).toBeChecked()
-    await expect(page.getByRole('heading', { level: 2, name: 'Strawberry Cloud' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: /Dâu Tây Mây Hồng/ })).toBeChecked()
+    await expect(page.getByRole('heading', { level: 2, name: 'Dâu Tây Mây Hồng' })).toBeVisible()
 
     // Arrow keys move through the list like any radio group.
-    await page.getByRole('radio', { name: /Strawberry Cloud/ }).focus()
+    await page.getByRole('radio', { name: /Dâu Tây Mây Hồng/ }).focus()
     await page.keyboard.press('ArrowDown')
-    await expect(page.getByRole('radio', { name: /Midnight Ganache/ })).toBeChecked()
-    const card = page.getByRole('region', { name: 'Midnight Ganache' })
+    await expect(page.getByRole('radio', { name: /Socola Crush/ })).toBeChecked()
+    const card = page.getByRole('region', { name: 'Socola Crush' })
     await expect(card).toBeVisible()
-    await expect(card.getByText('$61', { exact: true })).toBeVisible()
-    await expect(card.getByText('Dark cocoa', { exact: true })).toBeVisible()
+    await expect(card.getByText('520.000đ', { exact: true })).toBeVisible()
+    await expect(card.getByText('Socola', { exact: true })).toBeVisible()
+    await expect(card.getByText('18 cm · 6–8 người')).toBeVisible()
+    await expect(card.getByText('trứng, sữa, bột mì (gluten), đậu nành', { exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Next cake' }).click()
-    await expect(page.getByRole('heading', { level: 2, name: 'Matcha Garden' })).toBeVisible()
-    await page.getByRole('button', { name: 'Previous cake' }).click()
-    await page.getByRole('button', { name: 'Previous cake' }).click()
-    await expect(page.getByRole('heading', { level: 2, name: 'Strawberry Cloud' })).toBeVisible()
+    await page.getByRole('button', { name: 'Bánh tiếp theo' }).click()
+    await expect(page.getByRole('heading', { level: 2, name: 'Bento Bestie' })).toBeVisible()
+    await page.getByRole('button', { name: 'Bánh trước' }).click()
+    await page.getByRole('button', { name: 'Bánh trước' }).click()
+    await expect(page.getByRole('heading', { level: 2, name: 'Dâu Tây Mây Hồng' })).toBeVisible()
     // Round the table: before the first cake comes the last.
-    await page.getByRole('button', { name: 'Previous cake' }).click()
-    await expect(page.getByRole('radio', { name: /Birthday Confetti/ })).toBeChecked()
+    await page.getByRole('button', { name: 'Bánh trước' }).click()
+    await expect(page.getByRole('radio', { name: /Sinh Nhật Cầu Vồng/ })).toBeChecked()
     await expect(
-      page.getByRole('region', { name: 'Birthday Confetti' }).getByText('“Happy Birthday”'),
+      page.getByRole('region', { name: 'Sinh Nhật Cầu Vồng' }).getByText('“Happy Birthday”'),
     ).toBeVisible()
+  })
+
+  test('house cakes show how far ahead to order', async ({ page }) => {
+    await page.goto('/menu')
+    await expect(page.getByTestId('lead-time')).toHaveText(/Đặt trước 4 giờ/)
+    await page.getByText('Vương Miện Caramel', { exact: true }).click()
+    await expect(page.getByTestId('lead-time')).toHaveText(/Đặt trước 48 giờ/)
   })
 
   test('peeking inside is a toggle that resets with the next cake', async ({ page }) => {
     await page.goto('/menu')
-    await page.getByRole('button', { name: 'Peek inside' }).click()
-    await expect(page.getByRole('button', { name: 'Close it up' })).toHaveAttribute('aria-pressed', 'true')
-    await page.getByRole('button', { name: 'Next cake' }).click()
-    await expect(page.getByRole('button', { name: 'Peek inside' })).toHaveAttribute('aria-pressed', 'false')
+    await page.getByRole('button', { name: 'Xem ruột bánh' }).click()
+    await expect(page.getByRole('button', { name: 'Đóng lại' })).toHaveAttribute('aria-pressed', 'true')
+    await page.getByRole('button', { name: 'Bánh tiếp theo' }).click()
+    await expect(page.getByRole('button', { name: 'Xem ruột bánh' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('"Make it yours" opens the cake in the builder', async ({ page }) => {
+  test('"Đổi theo ý bạn" opens the cake in the builder', async ({ page }) => {
     await page.goto('/menu')
-    await page.getByText('Caramel Crown', { exact: true }).click()
-    const card = page.getByRole('region', { name: 'Caramel Crown' })
-    await expect(card.getByRole('link', { name: 'Make it yours' })).toHaveAttribute(
+    await page.getByText('Vương Miện Caramel', { exact: true }).click()
+    const card = page.getByRole('region', { name: 'Vương Miện Caramel' })
+    await expect(card.getByRole('link', { name: 'Đổi theo ý bạn' })).toHaveAttribute(
       'href',
       '/design?preset=caramel-crown',
     )
-    await card.getByRole('link', { name: 'Make it yours' }).click()
+    await card.getByRole('link', { name: 'Đổi theo ý bạn' }).click()
     await expect(page).toHaveURL(/\/design$/)
-    await expect(page.getByTestId('price')).toHaveText('$102')
-    await expect(page.getByRole('radio', { name: /^Grand/ })).toBeChecked()
+    await expect(page.getByTestId('price')).toHaveText('1.290.000đ')
+    await expect(page.getByRole('radio', { name: /^2 tầng/ })).toBeChecked()
   })
 
   test('a house cake goes straight into the cart', async ({ page }) => {
     await page.goto('/menu')
-    await page.getByText('Ube Dream', { exact: true }).click()
-    const card = page.getByRole('region', { name: 'Ube Dream' })
-    await card.getByRole('button', { name: 'Add to cart' }).click()
+    await page.getByText('Khoai Môn Mộng Mơ', { exact: true }).click()
+    const card = page.getByRole('region', { name: 'Khoai Môn Mộng Mơ' })
+    await card.getByRole('button', { name: 'Thêm vào giỏ' }).click()
     await expect(cartCount(page)).toHaveText('1')
-    await card.getByRole('link', { name: 'View cart →' }).click()
+    await card.getByRole('link', { name: 'Xem giỏ →' }).click()
     await expect(page).toHaveURL(/\/cart$/)
-    await expect(page.getByRole('heading', { level: 2, name: 'Ube Dream' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Khoai Môn Mộng Mơ' })).toBeVisible()
+  })
+
+  test('the English vitrine keeps its links in English', async ({ page }) => {
+    await page.goto('/en/menu')
+    await expect(page.getByRole('heading', { level: 2, name: 'Strawberry Cloud' })).toBeVisible()
+    const card = page.getByRole('region', { name: 'Strawberry Cloud' })
+    await expect(card.getByText('350,000 VND', { exact: true })).toBeVisible()
+    await expect(card.getByRole('link', { name: 'Make it yours' })).toHaveAttribute(
+      'href',
+      '/en/design?preset=strawberry-cloud',
+    )
   })
 })

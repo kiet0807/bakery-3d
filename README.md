@@ -23,7 +23,7 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
   drip, up to four toppings, sweetness, candles and a message of up to 22 characters with full Vietnamese
   diacritics. Every choice redraws the cake and the price in đồng, and shows how far ahead it must be ordered.
   Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the
-  exact same cake (`/design?cake=…`) to send to the shop on Zalo.
+  exact same cake (`/design#cake=…`, in the fragment so it never reaches a server) to send to the shop on Zalo.
 - **Vitrine** (`/menu`): the six house cakes on a turning table under glass cloches. The chosen cake comes to
   the front and its cloche lifts. Add it as it is, or open it in the builder.
 - **Cart** (`/cart`): quantities, then a demo checkout with pickup at the shop or delivery, time slots in the
@@ -162,7 +162,8 @@ Dependency versions are pinned exactly in `package.json`.
 
 ## Run locally
 
-Requires Node.js 20.9 or later and pnpm 10 (`corepack enable` picks the version from `package.json`).
+Requires Node.js 22.12 or later (Vitest needs it; the site alone runs on 20.9) and pnpm 10 (`corepack enable` picks
+the version from `package.json`). CI uses Node 22.
 
 ```bash
 pnpm install

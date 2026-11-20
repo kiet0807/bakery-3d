@@ -161,6 +161,7 @@ const policySections: Record<PolicyId, PolicySection> = {
           'Web không có tài khoản, không cookie, không công cụ đo lường hay quảng cáo.',
           'Giỏ hàng và chiếc bánh bạn đang thiết kế chỉ lưu trong trình duyệt này (localStorage), để lần sau mở lại còn nguyên. Không gửi đi đâu.',
           'Tên, số điện thoại, địa chỉ ở bước thanh toán không được gửi hay lưu ở máy chủ nào. Vì tiệm không có thật, đơn chỉ là đơn thử.',
+          'Link "Gửi thiết kế cho tiệm" chứa nguyên chiếc bánh, kể cả chữ trên bánh, ở phần sau dấu # của link. Trình duyệt không gửi phần đó lên máy chủ, nhưng ai có link cũng xem được bánh của bạn.',
           'Khi bạn gọi điện, nhắn Zalo, Facebook, Instagram hay TikTok, cuộc trò chuyện do các dịch vụ đó xử lý theo chính sách của họ.',
           'Muốn xóa sạch? Xóa từng bánh trong giỏ, hoặc xóa dữ liệu trang web trong cài đặt trình duyệt.',
         ],

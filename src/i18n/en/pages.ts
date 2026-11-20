@@ -150,6 +150,7 @@ const policySections: Record<PolicyId, PolicySection> = {
           'No accounts, no cookies, no analytics or advertising tools.',
           'Your cart and the cake you are designing are stored only in this browser (localStorage), so they are still there next time. Nothing is sent anywhere.',
           "The name, phone number and address you type at checkout are not sent to or stored on any server. The shop isn't real, so every order is a demo.",
+          'The "Send this design to the shop" link carries the whole cake, message included, after the # in the link. Browsers never send that part to a server, but anyone with the link can see your cake.',
           'When you call, or message on Zalo, Facebook, Instagram or TikTok, those services handle the conversation under their own policies.',
           "Want it all gone? Remove the cakes from your cart, or clear this site's data in your browser settings.",
         ],

@@ -103,6 +103,16 @@ test.describe('home', () => {
     })
   })
 
+  test('the side index leaves the Tab order when it fades out', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'The side index is shown on wide screens only.')
+    await skipIntro(page)
+    await page.goto('/')
+    const index = page.locator('nav[aria-label="Các chương"]')
+    await expect(index).not.toHaveAttribute('inert')
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await expect(index).toHaveAttribute('inert', '')
+  })
+
   test('the English home page tells the same story under /en', async ({ page }) => {
     await page.goto('/en')
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')

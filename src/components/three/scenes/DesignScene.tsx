@@ -2,7 +2,7 @@
 
 import { OrbitControls } from '@react-three/drei'
 import type { EffectComposer as Composer } from 'postprocessing'
-import { useMemo, useRef, type RefObject } from 'react'
+import { lazy, Suspense, useMemo, useRef, type RefObject } from 'react'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
@@ -11,11 +11,16 @@ import { CanvasShell } from '../CanvasShell'
 import { CaptureBridge, type Capture } from '../Capture'
 import { Effects } from '../Effects'
 import { FitCamera } from '../FitCamera'
-import { PhotoMode } from '../PhotoMode'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
+
+/**
+ * The path tracer (about 66 KB gzipped) loads only when someone asks for a studio photo. Phones never offer it, so
+ * they never download it.
+ */
+const PhotoMode = lazy(() => import('../PhotoMode').then((module) => ({ default: module.PhotoMode })))
 
 export default function DesignScene({
   config,
@@ -24,6 +29,7 @@ export default function DesignScene({
   photo = false,
   onPhotoProgress = () => {},
   onPhotoError = () => {},
+  onFallback,
 }: {
   config: CakeConfig
   sliced: boolean
@@ -32,6 +38,8 @@ export default function DesignScene({
   photo?: boolean
   onPhotoProgress?: (progress: number) => void
   onPhotoError?: (error: unknown) => void
+  /** The 2D drawing is shown instead (no WebGL, or the scene crashed): there is nothing to photograph. */
+  onFallback?: () => void
 }) {
   const { scenes } = useDict()
   const composer = useRef<Composer | null>(null)
@@ -50,6 +58,7 @@ export default function DesignScene({
       className="h-full w-full cursor-grab active:cursor-grabbing"
       label={scenes.design}
       camera={{ position: [0, 2, 7], fov: 32 }}
+      onFallback={onFallback}
     >
       <FitCamera
         radius={frame.radius}
@@ -76,12 +85,14 @@ export default function DesignScene({
       <CakeStand radius={radius} />
       <Cake config={config} sliced={sliced} />
       {photo ? (
-        <PhotoMode
-          floorY={-STAND_HEIGHT}
-          drawRef={draw}
-          onProgress={onPhotoProgress}
-          onError={onPhotoError}
-        />
+        <Suspense fallback={null}>
+          <PhotoMode
+            floorY={-STAND_HEIGHT}
+            drawRef={draw}
+            onProgress={onPhotoProgress}
+            onError={onPhotoError}
+          />
+        </Suspense>
       ) : (
         <Effects ref={composer} />
       )}

@@ -55,7 +55,7 @@ export const cart = {
     name: { label: 'Tên người nhận', hint: 'Tiệm ghi tên này lên hộp bánh.', placeholder: 'Ví dụ: Linh' },
     phone: {
       label: 'Số điện thoại',
-      hint: 'Tiệm gọi hoặc nhắn Zalo để xác nhận đơn.',
+      hint: 'Tiệm mở thật thì sẽ gọi hoặc nhắn Zalo số này để xác nhận đơn. Đơn thử thì không ai gọi đâu.',
       placeholder: '09xx xxx xxx',
     },
     method: {

@@ -1,6 +1,13 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
-import { DEFAULT_CAKE, MAX_TOPPINGS, normalizeConfig, type CakeConfig, type ToppingId } from './cake'
+import { createJSONStorage, persist, type PersistStorage, type StateStorage } from 'zustand/middleware'
+import {
+  DEFAULT_CAKE,
+  MAX_TOPPINGS,
+  cleanMessage,
+  normalizeConfig,
+  type CakeConfig,
+  type ToppingId,
+} from './cake'
 import { addItem, removeItem, restoreItems, setQuantity, type CartItem } from './cart'
 import type { PresetId } from './presets'
 
@@ -35,6 +42,27 @@ const safeStorage: StateStorage = {
   },
 }
 
+/**
+ * JSON over safeStorage that forgives a broken saved value (edited by hand, cut short by a full disk): the value
+ * is dropped and the store starts empty. Without this, persist never finishes hydrating on a parse error, and the
+ * cart page waits forever behind its loading state.
+ */
+function forgivingStorage<S>(): PersistStorage<S> {
+  const json = createJSONStorage<S>(() => safeStorage) as PersistStorage<S>
+  return {
+    getItem: (name) => {
+      try {
+        return json.getItem(name)
+      } catch {
+        safeStorage.removeItem(name)
+        return null
+      }
+    },
+    setItem: (name, value) => json.setItem(name, value),
+    removeItem: (name) => json.removeItem(name),
+  }
+}
+
 interface DesignState {
   config: CakeConfig
   sliced: boolean
@@ -50,7 +78,15 @@ export const useDesign = create<DesignState>()(
     (set) => ({
       config: DEFAULT_CAKE,
       sliced: false,
-      update: (patch) => set((state) => ({ config: normalizeConfig({ ...state.config, ...patch }) })),
+      update: (patch) =>
+        set((state) => {
+          const config = normalizeConfig({ ...state.config, ...patch })
+          // normalizeConfig trims the message, which would eat the space after each word as it is typed
+          // ("HappyBirthday"). While typing it keeps the space; the box trims on blur, and the cart, the share
+          // link and the saved design all go through normalizeConfig again.
+          if (typeof patch.message !== 'string') return { config }
+          return { config: { ...config, message: cleanMessage(patch.message) } }
+        }),
       toggleTopping: (id) =>
         set((state) => {
           const { toppings } = state.config
@@ -66,7 +102,7 @@ export const useDesign = create<DesignState>()(
     {
       name: 'kais-bakery-design',
       version: 2,
-      storage: createJSONStorage(() => safeStorage),
+      storage: forgivingStorage(),
       partialize: (state) => ({ config: state.config }),
       merge: (persisted, current) => ({
         ...current,
@@ -105,7 +141,7 @@ export const useCart = create<CartState>()(
     {
       name: 'kais-bakery-cart',
       version: 2,
-      storage: createJSONStorage(() => safeStorage),
+      storage: forgivingStorage(),
       partialize: (state) => ({ items: state.items }),
       merge: (persisted, current) => ({
         ...current,

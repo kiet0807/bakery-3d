@@ -18,6 +18,14 @@ async function safeDay(page: Page, label: string) {
 }
 
 test.describe('cart and test checkout', () => {
+  test('a broken saved cart is dropped, not waited on forever', async ({ page }) => {
+    await page.goto('/cart')
+    await page.evaluate((key) => window.localStorage.setItem(key, '{'), CART_KEY)
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1, name: 'Giỏ còn trống trơn nè' })).toBeVisible()
+    await expect(cartCount(page)).toHaveText('0')
+  })
+
   test('an empty cart points to the builder and the menu', async ({ page }) => {
     await page.goto('/cart')
     await expect(page.getByRole('heading', { level: 1, name: 'Giỏ còn trống trơn nè' })).toBeVisible()

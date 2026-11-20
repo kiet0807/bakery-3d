@@ -52,7 +52,7 @@ export const cake: CakeDict = {
   toppings: {
     strawberries: { name: 'Đà Lạt strawberries', note: 'Fresh and juicy' },
     blueberries: { name: 'Blueberries', note: 'Little purple clusters' },
-    macarons: { name: 'Macarons', note: 'Four pastel shells' },
+    macarons: { name: 'Macarons', note: 'Four pastel shells, eight on two tiers' },
     cherries: { name: 'Cherries', note: 'Stems and all' },
     'cream-kisses': { name: 'Cream kisses', note: 'Piped all around, free' },
     'chocolate-shards': { name: 'Chocolate shards', note: 'Snapped by hand' },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeConfig } from '@/lib/cake'
+import { macaronCount, normalizeConfig } from '@/lib/cake'
+import { PRESETS } from '@/lib/presets'
 import { PLAQUE_HEIGHT, computeLayout, headroom, plaqueLines } from './layout'
 
 const bento = normalizeConfig({ size: 'bento', candles: 9, message: 'Chúc mừng sinh nhật Mẹ' })
@@ -39,5 +40,26 @@ describe('plaque and headroom', () => {
     expect(headroom(normalizeConfig({ size: 's16', message: 'Hi' }))).toBeCloseTo(0.42)
     expect(headroom(normalizeConfig({ size: 's16', candles: 3 }))).toBe(0.4)
     expect(headroom(normalizeConfig({ size: 's16' }))).toBe(0.22)
+  })
+})
+
+describe('the topping ring', () => {
+  const ringOf = (config: Parameters<typeof normalizeConfig>[0]) =>
+    computeLayout(normalizeConfig(config)).ring
+
+  it('draws exactly the macarons the topping promises, on every vitrine cake that has them', () => {
+    const withMacarons = PRESETS.filter((preset) => preset.config.toppings.includes('macarons'))
+    expect(withMacarons.length).toBeGreaterThan(0)
+    for (const preset of withMacarons)
+      expect(computeLayout(preset.config).ring.macarons, preset.id).toHaveLength(
+        macaronCount(preset.config.size),
+      )
+  })
+
+  it('draws eight on a two-tier cake, and lets fruit fill the rest of the ring', () => {
+    expect(ringOf({ size: 'tier2', toppings: ['macarons'] }).macarons).toHaveLength(8)
+    const mixed = ringOf({ size: 's18', toppings: ['strawberries', 'macarons'] })
+    expect(mixed.macarons).toHaveLength(4)
+    expect(mixed.strawberries.length).toBeGreaterThan(4)
   })
 })

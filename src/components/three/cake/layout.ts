@@ -1,4 +1,4 @@
-import { configKey, sizeOf, type CakeConfig, type ToppingId } from '@/lib/cake'
+import { configKey, macaronCount, sizeOf, type CakeConfig, type ToppingId } from '@/lib/cake'
 import { createRandom, hashString } from '@/lib/random'
 import { BEVEL, FROSTING, SLICE_ANGLE } from './geometry'
 
@@ -188,16 +188,24 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
     }
   }
 
-  // Fruit, macarons and shards share one ring on the top tier, taking turns.
+  // Fruit, macarons and shards share one ring on the top tier. Macarons are counted (macaronCount, the number the
+  // topping promises) and spread evenly; the other kinds fill the rest of the ring, taking turns.
   const kinds = RING_TOPPINGS.filter((id) => config.toppings.includes(id))
   if (kinds.length) {
     const radius = top.radius * (kisses ? 0.62 : 0.72)
-    const spacing = kinds.includes('macarons') ? 0.24 : 0.2
-    const count = Math.max(kinds.length * 2, Math.round((Math.PI * 2 * radius) / spacing))
+    const macarons = kinds.includes('macarons') ? macaronCount(config.size) : 0
+    const others = kinds.filter((id) => id !== 'macarons')
+    const spacing = macarons ? 0.24 : 0.2
+    const slots = Math.max(others.length * 2, Math.round((Math.PI * 2 * radius) / spacing))
+    const count = others.length ? Math.max(slots, macarons * 2) : macarons
+    // Slot i holds a macaron when the running share of macarons steps up there: exactly `macarons` slots, evenly.
+    const macaronAt = (i: number) =>
+      Math.floor(((i + 1) * macarons) / count) > Math.floor((i * macarons) / count)
     const offset = random() * 0.4
+    let turn = 0
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + offset
-      const kind = kinds[i % kinds.length]
+      const kind = macaronAt(i) ? 'macarons' : others[turn++ % others.length]
       const { x, z } = polar(radius, angle)
       ring[kind].push({
         x,

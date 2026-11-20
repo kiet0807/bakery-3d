@@ -34,7 +34,8 @@ None. Every cake, stand, cloche, cloud and box is generated in code.
   for state, [Tailwind CSS](https://tailwindcss.com) for styling
 - [Vitest](https://vitest.dev) and [Playwright](https://playwright.dev) for tests
 
-All are MIT licensed, except postprocessing (zlib) and N8AO (ISC).
+All are MIT licensed, except postprocessing (zlib) and N8AO (ISC). Playwright and TypeScript, used only to build
+and test, are Apache-2.0.
 
 ## Inspiration
 

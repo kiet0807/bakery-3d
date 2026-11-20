@@ -274,8 +274,10 @@ export function HomeExperience() {
         })}
       </div>
 
+      {/* Faded out past the story or behind the welcome screen: `inert` keeps its buttons out of the Tab order too. */}
       <nav
         aria-label={story.indexLabel}
+        inert={!(inStory && gate === 'closed')}
         className={`fixed top-1/2 right-5 z-30 hidden -translate-y-1/2 transition-opacity duration-500 lg:block ${
           inStory && gate === 'closed' ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}

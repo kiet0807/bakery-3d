@@ -16,7 +16,7 @@ to `https://bakery.kaidev.io.vn`.
 Kai's Bakery is a demo shop: there is no server-side code that stores orders, no accounts and no payments. Welcome
 reports, for example:
 
-- script injection through a shared design link (`/design?cake=…`), a saved cart or any other input;
+- script injection through a shared design link (`/design#cake=…`, or `?cake=…` in older links), a saved cart or any other input;
 - a way around the security headers in `next.config.ts`, for example framing the site from another origin or
   sending its forms elsewhere;
 - the test checkout sending or keeping a name, phone number or address, which the site promises it never does.

@@ -74,6 +74,13 @@ test.describe('cake builder', () => {
     await message.fill('Chúc mừng sinh nhật bé Na nhé')
     await expect(message).toHaveValue('Chúc mừng sinh nhật bé')
     await expect(page.getByText('22/22')).toBeVisible()
+
+    // Typed key by key, as a person does: the space after a word must survive until the next one.
+    await message.fill('')
+    await message.pressSequentially('Happy Birthday ')
+    await expect(message).toHaveValue('Happy Birthday ')
+    await message.blur()
+    await expect(message).toHaveValue('Happy Birthday')
   })
 
   test('sweetness, lead time and allergens follow the cake', async ({ page }) => {
@@ -113,6 +120,7 @@ test.describe('cake builder', () => {
       sweetness: 'regular',
       message: 'Mẹ yêu',
     })
+    // A link from before 2026-11-20, with the design in the query: it still opens.
     await page.goto(`/design?cake=${encodeCake(shared)}`)
     await expect(page).toHaveURL(/\/design$/)
     // 440.000 + matcha 30.000 + mango 50.000 + pistachio 40.000 + blueberries 60.000
@@ -128,7 +136,7 @@ test.describe('cake builder', () => {
     await clickInBand(page.getByRole('button', { name: /Gửi thiết kế cho tiệm/ }))
     await expect(page.getByText('Đã chép link, dán vào Zalo cho tiệm nha!').first()).toBeVisible()
     const link = await page.evaluate(() => navigator.clipboard.readText())
-    expect(link).toMatch(/\/design\?cake=[A-Za-z0-9_-]+$/)
+    expect(link).toMatch(/\/design#cake=[A-Za-z0-9_-]+$/)
 
     await clickInBand(page.getByRole('button', { name: 'Làm lại từ đầu' }))
     await expect(page.getByTestId('price')).toHaveText('350.000đ')

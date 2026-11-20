@@ -1,6 +1,10 @@
 import { normalizeConfig, type CakeConfig } from './cake'
 
-/** The query parameter that carries a whole cake design: `/design?cake=…`. */
+/**
+ * The name that carries a whole cake design in a link. New links put it in the fragment (`/design#cake=…`), which
+ * browsers never send to a server, so the message on the cake stays between the people sharing the link. Links
+ * from before 2026-11-20 used the query (`/design?cake=…`); the builder still opens them.
+ */
 export const SHARE_PARAM = 'cake'
 
 const toBase64Url = (bytes: Uint8Array) => {
@@ -58,4 +62,4 @@ export function decodeCake(token: string | null | undefined): CakeConfig | null 
 }
 
 /** The path (without language prefix) that opens this design in the builder. */
-export const designPath = (config: CakeConfig) => `/design?${SHARE_PARAM}=${encodeCake(config)}`
+export const designPath = (config: CakeConfig) => `/design#${SHARE_PARAM}=${encodeCake(config)}`

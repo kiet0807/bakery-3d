@@ -53,7 +53,7 @@ export const cart: CartDict = {
     name: { label: 'Name for the order', hint: 'We write it on the cake box.', placeholder: 'e.g. Linh' },
     phone: {
       label: 'Phone number',
-      hint: 'We call or text on Zalo to confirm.',
+      hint: 'A real shop would call or text this number on Zalo to confirm. For a demo order, nobody calls.',
       placeholder: '09xx xxx xxx',
     },
     method: {

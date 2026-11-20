@@ -89,6 +89,8 @@ test.describe('accessibility and resilience', () => {
     test('the builder shows a drawing and still sells cakes', async ({ page }) => {
       await page.goto('/design')
       await expect(page.getByText(NO_3D)).toBeVisible()
+      // Nothing to photograph: the studio photo would wait at 0% forever.
+      await expect(page.getByRole('button', { name: 'Chụp ảnh studio' })).toHaveCount(0)
       await page.getByRole('button', { name: 'Thêm vào giỏ' }).click()
       await expect(cartCount(page)).toHaveText('1')
     })

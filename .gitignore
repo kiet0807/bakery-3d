@@ -43,6 +43,8 @@ next-env.d.ts
 # local notes (never committed)
 HANDOFF.md
 PLAN.md
+REVIEW-PROMPT.md
+BAO-CAO-REVIEW-*.md
 
 # playwright
 /test-results/

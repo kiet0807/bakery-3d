@@ -127,7 +127,7 @@ if (want('photo')) {
     'Happy Birthday',
   ]
   const token = Buffer.from(JSON.stringify(fields)).toString('base64url')
-  const s = await open(`/design?cake=${token}`)
+  const s = await open(`/design#cake=${token}`)
   await s.page.waitForTimeout(5000)
   await s.page.getByRole('button', { name: 'Chụp ảnh studio' }).click()
   await s.page.getByRole('progressbar').waitFor({ state: 'visible', timeout: 30000 })

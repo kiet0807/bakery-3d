@@ -59,7 +59,7 @@ export const cake = {
   toppings: {
     strawberries: { name: 'Dâu tây Đà Lạt', note: 'Tươi rói, đỏ mọng' },
     blueberries: { name: 'Việt quất', note: 'Từng chùm tím xanh' },
-    macarons: { name: 'Macaron', note: '4 chiếc pastel' },
+    macarons: { name: 'Macaron', note: '4 chiếc pastel, bánh 2 tầng 8 chiếc' },
     cherries: { name: 'Cherry', note: 'Còn nguyên cuống' },
     'cream-kisses': { name: 'Bông kem', note: 'Bắt quanh bánh, miễn phí' },
     'chocolate-shards': { name: 'Socola miếng', note: 'Bẻ tay, giòn tan' },

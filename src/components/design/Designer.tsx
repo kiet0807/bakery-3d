@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { allergenText, lineLabel } from '@/i18n/cake-text'
 import { localeHref } from '@/i18n/config'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
@@ -44,21 +44,34 @@ const DesignScene = dynamic(() => import('../three/scenes/DesignScene'), {
 })
 
 /**
- * Opens a design from the address, then tidies it: `?cake=…` is a design someone shared, `?preset=…` a
- * vitrine cake. A shared design wins if both are there; a broken token is simply dropped.
+ * Opens a design from the address, then tidies it: `#cake=…` is a design someone shared (`?cake=…` in links made
+ * before 2026-11-20), `?preset=…` a vitrine cake. A shared design wins if both are there; a broken token is simply
+ * dropped. A shared link opened while the builder is already open only changes the fragment, with no new page
+ * load, hence the `hashchange` listener.
  */
 function useDesignFromUrl() {
   const load = useDesign((state) => state.load)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (!params.has(SHARE_PARAM) && !params.has('preset')) return
-    const config = decodeCake(params.get(SHARE_PARAM)) ?? presetById(params.get('preset'))?.config
-    const apply = () => {
-      if (config) load(config)
-      window.history.replaceState(null, '', window.location.pathname)
+    let stopWaiting = () => {}
+    const read = () => {
+      const params = new URLSearchParams(window.location.search)
+      const token =
+        new URLSearchParams(window.location.hash.slice(1)).get(SHARE_PARAM) ?? params.get(SHARE_PARAM)
+      if (!token && !params.has('preset')) return
+      const config = decodeCake(token) ?? presetById(params.get('preset'))?.config
+      const apply = () => {
+        if (config) load(config)
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+      if (useDesign.persist.hasHydrated()) apply()
+      else stopWaiting = useDesign.persist.onFinishHydration(apply)
     }
-    if (useDesign.persist.hasHydrated()) apply()
-    else return useDesign.persist.onFinishHydration(apply)
+    read()
+    window.addEventListener('hashchange', read)
+    return () => {
+      window.removeEventListener('hashchange', read)
+      stopWaiting()
+    }
   }, [load])
 }
 
@@ -92,8 +105,11 @@ export function Designer() {
   const [photoFor, setPhotoFor] = useState<string | null>(null)
   const [photoProgress, setPhotoProgress] = useState(0)
   const [photoNote, setPhotoNote] = useState('')
+  // The stage shows the 2D drawing (no WebGL, or the scene crashed): no studio photo then. Stable for CanvasShell.
+  const [flat, setFlat] = useState(false)
+  const showFlat = useCallback(() => setFlat(true), [])
   if (photoFor !== null && photoFor !== sceneKey) setPhotoFor(null)
-  const photo = photoFor === sceneKey
+  const photo = photoFor === sceneKey && !flat
   const developed = photo && photoProgress >= 1
 
   const price = priceOf(config)
@@ -189,6 +205,7 @@ export function Designer() {
           photo={photo}
           onPhotoProgress={setPhotoProgress}
           onPhotoError={photoFailed}
+          onFallback={showFlat}
         />
         <span className="chip pointer-events-none absolute top-3 left-3 rotate-[-3deg] border border-ink/70">
           <span aria-hidden>✦</span> {dict.common.illustration}
@@ -243,10 +260,16 @@ export function Designer() {
               <button type="button" onClick={saveImage} className={STAGE_BUTTON}>
                 {d.stage.save}
               </button>
-              {/* Path tracing is a desktop-GPU job; phones keep the instant picture. */}
-              <button type="button" onClick={startPhoto} className={`${STAGE_BUTTON} hidden md:inline-flex`}>
-                {d.stage.studio}
-              </button>
+              {/* Path tracing is a desktop-GPU job; phones and the 2D drawing keep the instant picture. */}
+              {!flat && (
+                <button
+                  type="button"
+                  onClick={startPhoto}
+                  className={`${STAGE_BUTTON} hidden md:inline-flex`}
+                >
+                  {d.stage.studio}
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -287,7 +287,7 @@ describe('orderText', () => {
     expect(text).toContain('• Dâu Tây Mây Hồng × 2: 700.000đ')
     expect(text).toContain('Cọc 50%: 525.000đ · còn lại: 525.000đ')
     expect(text).toContain('Ghi chú: Ít ngọt')
-    const links = [...text.matchAll(/https:\/\/kai\.example\/design\?cake=([\w-]+)/g)]
+    const links = [...text.matchAll(/https:\/\/kai\.example\/design#cake=([\w-]+)/g)]
     expect(links).toHaveLength(2)
     expect(decodeCake(links[1][1])?.message).toBe('Mẹ yêu')
   })
@@ -296,7 +296,7 @@ describe('orderText', () => {
     const text = orderText({ order, items, dict: dictionaries.en, lang: 'en', origin: 'https://kai.example' })
     expect(text).toContain('Order KAI-0042')
     expect(text).toContain('Strawberry Cloud × 2: 700,000 VND')
-    expect(text).toContain('https://kai.example/en/design?cake=')
+    expect(text).toContain('https://kai.example/en/design#cake=')
     expect(text).toContain('Payment: Bank transfer')
   })
 })

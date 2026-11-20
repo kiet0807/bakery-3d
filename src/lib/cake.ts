@@ -230,6 +230,12 @@ export const toppingOf = (id: ToppingId) => byId(TOPPINGS, id)
 /** The surcharge band of a size. */
 export const bandOf = (size: SizeId): Band => byId(SIZES, size).band
 
+/**
+ * Macarons are sold by the piece, so the topping's words, its price band and the 3D ring all use this one count:
+ * four (40.000đ), eight on a two-tier cake (80.000đ).
+ */
+export const macaronCount = (size: SizeId): number => (bandOf(size) === 'tiered' ? 8 : 4)
+
 /** What a choice adds to a cake of the given size, in đồng. */
 export const surcharge = (choice: { price: BandPrice }, size: SizeId) => choice.price[bandOf(size)]
 

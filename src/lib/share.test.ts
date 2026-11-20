@@ -14,7 +14,7 @@ describe('share links', () => {
     const token = encodeCake(PRESETS[5].config)
     expect(token).toMatch(/^[A-Za-z0-9_-]+$/)
     expect(token.length).toBeLessThan(200)
-    expect(designPath(PRESETS[0].config)).toBe(`/design?${SHARE_PARAM}=${encodeCake(PRESETS[0].config)}`)
+    expect(designPath(PRESETS[0].config)).toBe(`/design#${SHARE_PARAM}=${encodeCake(PRESETS[0].config)}`)
   })
 
   it('rejects broken tokens and cleans tampered ones', () => {

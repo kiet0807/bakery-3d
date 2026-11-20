@@ -63,3 +63,32 @@ describe('the topping ring', () => {
     expect(mixed.strawberries.length).toBeGreaterThan(4)
   })
 })
+
+describe('what stays put when the design changes', () => {
+  const base = { size: 's18', toppings: ['sprinkles', 'macarons'], drip: 'none' } as const
+  const layoutOf = (config: Parameters<typeof normalizeConfig>[0]) => computeLayout(normalizeConfig(config))
+
+  it('keeps every sprinkle and macaron where it was when only colours change', () => {
+    const before = layoutOf(base)
+    const after = layoutOf({ ...base, frosting: 'cocoa', drip: 'caramel', sponge: 'matcha' })
+    expect(after.sprinkles).toEqual(before.sprinkles)
+    expect(after.ring.macarons.map((p) => [p.x, p.z])).toEqual(before.ring.macarons.map((p) => [p.x, p.z]))
+  })
+
+  it('leaves the sprinkles alone when another topping is added, and the macarons standing where they were', () => {
+    const before = layoutOf(base)
+    const after = layoutOf({ ...base, toppings: ['sprinkles', 'macarons', 'strawberries'] })
+    expect(after.sprinkles).toEqual(before.sprinkles)
+    expect(after.ring.macarons.map((p) => [p.x, p.z])).toEqual(before.ring.macarons.map((p) => [p.x, p.z]))
+  })
+
+  it('tells each drip which tier it runs down', () => {
+    const { drips, tiers } = layoutOf({ size: 'tier2', drip: 'caramel' })
+    for (const [index, tier] of tiers.entries()) {
+      const own = drips.filter((d) => d.tier === index)
+      expect(own.length).toBeGreaterThan(0)
+      // Drips start just under the tier's rounded top edge.
+      for (const d of own) expect(Math.abs(d.top - (tier.base + tier.height))).toBeLessThan(0.08)
+    }
+  })
+})

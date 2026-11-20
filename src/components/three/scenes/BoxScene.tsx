@@ -317,13 +317,14 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
 }
 
 export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
-  const { scenes } = useDict()
+  const { scenes, cart } = useDict()
   const startedAt = useRef<number | null>(null)
   return (
     <CanvasShell
       className="h-full w-full"
       mode="always"
       label={scenes.box}
+      poster={cart.done.boxLoading}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}
     >
       <Studio floor={-T} shadows={false} />

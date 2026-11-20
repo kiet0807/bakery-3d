@@ -4,6 +4,7 @@ import { SectionHeading } from '@/components/info/SectionHeading'
 import { dictionaries } from '@/i18n/dictionaries'
 import { langFrom, pageMetadata } from '@/i18n/metadata'
 import type { PolicyBlock, PolicyId } from '@/i18n/vi/pages'
+import { PageTransition } from '@/components/PageTransition'
 
 const ORDER: PolicyId[] = ['delivery', 'payment', 'changes', 'damage', 'storage', 'allergens', 'privacy']
 
@@ -62,61 +63,63 @@ export default async function PoliciesPage({ params }: PageProps<'/[lang]/polici
   const { common, pages } = dictionaries[lang]
   const t = pages.policies
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-28 sm:px-8 sm:pt-36">
-      <header className="max-w-3xl space-y-6">
-        <SectionHeading id="policies-title" level={1} eyebrow={t.eyebrow} title={t.title} accent={t.accent}>
-          <p className="text-xl leading-relaxed text-muted">{t.lead}</p>
-        </SectionHeading>
-        <p className="rounded-2xl bg-butter-soft p-4 leading-relaxed">
-          <span className="chip mr-2 -rotate-2 border border-ink/80">
-            <span aria-hidden>✦</span> {common.notice.badge}
-          </span>
-          {t.demoNote}
-        </p>
-      </header>
+    <PageTransition>
+      <div className="mx-auto max-w-6xl px-4 pt-28 sm:px-8 sm:pt-36">
+        <header className="max-w-3xl space-y-6">
+          <SectionHeading id="policies-title" level={1} eyebrow={t.eyebrow} title={t.title} accent={t.accent}>
+            <p className="text-xl leading-relaxed text-muted">{t.lead}</p>
+          </SectionHeading>
+          <p className="rounded-2xl bg-butter-soft p-4 leading-relaxed">
+            <span className="chip mr-2 -rotate-2 border border-ink/80">
+              <span aria-hidden>✦</span> {common.notice.badge}
+            </span>
+            {t.demoNote}
+          </p>
+        </header>
 
-      <div className="mt-14 grid gap-12 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <nav aria-label={t.tocLabel} className="lg:sticky lg:top-28 lg:self-start">
-          <p className="eyebrow mb-3">{t.tocLabel}</p>
-          <ol className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
-            {ORDER.map((id, index) => (
-              <li key={id}>
-                <a
-                  href={`#${id}`}
-                  className="flex gap-2 rounded-xl px-3 py-2 font-semibold transition-colors hover:bg-soft hover:text-leaf"
-                >
-                  <span aria-hidden className="font-display text-muted tabular-nums">
-                    {index + 1}.
-                  </span>
-                  {t.sections[id].title}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <div className="mt-14 grid gap-12 lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <nav aria-label={t.tocLabel} className="lg:sticky lg:top-28 lg:self-start">
+            <p className="eyebrow mb-3">{t.tocLabel}</p>
+            <ol className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
+              {ORDER.map((id, index) => (
+                <li key={id}>
+                  <a
+                    href={`#${id}`}
+                    className="flex gap-2 rounded-xl px-3 py-2 font-semibold transition-colors hover:bg-soft hover:text-leaf"
+                  >
+                    <span aria-hidden className="font-display text-muted tabular-nums">
+                      {index + 1}.
+                    </span>
+                    {t.sections[id].title}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
 
-        <div className="max-w-3xl space-y-14">
-          {ORDER.map((id) => {
-            const section = t.sections[id]
-            return (
-              <section key={id} id={id} aria-labelledby={`${id}-title`} className="scroll-mt-28 space-y-6">
-                <div className="space-y-2 border-b-2 border-dashed border-line pb-4">
-                  <h2 id={`${id}-title`} className="font-display text-3xl font-extrabold tracking-tight">
-                    {section.title}
-                  </h2>
-                  <p className="text-lg font-semibold text-leaf">{section.summary}</p>
-                </div>
-                {section.blocks.map((block, index) => (
-                  <Block key={index} block={block} />
-                ))}
-                {id === 'allergens' && (
-                  <p className="rounded-2xl bg-soft p-4 text-sm leading-relaxed">{t.allergenHint}</p>
-                )}
-              </section>
-            )
-          })}
+          <div className="max-w-3xl space-y-14">
+            {ORDER.map((id) => {
+              const section = t.sections[id]
+              return (
+                <section key={id} id={id} aria-labelledby={`${id}-title`} className="scroll-mt-28 space-y-6">
+                  <div className="space-y-2 border-b-2 border-dashed border-line pb-4">
+                    <h2 id={`${id}-title`} className="font-display text-3xl font-extrabold tracking-tight">
+                      {section.title}
+                    </h2>
+                    <p className="text-lg font-semibold text-leaf">{section.summary}</p>
+                  </div>
+                  {section.blocks.map((block, index) => (
+                    <Block key={index} block={block} />
+                  ))}
+                  {id === 'allergens' && (
+                    <p className="rounded-2xl bg-soft p-4 text-sm leading-relaxed">{t.allergenHint}</p>
+                  )}
+                </section>
+              )
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   )
 }

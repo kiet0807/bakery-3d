@@ -8,6 +8,7 @@ import { GradientEquirectTexture, WebGLPathTracer } from 'three-gpu-pathtracer'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { usePerformanceHold } from './motion'
 import { useScene, type Scene } from './theme'
+import { useSettler } from './tween'
 import { CAFE_HDRI } from './Studio'
 
 /** Samples per pixel for a finished photo: clean enough on glaze and cream, about 15–25 s on a laptop GPU. */
@@ -307,10 +308,13 @@ function PathTracedPhoto({ floorY, drawRef, onProgress, onError, samples = PHOTO
   const { photo: colours } = useScene()
   const tracer = useRef<WebGLPathTracer | null>(null)
   const reported = useRef(-1)
+  const settler = useSettler()
 
   useEffect(() => {
     let cancelled = false
     let cleanup = () => {}
+    // The photo is of the cake as designed: a change still easing in (a colour, toppings landing) lands first.
+    settler.finishAll()
     buildPhotoScene(scene, floorY, environment, colours)
       .then(({ photo, dispose }) => {
         if (cancelled) {
@@ -358,7 +362,7 @@ function PathTracedPhoto({ floorY, drawRef, onProgress, onError, samples = PHOTO
     }
     // onError is read when it is needed, not a reason to rebuild the photo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gl, scene, camera, floorY, drawRef, environment, colours])
+  }, [gl, scene, camera, floorY, drawRef, environment, colours, settler])
 
   // Priority 1: while photo mode is on, this is the only thing that draws to the canvas.
   useFrame(() => {

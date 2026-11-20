@@ -1,11 +1,10 @@
 'use client'
 
-import Lenis from 'lenis'
-import 'lenis/dist/lenis.css'
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { LocalLink, useDict } from '@/i18n/LangProvider'
+import { scrollToElement } from '@/lib/smoothScroll'
 import { CHAPTERS, isStoryChapter } from './chapters'
 import { IntroGate } from './IntroGate'
 
@@ -76,13 +75,6 @@ export function HomeExperience() {
     window.setTimeout(() => setGate('closed'), 750)
   }
 
-  // Smooth scrolling once the visitor is in, unless they asked for less motion.
-  useEffect(() => {
-    if (!started || reduced) return
-    const lenis = new Lenis({ autoRaf: true, lerp: 0.085, smoothWheel: true })
-    return () => lenis.destroy()
-  }, [started, reduced])
-
   // One loop reads the scroll position and turns it into the chapter number.
   useEffect(() => {
     let frame = 0
@@ -135,8 +127,10 @@ export function HomeExperience() {
     return () => cancelAnimationFrame(frame)
   }, [])
 
+  // The side index glides with the same smooth scroll as the wheel (SmoothScroll in the root layout).
   const goTo = (index: number) => {
-    sections.current[index]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+    const section = sections.current[index]
+    if (section) scrollToElement(section, { smooth: !reduced })
   }
 
   const navLabel = (id: (typeof CHAPTERS)[number]) =>
@@ -207,7 +201,7 @@ export function HomeExperience() {
                   type="button"
                   onClick={() => goTo(1)}
                   aria-label={story.scrollDown}
-                  className="btn btn-buy h-12 w-12 p-0 motion-safe:animate-bounce"
+                  className="btn btn-buy h-12 w-12 p-0 motion-safe:animate-nudge"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -296,7 +290,7 @@ export function HomeExperience() {
                 {navLabel(id)}
                 <span
                   aria-hidden
-                  className={`h-1.5 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ${
                     active === index ? 'w-8 bg-leaf' : 'w-3 bg-edge group-hover:w-5'
                   }`}
                 />

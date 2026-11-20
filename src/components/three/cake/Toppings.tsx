@@ -1,7 +1,7 @@
 'use client'
 
 import { useFrame } from '@react-three/fiber'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
 import {
   BLUEBERRY,
@@ -18,6 +18,7 @@ import {
   STRAWBERRY,
 } from '../palette'
 import { useQuality, useReducedMotionScene } from '../motion'
+import { Arrival, placementSig } from './Arrival'
 import { stripeTexture } from './geometry'
 import type { CakeLayout, Part, Placement } from './layout'
 import { glowTexture, shared } from './shared'
@@ -103,7 +104,7 @@ function Shard({ p }: { p: Placement }) {
   )
 }
 
-function Kisses({ list, color }: { list: Placement[]; color: string }) {
+function Kisses({ list, material }: { list: Placement[]; material: THREE.Material }) {
   const g = shared()
   const ref = useRef<THREE.InstancedMesh>(null)
   useLayoutEffect(() => {
@@ -121,11 +122,7 @@ function Kisses({ list, color }: { list: Placement[]; color: string }) {
     mesh.computeBoundingSphere()
   }, [list])
   if (!list.length) return null
-  return (
-    <instancedMesh key={list.length} ref={ref} args={[g.kiss, undefined, list.length]} castShadow>
-      <meshPhysicalMaterial color={color} roughness={0.6} sheen={0.4} sheenColor="#ffffff" />
-    </instancedMesh>
-  )
+  return <instancedMesh key={list.length} ref={ref} args={[g.kiss, material, list.length]} castShadow />
 }
 
 function Sprinkles({ list }: { list: Placement[] }) {
@@ -228,44 +225,57 @@ function Candle({ p, lit }: { p: Placement; lit: boolean }) {
   )
 }
 
+/** Gap between two pieces of a ring landing; long rings close up, so a whole ring lands within 0.3 s. */
+const gapFor = (count: number) => Math.min(45, 300 / Math.max(1, count))
+
+/** A list of pieces that land one after another, in ring order, whenever they appear or move. */
+function Landing({
+  list,
+  height,
+  render,
+}: {
+  list: Placement[]
+  height?: number
+  render: (p: Placement) => ReactNode
+}) {
+  const sig = placementSig(list)
+  const gap = gapFor(list.length)
+  return list.map((p, i) => (
+    <Arrival key={i} sig={sig} delay={i * gap} height={height}>
+      {render(p)}
+    </Arrival>
+  ))
+}
+
 export function Toppings({
   layout,
   part,
-  kissColor,
+  kissMaterial,
   lit = true,
 }: {
   layout: CakeLayout
   part: Part
-  kissColor: string
+  /** Shared with the cake, which eases its colour along with the frosting. */
+  kissMaterial: THREE.Material
   lit?: boolean
 }) {
   const kisses = useMemo(() => only(layout.ring['cream-kisses'], part), [layout, part])
   const sprinkles = useMemo(() => only(layout.sprinkles, part), [layout, part])
   return (
     <group>
-      {only(layout.ring.strawberries, part).map((p, i) => (
-        <Strawberry key={`s${i}`} p={p} />
-      ))}
-      {only(layout.ring.blueberries, part).map((p, i) => (
-        <Blueberries key={`b${i}`} p={p} />
-      ))}
-      {only(layout.ring.macarons, part).map((p, i) => (
-        <Macaron key={`m${i}`} p={p} />
-      ))}
-      {only(layout.ring.cherries, part).map((p, i) => (
-        <Cherry key={`c${i}`} p={p} />
-      ))}
-      {only(layout.ring['chocolate-shards'], part).map((p, i) => (
-        <Shard key={`h${i}`} p={p} />
-      ))}
-      {only(layout.goldLeaf, part).map((p, i) => (
-        <GoldLeaf key={`g${i}`} p={p} />
-      ))}
-      {only(layout.candles, part).map((p) => (
-        <Candle key={`k${p.variant}`} p={p} lit={lit} />
-      ))}
-      <Kisses list={kisses} color={kissColor} />
-      <Sprinkles list={sprinkles} />
+      <Landing list={only(layout.ring.strawberries, part)} render={(p) => <Strawberry p={p} />} />
+      <Landing list={only(layout.ring.blueberries, part)} render={(p) => <Blueberries p={p} />} />
+      <Landing list={only(layout.ring.macarons, part)} render={(p) => <Macaron p={p} />} />
+      <Landing list={only(layout.ring.cherries, part)} render={(p) => <Cherry p={p} />} />
+      <Landing list={only(layout.ring['chocolate-shards'], part)} render={(p) => <Shard p={p} />} />
+      <Landing list={only(layout.goldLeaf, part)} height={0.22} render={(p) => <GoldLeaf p={p} />} />
+      <Landing list={only(layout.candles, part)} height={0.4} render={(p) => <Candle p={p} lit={lit} />} />
+      <Arrival sig={placementSig(kisses)} height={0.2}>
+        <Kisses list={kisses} material={kissMaterial} />
+      </Arrival>
+      <Arrival sig={placementSig(sprinkles)} height={0.45}>
+        <Sprinkles list={sprinkles} />
+      </Arrival>
     </group>
   )
 }

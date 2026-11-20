@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore, type RefObject } from 'react'
 import { LOCALES, localeHref, stripLocale } from '@/i18n/config'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { countItems } from '@/lib/cart'
@@ -15,7 +15,32 @@ function subscribeScroll(onChange: () => void) {
 }
 const readScrolled = () => window.scrollY > 8
 
+const subscribeHydration = (onChange: () => void) => useCart.persist.onFinishHydration(onChange)
+const readHydrated = () => useCart.persist.hasHydrated()
+
+/**
+ * The cart count swells and settles when a cake goes in, so the header answers the "Add to cart" press even when
+ * the cart button is far from it. Not when the saved cart arrives on page load (that is not news), and not for
+ * someone who asked for less motion.
+ */
+function useCountBump(badge: RefObject<HTMLSpanElement | null>, count: number) {
+  const hydrated = useSyncExternalStore(subscribeHydration, readHydrated, () => false)
+  const seen = useRef<number | null>(null)
+  useEffect(() => {
+    if (!hydrated) return
+    const before = seen.current
+    seen.current = count
+    if (before === null || count <= before) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    badge.current?.animate([{ scale: 1 }, { scale: 1.35, offset: 0.3 }, { scale: 1 }], {
+      duration: 550,
+      easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    })
+  }, [badge, count, hydrated])
+}
+
 export function SiteHeader() {
+  const badge = useRef<HTMLSpanElement>(null)
   const lang = useLang()
   const { common } = useDict()
   // The proxy serves Vietnamese pages from /vi/…, so the pathname may carry either prefix or none.
@@ -23,6 +48,7 @@ export function SiteHeader() {
   const count = useCart((state) => countItems(state.items))
   // Once the page moves, the header gets a frosted backing so content never runs under the links.
   const scrolled = useSyncExternalStore(subscribeScroll, readScrolled, () => false)
+  useCountBump(badge, count)
   const other = LOCALES.find((l) => l !== lang) ?? 'en'
   const links = [
     // On phones the builder is one tap away on the home page, the menu cards and the footer.
@@ -56,7 +82,7 @@ export function SiteHeader() {
         </LocalLink>
         <LocalLink
           href="/about#project"
-          className="chip mr-1 hidden -rotate-2 border border-ink/80 transition-transform hover:rotate-0 lg:inline-flex"
+          className="chip mr-1 hidden -rotate-2 border border-ink/80 transition-transform duration-500 ease-spring hover:rotate-0 lg:inline-flex"
           title={common.notice.short}
         >
           <span aria-hidden>✦</span> {common.notice.badge}
@@ -112,6 +138,7 @@ export function SiteHeader() {
           </svg>
           <span className="max-sm:sr-only">{common.nav.cart}</span>
           <span
+            ref={badge}
             aria-label={common.nav.cartCount(count)}
             className="grid h-5 min-w-5 place-items-center rounded-full bg-buy px-1.5 text-xs font-bold text-white max-sm:absolute max-sm:-top-2 max-sm:-right-2 max-sm:border-2 max-sm:border-cream"
           >

@@ -30,6 +30,8 @@ export interface Drip {
   top: number
   length: number
   part: Part
+  /** Index of the tier it runs down (0 = bottom), so fresh glaze can run from each tier's own edge. */
+  tier: number
 }
 
 export interface CakeLayout {
@@ -159,9 +161,14 @@ export function headroom(config: CakeConfig): number {
 }
 
 export function computeLayout(config: CakeConfig, { light = false }: LayoutOptions = {}): CakeLayout {
-  // Sweetness does not show on the cake, so changing it must not reshuffle the sprinkles.
+  // Sweetness does not show on the cake; the seed only varies the sponge's cut face.
   const seed = hashString(configKey({ ...config, sweetness: 'less' }))
-  const random = createRandom(seed)
+  // Each kind of decoration draws from its own random stream, seeded only by what changes its own shape. A new
+  // frosting colour, a message or another topping then leaves the sprinkles (and the rest) exactly where they
+  // were: on the design page nothing jumps that the visitor did not touch.
+  const stream = (...parts: (string | number | boolean)[]) =>
+    createRandom(hashString([config.size, light, ...parts].join('|')))
+  let random = stream('drips')
   let base = 0
   const tiers = sizeOf(config).tiers.map((tier) => {
     const layout = { ...tier, base }
@@ -176,7 +183,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   // Drips run down the top edge of every tier.
   const drips: Drip[] = []
   if (config.drip !== 'none') {
-    for (const tier of tiers) {
+    for (const [index, tier] of tiers.entries()) {
       const outer = tier.radius + FROSTING
       const count = Math.round((Math.PI * 2 * outer) / (light ? 0.16 : 0.105))
       for (let i = 0; i < count; i++) {
@@ -184,7 +191,14 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
         const long = random()
         const length = tier.height * (0.1 + long * long * 0.48)
         const { x, z } = polar(outer + 0.006, angle)
-        drips.push({ x, z, top: tier.base + tier.height - BEVEL * 0.7, length, part: partAt(angle) })
+        drips.push({
+          x,
+          z,
+          top: tier.base + tier.height - BEVEL * 0.7,
+          length,
+          part: partAt(angle),
+          tier: index,
+        })
       }
     }
   }
@@ -194,6 +208,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   ) as CakeLayout['ring']
 
   const kisses = config.toppings.includes('cream-kisses')
+  random = stream('kisses')
   if (kisses) {
     // A piped border along the top edge of every tier.
     for (const tier of tiers) {
@@ -221,7 +236,9 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   if (kinds.length) {
     const radius = ringRadius(top.radius, kisses)
     const others = kinds.filter((id) => id !== 'macarons')
-    const offset = random() * 0.4
+    // The ring's turn depends on the size alone, so adding fruit leaves the macarons standing where they were.
+    const offset = stream('ring-turn')() * 0.4
+    random = stream('ring', ...kinds, kisses)
     const pieces: { angle: number; kind: (typeof RING_TOPPINGS)[number]; macaronScale?: number }[] = []
     if (kinds.includes('macarons')) {
       // Macarons are counted (macaronCount, the number the topping promises) and full size, spread evenly; the
@@ -267,6 +284,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
 
   // Sprinkles over every exposed top surface.
   const sprinkles: Placement[] = []
+  random = stream('sprinkles')
   if (config.toppings.includes('sprinkles')) {
     tiers.forEach((tier, index) => {
       const above = tiers[index + 1]
@@ -293,6 +311,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   }
 
   const goldLeaf: Placement[] = []
+  random = stream('gold-leaf')
   if (config.toppings.includes('gold-leaf')) {
     const count = Math.round((light ? 8 : 14) * small)
     for (let i = 0; i < count; i++) {

@@ -92,6 +92,24 @@ loop damps the camera between per-chapter shots and drives the slice, glaze and 
 controls object instead of React state, so scrolling never re-renders the tree. Lenis smooths the scroll
 unless the visitor asked for reduced motion.
 
+### Motion
+
+- **The cake answers every choice.** A new frosting or glaze colour eases in over 420 ms; a new size grows or
+  shrinks the cake from the one on screen (560 ms, settling with a hint of give) while the camera glides to
+  the new framing; toppings and candles drop in one after another; fresh glaze runs down from each tier's
+  edge. The canvas renders on demand, so these frames run only while something moves.
+- **Each kind of decoration has its own random stream**, so a new colour or message never shuffles the
+  sprinkles, and adding fruit leaves the macarons where they stood.
+- **Pictures show the finished cake:** saving a picture, adding to the cart or starting a studio photo jumps
+  every running tween to its end first.
+- **Pages:** React `<ViewTransition>` fades the old page out quickly and lets the new one rise in; the header
+  stays put. The language switch (a full page load) fades with a cross-document view transition, and a new
+  colour set cross-fades the whole page. Lenis smooths wheel scrolling on every page; on the builder the
+  wheel zooms the cake instead.
+- **Controls:** buttons press down fast and spring back, choice cards lift, prices tick to the new total, the
+  cart badge bumps when something is added. One set of easing tokens (`--ease-out`, `--ease-spring`) in
+  `globals.css`.
+
 ### Quality and performance
 
 - Every scene goes through one `CanvasShell`: a WebGL check with a 2D fallback, an error boundary, rendering
@@ -144,7 +162,8 @@ All of these rules have unit tests (`src/lib/*.test.ts`).
 - The vitrine has a plain radio list next to the 3D table; arrow keys move through it.
 - Real form controls throughout, a skip link, visible focus, and focus moved to the first invalid field or to
   the confirmation heading.
-- With reduced motion: no idle animation, no smooth scrolling, the box scene starts closed.
+- With reduced motion: no idle animation, no smooth scrolling, the box scene starts closed, and changes to
+  the cake or the page happen at once (fades stay, movement goes).
 - Every text colour pair passes WCAG AA in all four colour sets, and a unit test measures them again
   (`src/lib/contrast.test.ts`). The colour switch is a keyboard-friendly radio group.
 

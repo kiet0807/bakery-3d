@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useScene } from './theme'
+import { useEasedSize } from './useEasedSize'
 
 let texture: THREE.CanvasTexture | null = null
+/** A 1 × 1 square scaled to the shadow's size, shared by every blob: its size can then ease with the cake. */
+let square: THREE.PlaneGeometry | null = null
 
 /**
  * One soft round shadow, painted once in white and shared by every blob on the page. The material tints it with
@@ -38,10 +41,12 @@ export function ShadowBlob({ radius, y, opacity = 1 }: { radius: number; y: numb
   const map = useMemo(() => blobTexture(), [])
   // Brand ink, thinned: on a cream page a soft green-grey shadow looks like daylight, black looks like a hole.
   const { ink } = useScene()
-  const geometry = useMemo(() => new THREE.PlaneGeometry(radius * 2, radius * 2), [radius])
-  useEffect(() => () => geometry.dispose(), [geometry])
+  const geometry = useMemo(() => (square ??= new THREE.PlaneGeometry(1, 1)), [])
+  const mesh = useRef<THREE.Mesh>(null)
+  useEasedSize(radius, (size) => mesh.current?.scale.set(size * 2, size * 2, 1))
   return (
     <mesh
+      ref={mesh}
       geometry={geometry}
       position-y={y + 0.003}
       rotation-x={-Math.PI / 2}

@@ -1,5 +1,7 @@
 'use client'
 
+import { useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { allergenText, cakeName, describeCake } from '@/i18n/cake-text'
 import { useDict, useLang } from '@/i18n/LangProvider'
 import { priceOf } from '@/lib/cake'
@@ -8,6 +10,38 @@ import { leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
 import { useCart } from '@/lib/store'
 import { CakeThumb } from './CakeThumb'
+
+/**
+ * Removes a line so the cart closes the gap smoothly: each line is named for one view transition, the removed one
+ * fades and shrinks a little, the lines below slide up into place, and the totals run to the new amount (CSS in
+ * globals.css, `.cart-line`). Instant where view transitions are missing or the visitor asked for less motion.
+ */
+function removeSmoothly(line: HTMLElement | null, remove: () => void) {
+  const lines = Array.from(line?.parentElement?.children ?? []).filter(
+    (element): element is HTMLElement => element instanceof HTMLElement && Boolean(element.dataset.line),
+  )
+  if (
+    !lines.length ||
+    typeof document.startViewTransition !== 'function' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    remove()
+    return
+  }
+  for (const element of lines) {
+    element.style.setProperty('view-transition-name', `cart-line-${element.dataset.line}`)
+    element.style.setProperty('view-transition-class', 'cart-line')
+  }
+  const transition = document.startViewTransition(() => flushSync(remove))
+  const clear = () => {
+    for (const element of lines) {
+      element.style.removeProperty('view-transition-name')
+      element.style.removeProperty('view-transition-class')
+    }
+  }
+  transition.ready.catch(() => {})
+  transition.finished.then(clear, clear)
+}
 
 const stepper =
   'grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-surface font-display text-xl font-bold transition-colors hover:bg-butter-soft disabled:cursor-not-allowed disabled:border-edge disabled:text-muted disabled:hover:bg-surface'
@@ -22,8 +56,13 @@ export function CartLine({ item }: { item: CartItem }) {
   const name = cakeName(item.presetId, dict)
   const each = priceOf(item.config)
   const lead = leadKind(item.config, item.presetId)
+  const line = useRef<HTMLLIElement>(null)
   return (
-    <li className="card grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 sm:p-5">
+    <li
+      ref={line}
+      data-line={item.id}
+      className="card grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 sm:p-5"
+    >
       <CakeThumb
         config={item.config}
         snapshot={item.snapshot}
@@ -78,7 +117,7 @@ export function CartLine({ item }: { item: CartItem }) {
         {item.quantity > 1 && <p className="text-xs text-muted tabular-nums">{t.each(money(each, lang))}</p>}
         <button
           type="button"
-          onClick={() => remove(item.id)}
+          onClick={() => removeSmoothly(line.current, () => remove(item.id))}
           className="ml-auto min-h-11 rounded-full px-3 text-sm font-semibold text-muted underline-offset-4 hover:text-error hover:underline"
         >
           {t.remove}

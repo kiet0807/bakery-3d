@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useDict } from '@/i18n/LangProvider'
 import { PALETTES, PALETTE_IDS, type Palette, type PaletteId } from '@/lib/palettes'
-import { setPalette, usePalette } from '@/lib/usePalette'
+import { readPalette, setPalette, usePalette } from '@/lib/usePalette'
 
 /**
  * The colour switch in the header: a round button showing the set in use, opening a small card with the four
@@ -12,7 +12,7 @@ import { setPalette, usePalette } from '@/lib/usePalette'
  * - Arrow keys move through the sets and apply each one at once, so the page and the 3D scene preview it live;
  *   Enter, Space or a click keeps the set and closes the card. Esc closes and gives the focus back to the button,
  *   so does a click outside or tabbing away (without moving the focus).
- * - The card stays in the DOM (hidden when closed), so `aria-controls` always points at something.
+ * - The card stays in the DOM (invisible when closed), so `aria-controls` always points at something.
  * - The browser's toolbar colour (`<meta name="theme-color">`) follows the set; the root layout ships the
  *   default set's cream, and client navigations can re-render the tag, hence the pathname in the effect.
  */
@@ -62,7 +62,8 @@ export function PaletteSwitcher() {
       close(true)
       return
     }
-    const index = PALETTE_IDS.indexOf(palette)
+    // From the page, not from React state: a set chosen inside a cross-fade that has not rendered yet still counts.
+    const index = PALETTE_IDS.indexOf(readPalette())
     const last = PALETTE_IDS.length - 1
     const target =
       event.key === 'ArrowDown' || event.key === 'ArrowRight'
@@ -112,18 +113,30 @@ export function PaletteSwitcher() {
       >
         <span
           aria-hidden
-          className="h-5 w-5 shrink-0 rounded-full border-2 border-ink bg-[conic-gradient(var(--color-brand)_0_25%,var(--color-butter)_0_50%,var(--color-buy)_0_75%,var(--color-mint)_0)] shadow-[inset_0_2px_3px_rgb(255_255_255/0.55)] transition-transform duration-300 group-hover:rotate-90 motion-reduce:transition-none"
+          className={`h-5 w-5 shrink-0 rounded-full border-2 border-ink bg-[conic-gradient(var(--color-brand)_0_25%,var(--color-butter)_0_50%,var(--color-buy)_0_75%,var(--color-mint)_0)] shadow-[inset_0_2px_3px_rgb(255_255_255/0.55)] transition-transform duration-500 ease-spring group-hover:rotate-90 ${
+            open ? 'rotate-90' : ''
+          }`}
         />
         <span aria-hidden className="hidden whitespace-nowrap lg:inline">
           {t.label}
         </span>
       </button>
 
+      {/*
+        Closed, the card is `invisible` rather than `hidden`, so it can leave as smoothly as it came: it grows out of
+        the button (260 ms, soft landing) and shrinks back into it faster (150 ms). Invisible also takes it out of the
+        Tab order and the accessibility tree, as `hidden` did. Visibility is left out of the opening transition: it
+        must turn visible at once, or the focus that opening puts on the checked set lands on an invisible element
+        and is dropped. Closing keeps it, so the card stays visible until it has faded.
+      */}
       <div
         id={panelId}
-        hidden={!open}
         onKeyDown={onPanelKeyDown}
-        className="fixed inset-x-3 top-[4.25rem] z-50 origin-top-right rounded-[1.75rem] border-2 border-ink bg-surface p-3 shadow-sticker-lg transition-[opacity,scale,translate] duration-200 ease-out motion-reduce:transition-none sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.75rem)] sm:right-0 sm:w-[21rem] starting:-translate-y-1 starting:scale-95 starting:opacity-0"
+        className={`fixed inset-x-3 top-[4.25rem] z-50 origin-top rounded-[1.75rem] border-2 border-ink bg-surface p-3 shadow-sticker-lg sm:absolute sm:inset-x-auto sm:top-[calc(100%+0.75rem)] sm:right-0 sm:w-[21rem] sm:origin-top-right ${
+          open
+            ? 'visible transition-[opacity,scale,translate] duration-[260ms] ease-out'
+            : 'pointer-events-none invisible -translate-y-1.5 scale-95 opacity-0 transition-[opacity,scale,translate,visibility] duration-150 ease-in'
+        }`}
       >
         <div className="flex items-start gap-2 px-1.5 pt-0.5 pb-2.5">
           <span aria-hidden className="mt-0.5 text-lg leading-none">
@@ -159,7 +172,7 @@ export function PaletteSwitcher() {
                   setPalette(option)
                   close(true)
                 }}
-                className={`flex w-full items-center gap-3 rounded-2xl border-2 p-1.5 pr-3 text-left transition-[background-color,border-color,box-shadow] duration-150 ${
+                className={`flex w-full items-center gap-3 rounded-2xl border-2 p-1.5 pr-3 text-left transition-[background-color,border-color,box-shadow] duration-200 ${
                   checked
                     ? 'border-ink bg-soft shadow-sticker'
                     : 'border-transparent hover:border-line hover:bg-butter-soft'
@@ -182,8 +195,10 @@ export function PaletteSwitcher() {
                 </span>
                 <span
                   aria-hidden
-                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 text-xs font-black ${
-                    checked ? 'border-ink bg-ink text-cream' : 'border-edge text-transparent'
+                  className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 text-xs font-black transition-[background-color,border-color,color,scale] duration-300 ease-spring ${
+                    checked
+                      ? 'scale-100 border-ink bg-ink text-cream'
+                      : 'scale-90 border-edge text-transparent'
                   }`}
                 >
                   ✓

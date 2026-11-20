@@ -1,6 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import { flushSync } from 'react-dom'
 import { DEFAULT_PALETTE, PALETTE_KEY, isPaletteId, type PaletteId } from './palettes'
 
 /**
@@ -14,7 +15,7 @@ export function readPalette(): PaletteId {
   return isPaletteId(value) ? value : DEFAULT_PALETTE
 }
 
-export function setPalette(id: PaletteId) {
+function applyPalette(id: PaletteId) {
   document.documentElement.setAttribute('data-palette', id)
   try {
     window.localStorage.setItem(PALETTE_KEY, id)
@@ -22,6 +23,33 @@ export function setPalette(id: PaletteId) {
     // Storage blocked (private mode): the palette still changes for this page.
   }
   listeners.forEach((listener) => listener())
+}
+
+/**
+ * Switches the set. Where the browser has view transitions, the old colours cross-fade into the new ones over the
+ * whole page (380 ms, see globals.css) instead of snapping; React renders the new set inside the transition
+ * (flushSync), so the switch's own tick and name change in the same frame as the colours. A transition that is
+ * skipped (a hidden tab) still applies the set. While one cross-fade runs, a further change (arrow keys held
+ * through the sets) applies at once inside it instead of starting another: transitions never pile up, and the set
+ * on the page is always the last one chosen.
+ */
+let running = false
+
+export function setPalette(id: PaletteId) {
+  const root = document.documentElement
+  if (running || readPalette() === id || typeof document.startViewTransition !== 'function') {
+    applyPalette(id)
+    return
+  }
+  running = true
+  root.setAttribute('data-view-transition', 'palette')
+  const transition = document.startViewTransition(() => flushSync(() => applyPalette(id)))
+  const done = () => {
+    running = false
+    if (root.getAttribute('data-view-transition') === 'palette') root.removeAttribute('data-view-transition')
+  }
+  transition.ready.catch(() => {})
+  transition.finished.then(done, done)
 }
 
 function subscribe(listener: () => void) {

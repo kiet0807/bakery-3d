@@ -31,6 +31,7 @@ import { PRESETS, presetById } from '@/lib/presets'
 import { SHARE_PARAM, decodeCake, designPath } from '@/lib/share'
 import { useCart, useDesign } from '@/lib/store'
 import { ScenePoster } from '../ScenePoster'
+import { TickingMoney } from '../TickingMoney'
 import type { Capture } from '../three/Capture'
 import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
 
@@ -197,7 +198,11 @@ export function Designer() {
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 px-3 pt-20 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
-      <div className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]">
+      {/* The wheel zooms the cake here (OrbitControls), so the smooth page scroll keeps out of the stage. */}
+      <div
+        data-lenis-prevent-wheel
+        className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
+      >
         <DesignScene
           config={config}
           sliced={sliced}
@@ -473,11 +478,11 @@ export function Designer() {
             <div className="mr-auto min-w-0 leading-tight">
               <p className="truncate text-xs font-medium text-muted">{presetName}</p>
               <p className="font-display text-3xl font-extrabold tabular-nums" data-testid="price">
-                {money(price, lang)}
+                <TickingMoney value={price} />
               </p>
             </div>
             {justAdded ? (
-              <LocalLink href="/cart" className="btn btn-ghost">
+              <LocalLink href="/cart" className="btn btn-ghost animate-pop">
                 {d.bar.viewCart}
               </LocalLink>
             ) : (

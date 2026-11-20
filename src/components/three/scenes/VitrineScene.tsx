@@ -281,6 +281,7 @@ export default function VitrineScene({
     <CanvasShell
       className="h-full w-full"
       label={dict.scenes.vitrine(presets.length, presetLabel)}
+      poster={dict.menu.loading}
       camera={{ position: [0, 2.2, 9], fov: 34, near: 0.1, far: 60 }}
       lowDpr={1}
     >

@@ -2,7 +2,7 @@
 
 import { OrbitControls } from '@react-three/drei'
 import type { EffectComposer as Composer } from 'postprocessing'
-import { lazy, Suspense, useMemo, useRef, type RefObject } from 'react'
+import { lazy, Suspense, useMemo, useRef, useState, type RefObject } from 'react'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
@@ -41,7 +41,7 @@ export default function DesignScene({
   /** The 2D drawing is shown instead (no WebGL, or the scene crashed): there is nothing to photograph. */
   onFallback?: () => void
 }) {
-  const { scenes } = useDict()
+  const { scenes, design } = useDict()
   const composer = useRef<Composer | null>(null)
   const draw = useRef<(() => void) | null>(null)
   const tiers = sizeOf(config).tiers
@@ -52,11 +52,14 @@ export default function DesignScene({
     const bottom = -STAND_HEIGHT
     return { radius: radius + 0.55, height: top - bottom, center: (top + bottom) / 2 + 0.05 }
   }, [radius, cakeHeight, config])
+  // The orbit's first target only: after that FitCamera moves it, gliding with the camera when the cake changes.
+  const [target] = useState<[number, number, number]>(() => [0, frame.center, 0])
 
   return (
     <CanvasShell
       className="h-full w-full cursor-grab active:cursor-grabbing"
       label={scenes.design}
+      poster={design.loading}
       camera={{ position: [0, 2, 7], fov: 32 }}
       onFallback={onFallback}
     >
@@ -66,10 +69,11 @@ export default function DesignScene({
         center={[0, frame.center, 0]}
         elevation={18}
         margin={1.05}
+        glide
       />
       <OrbitControls
         makeDefault
-        target={[0, frame.center, 0]}
+        target={target}
         enablePan={false}
         enableDamping
         dampingFactor={0.08}

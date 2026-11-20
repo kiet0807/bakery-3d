@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useDict, useLang, LocalLink } from '@/i18n/LangProvider'
+import { useDict, LocalLink } from '@/i18n/LangProvider'
 import { countItems, subtotal } from '@/lib/cart'
-import { money } from '@/lib/money'
 import type { Order } from '@/lib/order'
 import { useCart } from '@/lib/store'
 import { useCartHydrated } from '@/lib/useHydrated'
+import { TickingMoney } from '../TickingMoney'
 import { CartLine } from './CartLine'
 import { Checkout } from './Checkout'
 import { OrderDone, type PlacedOrder } from './OrderDone'
@@ -56,7 +56,6 @@ function EmptyCart() {
 
 export function CartView() {
   const { cart } = useDict()
-  const lang = useLang()
   const hydrated = useCartHydrated()
   const items = useCart((state) => state.items)
   const [order, setOrder] = useState<PlacedOrder | null>(null)
@@ -102,7 +101,9 @@ export function CartView() {
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted">{t.subtotal}</dt>
-            <dd className="tabular-nums">{money(total, lang)}</dd>
+            <dd className="tabular-nums">
+              <TickingMoney value={total} />
+            </dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted">{t.shipping}</dt>
@@ -110,7 +111,9 @@ export function CartView() {
           </div>
           <div className="flex items-baseline justify-between gap-4 border-t-2 border-dashed border-line pt-3">
             <dt className="font-display font-bold">{t.total}</dt>
-            <dd className="font-display text-3xl font-extrabold tabular-nums">{money(total, lang)}</dd>
+            <dd className="font-display text-3xl font-extrabold tabular-nums">
+              <TickingMoney value={total} />
+            </dd>
           </div>
         </dl>
         <p className="text-xs leading-relaxed text-muted">{t.shipNote}</p>

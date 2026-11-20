@@ -4,6 +4,7 @@ import { useThree } from '@react-three/fiber'
 import type { EffectComposer as Composer } from 'postprocessing'
 import { useEffect, type RefObject } from 'react'
 import { useScene } from './theme'
+import { useSettler } from './tween'
 
 /** Takes a square picture of the scene as a data URL, or null when the browser cannot. */
 export type Capture = (size: number, type?: 'image/png' | 'image/jpeg', quality?: number) => string | null
@@ -31,8 +32,11 @@ export function CaptureBridge({
   const scene = useThree((state) => state.scene)
   const camera = useThree((state) => state.camera)
   const { sky: colours } = useScene()
+  const settler = useSettler()
   useEffect(() => {
     captureRef.current = (size, type = 'image/jpeg', quality = 0.86) => {
+      // A picture taken right after a change shows the cake as chosen, not halfway through easing into it.
+      settler.finishAll()
       const draw = drawRef?.current
       const composer = composerRef?.current
       if (draw) draw()
@@ -73,6 +77,6 @@ export function CaptureBridge({
     return () => {
       captureRef.current = null
     }
-  }, [gl, scene, camera, captureRef, composerRef, drawRef, crop, colours])
+  }, [gl, scene, camera, captureRef, composerRef, drawRef, crop, colours, settler])
   return null
 }

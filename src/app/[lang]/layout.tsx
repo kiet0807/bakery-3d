@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { PaletteHead } from '@/components/PaletteHead'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
+import { SmoothScroll } from '@/components/SmoothScroll'
 import { StoreHydrator } from '@/components/StoreHydrator'
 import { LOCALES, OG_LOCALE, hasLocale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
@@ -84,6 +85,7 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
         </a>
         <LangProvider lang={lang}>
           <StoreHydrator />
+          <SmoothScroll />
           <SiteHeader />
           <main id="main">{children}</main>
           <SiteFooter lang={lang} />

@@ -45,9 +45,53 @@
     0 1px 2px color-mix(in srgb, var(--color-ink) 8%, transparent),
     0 14px 34px -18px color-mix(in srgb, var(--color-ink) 40%, transparent);
 
-  --animate-rise: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /*
+   * Motion. Things arrive like cream settling: a quick start and a long soft landing (`ease-out`); they leave
+   * faster than they came (`ease-in`, shorter durations). `ease-spring` is a damped spring with an 8% overshoot,
+   * kept for what is pressed or popped (a button coming back up, a tick, the cart count), never for page moves.
+   * Every `transition-*` utility without its own timing gets the soft curve at 200 ms.
+   */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.55, 0, 0.75, 0.2);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: linear(
+    0,
+    0.0453 3.6%,
+    0.1569 7.1%,
+    0.3034 10.7%,
+    0.4608 14.3%,
+    0.6122 17.9%,
+    0.7466 21.4%,
+    0.8583 25%,
+    0.9452 28.6%,
+    1.0081 32.1%,
+    1.0496 35.7%,
+    1.0732 39.3%,
+    1.0828 42.9%,
+    1.0821 46.4%,
+    1.0748 50%,
+    1.0634 53.6%,
+    1.0505 57.1%,
+    1.0375 60.7%,
+    1.0256 64.3%,
+    1.0154 67.9%,
+    1.0073 71.4%,
+    1.0013 75%,
+    0.9971 78.6%,
+    0.9945 82.1%,
+    0.993 89.3%,
+    0.9943 96.4%,
+    1
+  );
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-rise: rise 0.9s var(--ease-out) both;
   --animate-drift: drift 18s ease-in-out infinite alternate;
   --animate-wiggle: wiggle 2.4s ease-in-out infinite;
+  --animate-pop: pop 0.5s var(--ease-spring) both;
+  --animate-bump: bump 0.55s var(--ease-out);
+  --animate-nudge: nudge 2.2s var(--ease-in-out) infinite;
 }
 
 /* The Pacifico subset already shipped for the cake lettering in 3D, reused for the logo (one download). */
@@ -74,6 +118,38 @@
   }
   to {
     transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+/* Something new on screen pops in: from a little smaller, on the spring. */
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: 0.86;
+  }
+}
+
+/* The "scroll down" button breathes downwards instead of bouncing hard. */
+@keyframes nudge {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 7px;
+  }
+}
+
+/* The cart count when a cake goes in: a quick swell and a settle. */
+@keyframes bump {
+  0% {
+    scale: 1;
+  }
+  30% {
+    scale: 1.32;
+  }
+  100% {
+    scale: 1;
   }
 }
 
@@ -233,10 +309,14 @@ h3 {
   font-size: 1rem;
   line-height: 1.1;
   box-shadow: var(--shadow-sticker);
+  /* Pressing is instant (60 ms); letting go springs back up, and the hover lift rides the same spring. */
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
+    transform 0.32s var(--ease-spring),
+    box-shadow 0.32s var(--ease-spring),
+    background-color 0.2s var(--ease-out),
+    color 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    opacity 0.2s var(--ease-out);
   &:hover:not(:disabled) {
     transform: translate(-1px, -1px);
     box-shadow: 4px 4px 0 var(--color-ink);
@@ -244,6 +324,8 @@ h3 {
   &:active:not(:disabled) {
     transform: translate(2px, 2px);
     box-shadow: 1px 1px 0 var(--color-ink);
+    transition-duration: 0.06s;
+    transition-timing-function: var(--ease-out);
   }
   &:disabled {
     cursor: not-allowed;
@@ -278,6 +360,9 @@ h3 {
   font-size: 1rem;
   color: var(--color-ink);
   outline: none;
+  transition:
+    border-color 0.2s var(--ease-out),
+    box-shadow 0.25s var(--ease-out);
   &::placeholder {
     color: var(--color-muted);
   }
@@ -299,13 +384,100 @@ h3 {
   color: var(--color-leaf);
 }
 
+/*
+ * Moving between pages (React <ViewTransition> in each page, see PageTransition.tsx): the old page fades away
+ * quickly, the new one rises 14px into place as it fades in. The header and footer are not named, so they sit in
+ * the root snapshot, whose default cross-fade (plus-lighter) keeps identical pixels still: they do not blink.
+ * A colour set change cross-fades the whole page (`data-view-transition="palette"`, set by usePalette.ts).
+ * The overlay lets clicks through, so a tap right after a navigation is not lost.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+:root[data-view-transition='palette']::view-transition-old(root),
+:root[data-view-transition='palette']::view-transition-new(root) {
+  animation-duration: 380ms;
+}
+
+::view-transition-old(.page-exit) {
+  animation: vt-fade-out 140ms var(--ease-in) both;
+}
+
+::view-transition-new(.page-enter) {
+  animation:
+    vt-fade-in 260ms var(--ease-out) 60ms both,
+    vt-rise 340ms var(--ease-out) both;
+}
+
+/* A cart line that is removed fades and shrinks a little; the lines below slide up into its place. */
+::view-transition-group(.cart-line) {
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(.cart-line):only-child {
+  animation:
+    vt-fade-out 180ms var(--ease-in) both,
+    vt-shrink 180ms var(--ease-in) both;
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    translate: 0 14px;
+  }
+}
+
+@keyframes vt-shrink {
+  to {
+    scale: 0.96;
+  }
+}
+
+/*
+ * Less motion: nothing travels, zooms or bounces, but changes still fade so cause and effect stay readable.
+ * Keyframe animations end at once; transitions keep their duration for colour and opacity only, so a transform
+ * (a lift, a press, a slide) jumps straight to its end. Page changes keep their fade and lose the rise.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-property:
+      color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity,
+      box-shadow, visibility !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-new(.page-enter) {
+    animation: vt-fade-in 200ms var(--ease-out) both;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0s;
   }
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { CartView } from '@/components/cart/CartView'
 import { dictionaries } from '@/i18n/dictionaries'
 import { langFrom, pageMetadata } from '@/i18n/metadata'
+import { PageTransition } from '@/components/PageTransition'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]/cart'>): Promise<Metadata> {
   const lang = await langFrom(params)
@@ -10,5 +11,9 @@ export async function generateMetadata({ params }: PageProps<'/[lang]/cart'>): P
 }
 
 export default function CartPage() {
-  return <CartView />
+  return (
+    <PageTransition>
+      <CartView />
+    </PageTransition>
+  )
 }

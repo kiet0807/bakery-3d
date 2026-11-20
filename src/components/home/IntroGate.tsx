@@ -72,8 +72,8 @@ export function IntroGate({
       aria-modal="true"
       aria-labelledby="intro-title"
       aria-describedby="intro-tagline"
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 overflow-hidden px-6 text-center transition-[opacity,transform] duration-700 ${
-        leaving ? 'pointer-events-none scale-105 opacity-0' : 'opacity-100'
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 overflow-hidden px-6 text-center transition-[opacity,scale] duration-700 ease-out ${
+        leaving ? 'pointer-events-none scale-[1.06] opacity-0' : 'opacity-100'
       }`}
     >
       <div aria-hidden className="absolute inset-0 -z-10 bg-cream">
@@ -93,7 +93,12 @@ export function IntroGate({
       </p>
       <div className="flex h-16 animate-rise items-center [animation-delay:280ms]">
         {ready ? (
-          <button ref={button} type="button" onClick={onStart} className="btn btn-buy px-9 py-3.5 text-lg">
+          <button
+            ref={button}
+            type="button"
+            onClick={onStart}
+            className="btn btn-buy animate-pop px-9 py-3.5 text-lg"
+          >
             {t.start}
           </button>
         ) : (

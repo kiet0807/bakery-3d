@@ -39,14 +39,20 @@ function Tick({ square = false }: { square?: boolean }) {
         square ? 'rounded-lg' : 'rounded-full'
       } bg-surface text-transparent group-has-checked:bg-leaf group-has-checked:text-white`}
     >
-      ✓
+      {/* The tick pops in on the spring as the box fills; unticking just fades. */}
+      <span className="scale-50 transition-[scale] duration-150 ease-in group-has-checked:scale-100 group-has-checked:duration-[420ms] group-has-checked:ease-spring">
+        ✓
+      </span>
     </span>
   )
 }
 
-/** The card behind each radio or checkbox. The input before it is `peer sr-only`. */
+/**
+ * The card behind each radio or checkbox. The input before it is `peer sr-only`. Choosing lifts the card onto its
+ * sticker shadow on the spring; colours change on the soft curve (a spring would overshoot them).
+ */
 const CARD =
-  'flex h-full items-center gap-3 rounded-2xl border-2 border-line bg-surface p-3 transition-[border-color,background-color,box-shadow,transform] group-hover:border-edge peer-checked:border-ink peer-checked:bg-butter-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf motion-safe:peer-checked:-translate-y-0.5'
+  'flex h-full items-center gap-3 rounded-2xl border-2 border-line bg-surface p-3 [transition:border-color_200ms_var(--ease-out),background-color_200ms_var(--ease-out),box-shadow_320ms_var(--ease-spring),translate_320ms_var(--ease-spring)] group-hover:border-edge peer-checked:border-ink peer-checked:bg-butter-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf motion-safe:peer-checked:-translate-y-0.5'
 
 export function Section({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
   return (

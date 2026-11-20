@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useDict } from '@/i18n/LangProvider'
 import { Logo } from '../Logo'
 
 /**
@@ -16,6 +17,8 @@ export function IntroGate({
   onStart: () => void
   leaving: boolean
 }) {
+  const { home, common } = useDict()
+  const t = home.intro
   const button = useRef<HTMLButtonElement>(null)
   const ready = percent >= 100
   useEffect(() => {
@@ -35,40 +38,43 @@ export function IntroGate({
       role="dialog"
       aria-modal="true"
       aria-labelledby="intro-title"
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-10 overflow-hidden px-6 text-center transition-[opacity,filter] duration-700 ${
-        leaving ? 'pointer-events-none opacity-0 blur-md' : 'opacity-100'
+      aria-describedby="intro-tagline"
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 overflow-hidden px-6 text-center transition-[opacity,transform] duration-700 ${
+        leaving ? 'pointer-events-none scale-105 opacity-0' : 'opacity-100'
       }`}
     >
-      <div aria-hidden className="absolute inset-0 -z-10 bg-night">
-        <div className="absolute -top-1/4 -left-1/4 h-[80vmax] w-[80vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(28_42_120/0.9),transparent)] blur-3xl" />
-        <div className="absolute -right-1/4 -bottom-1/4 h-[70vmax] w-[70vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(91_124_255/0.34),transparent)] blur-3xl [animation-delay:-6s]" />
-        <div className="absolute top-1/3 right-1/4 h-[40vmax] w-[40vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_138_180/0.16),transparent)] blur-3xl [animation-delay:-11s]" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-cream">
+        <div className="absolute -top-1/4 -left-1/4 h-[70vmax] w-[70vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(142_217_194/0.55),transparent)] blur-2xl" />
+        <div className="absolute -right-1/4 -bottom-1/4 h-[65vmax] w-[65vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_179_138/0.45),transparent)] blur-2xl [animation-delay:-6s]" />
+        <div className="absolute top-1/4 right-1/5 h-[36vmax] w-[36vmax] animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_201_77/0.4),transparent)] blur-2xl [animation-delay:-11s]" />
       </div>
-      <Logo className="h-20 w-20 animate-rise" />
-      <h2
-        id="intro-title"
-        className="animate-rise text-5xl leading-[1.05] font-light tracking-tight sm:text-7xl [animation-delay:120ms]"
-      >
-        Welcome to
-        <br />
-        Crumb & Cloud
+      <Logo className="h-24 w-24 animate-rise" />
+      <h2 id="intro-title" className="animate-rise font-display [animation-delay:120ms]">
+        <span className="block text-2xl font-bold text-muted sm:text-3xl">{t.welcome}</span>
+        <span className="block font-script text-[clamp(3.6rem,13vw,7.5rem)] leading-[1.15] font-normal text-buy">
+          Kai&apos;s Bakery
+        </span>
       </h2>
-      <div className="h-14 animate-rise [animation-delay:240ms]">
+      <p id="intro-tagline" className="max-w-md animate-rise text-lg text-muted [animation-delay:200ms]">
+        {t.tagline}
+      </p>
+      <div className="flex h-16 animate-rise items-center [animation-delay:280ms]">
         {ready ? (
-          <button
-            ref={button}
-            type="button"
-            onClick={onStart}
-            className="rounded-full border border-white/50 px-10 py-3.5 text-sm font-medium tracking-[0.14em] uppercase transition-colors hover:border-moon hover:bg-moon/10 hover:text-moon"
-          >
-            Start the experience
+          <button ref={button} type="button" onClick={onStart} className="btn btn-buy px-9 py-3.5 text-lg">
+            {t.start}
           </button>
         ) : (
-          <p className="eyebrow pt-4" aria-live="polite">
-            Baking the scene · <span className="tabular-nums">{percent}%</span>
+          <p className="eyebrow" aria-live="polite">
+            {t.loading} · <span className="tabular-nums">{percent}%</span>
           </p>
         )}
       </div>
+      <p className="max-w-sm animate-rise text-sm text-muted [animation-delay:360ms]">
+        <span className="chip mr-1.5 -rotate-2 border border-ink/80">
+          <span aria-hidden>✦</span> {common.notice.badge}
+        </span>
+        {t.notice}
+      </p>
     </div>
   )
 }

@@ -3,15 +3,16 @@
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { CHAPTERS } from './chapters'
+import { LocalLink, useDict } from '@/i18n/LangProvider'
+import { CHAPTERS, isStoryChapter } from './chapters'
 import { IntroGate } from './IntroGate'
 
 const StoryScene = dynamic(() => import('../three/scenes/StoryScene'), { ssr: false })
 
-const SEEN_KEY = 'crumb-cloud-intro-seen'
+/** Remembers, for this browser tab, that the visitor already pressed the start button. */
+const SEEN_KEY = 'kais-bakery-intro-seen'
 
 const noSubscription = () => () => {}
 
@@ -23,11 +24,17 @@ function readSeen() {
   }
 }
 
+/** Keeps dark ink text readable over a bright, busy 3D scene (written out in full so Tailwind sees them). */
+const halo = '[text-shadow:0_1px_1px_rgb(255_248_229/0.95),0_0_18px_rgb(255_248_229/0.95)]'
+const haloFromSm = 'sm:[text-shadow:0_1px_1px_rgb(255_248_229/0.95),0_0_18px_rgb(255_248_229/0.95)]'
+
 /**
  * The home page: a sticky 3D stage behind a column of chapters. Scrolling sets a continuous chapter number
  * (2.5 = halfway between chapters 2 and 3) that the camera follows.
  */
 export function HomeExperience() {
+  const { home } = useDict()
+  const story = home.story
   const reduced = useReducedMotion()
   const chapterRef = useRef(0)
   const sections = useRef<(HTMLElement | null)[]>([])
@@ -107,13 +114,13 @@ export function HomeExperience() {
         title.current.style.transform = `translateY(${-fade * 12}vh) scale(${1 + fade * 0.06})`
       }
       if (shade.current) {
-        // Darken the side the chapter text sits on, only while chapters are on screen.
+        // A soft cream wash on the side the chapter text sits on, only while chapters are on screen.
         const on =
           Math.min(1, Math.max(0, (chapter - 0.45) * 3)) * Math.min(1, Math.max(0, (4.55 - chapter) * 3))
         shade.current.style.opacity = String(on)
       }
       if (tint.current) {
-        // Inside the cake the night turns to warm cocoa.
+        // Inside the cake the light turns warm, like peach sponge.
         const inside = Math.max(0, 1 - Math.abs(chapter - 1.6) / 1.1)
         tint.current.style.opacity = String(Math.min(1, inside * 1.2))
       }
@@ -127,8 +134,11 @@ export function HomeExperience() {
     sections.current[index]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
   }
 
+  const navLabel = (id: (typeof CHAPTERS)[number]) =>
+    id === 'intro' ? story.introNav : id === 'build' ? story.build.nav : story.chapters[id].nav
+
   return (
-    <div className="relative" id="story">
+    <div className="relative" id="story" aria-label={story.label} role="region">
       {gate !== 'closed' && <IntroGate percent={percent} onStart={start} leaving={gate === 'leaving'} />}
 
       <div
@@ -137,112 +147,117 @@ export function HomeExperience() {
       >
         <div
           ref={tint}
-          className="absolute inset-0 bg-[radial-gradient(120%_90%_at_60%_50%,#6a4434_0%,#33201a_45%,#120b09_100%)] opacity-0"
+          className="absolute inset-0 bg-[radial-gradient(120%_90%_at_60%_50%,var(--color-peach-soft)_0%,var(--color-cream-deep)_50%,var(--color-cream)_100%)] opacity-0"
         />
         <h1
           ref={title}
-          className="text-gradient absolute inset-x-0 top-[13svh] text-center font-display text-[clamp(4.2rem,17vw,16rem)] leading-[0.82] font-extralight tracking-[0.02em] uppercase will-change-transform"
+          aria-label={`${home.stage.script} ${home.stage.word}, ${home.stage.subtitle}`}
+          className="absolute inset-x-0 top-[12svh] flex flex-col items-center text-center will-change-transform"
         >
-          Crumb <span className="font-light">&</span>
-          <br />
-          Cloud
+          <span className="font-script text-[clamp(4.4rem,15vw,12rem)] leading-[1] text-buy [text-shadow:4px_4px_0_var(--color-ink)]">
+            {home.stage.script}
+          </span>
+          <span className="-mt-[0.15em] font-display text-[clamp(3rem,11vw,9rem)] leading-[0.9] font-extrabold tracking-tight text-ink uppercase">
+            {home.stage.word}
+          </span>
+          <span className="mt-3 chip rotate-[-2deg] border border-ink/80 px-3 py-1 text-sm">
+            {home.stage.subtitle}
+          </span>
         </h1>
         <div className="absolute inset-0">
           <StoryScene chapterRef={chapterRef} started={started} onProgress={onProgress} />
         </div>
         <div
           ref={shade}
-          className="absolute inset-y-0 left-0 hidden w-[64%] bg-gradient-to-r from-night/90 via-night/55 to-transparent opacity-0 sm:block"
+          className="absolute inset-y-0 left-0 hidden w-[62%] bg-gradient-to-r from-cream/90 via-cream/55 to-transparent opacity-0 sm:block"
         />
       </div>
 
       <div className="relative z-10 -mt-[100svh]">
-        {CHAPTERS.map((chapter, index) => {
+        {CHAPTERS.map((id, index) => {
           const register = (element: HTMLElement | null) => {
             sections.current[index] = element
           }
-          if (chapter.id === 'intro')
+          if (id === 'intro')
             return (
               <section
-                key={chapter.id}
+                key={id}
                 ref={register}
-                aria-label="Introduction"
+                aria-label={story.introLabel}
                 className="flex h-[100svh] flex-col items-center justify-end gap-5 px-6 pb-[5svh] text-center"
               >
-                <p className="max-w-md text-[clamp(1.4rem,2.6vw,2rem)] leading-tight font-light [text-shadow:0_1px_2px_rgb(6_8_20/0.9),0_2px_28px_rgb(6_8_20/0.95)]">
-                  Cakes, built in 3D.
+                <p
+                  className={`max-w-md font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-tight font-bold ${halo}`}
+                >
+                  {story.introLine}
                   <br />
-                  <span className="text-ink/85">Scroll to dive into the layers.</span>
+                  <span className="text-[0.8em] font-semibold text-muted">{story.introHint}</span>
                 </p>
                 <button
                   type="button"
                   onClick={() => goTo(1)}
-                  aria-label="Scroll to the first chapter"
-                  className="grid h-12 w-12 place-items-center rounded-full bg-ink text-night shadow-glow transition-transform hover:translate-y-1"
+                  aria-label={story.scrollDown}
+                  className="btn btn-buy h-12 w-12 p-0 motion-safe:animate-bounce"
                 >
                   <svg
                     viewBox="0 0 24 24"
                     className="h-5 w-5"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
+                    aria-hidden
                   >
                     <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
               </section>
             )
-          if (chapter.id === 'build')
+          if (id === 'build')
             return (
               <section
-                key={chapter.id}
+                key={id}
                 ref={register}
                 aria-labelledby="build-title"
-                className="flex min-h-[115svh] flex-col items-center justify-end gap-7 px-6 pb-[9svh] text-center [text-shadow:0_2px_24px_rgb(3_11_23/0.9)]"
+                className="flex min-h-[115svh] flex-col items-center justify-end gap-7 px-6 pb-[9svh] text-center"
               >
-                <p className="eyebrow">05 — Yours</p>
+                <p className="eyebrow">{story.build.eyebrow}</p>
                 <h2
                   id="build-title"
-                  className="max-w-3xl text-[clamp(2.4rem,6vw,5rem)] leading-[1] font-light tracking-tight"
+                  className={`max-w-3xl font-display text-[clamp(2.4rem,6vw,5rem)] leading-[1] font-extrabold tracking-tight ${halo}`}
                 >
-                  Now, <span className="text-accent">build yours.</span>
+                  {story.build.title}
+                  <span className="mark">{story.build.accent}</span>
                 </h2>
                 <div className="flex flex-wrap justify-center gap-3">
-                  <Link
-                    href="/design"
-                    className="rounded-full bg-ink px-8 py-3.5 text-sm font-semibold tracking-[0.12em] text-night uppercase shadow-glow transition-transform hover:-translate-y-0.5"
-                  >
-                    Build your cake
-                  </Link>
-                  <Link
-                    href="/menu"
-                    className="rounded-full border border-white/40 px-8 py-3.5 text-sm font-medium tracking-[0.12em] uppercase transition-colors hover:border-moon hover:text-moon"
-                  >
-                    Visit the vitrine
-                  </Link>
+                  <LocalLink href="/design" className="btn btn-buy px-7 py-3.5 text-lg">
+                    {story.build.design}
+                  </LocalLink>
+                  <LocalLink href="/menu" className="btn btn-ghost px-7 py-3.5 text-lg">
+                    {story.build.menu}
+                  </LocalLink>
                 </div>
               </section>
             )
+          if (!isStoryChapter(id)) return null
+          const chapter = story.chapters[id]
           return (
             <section
-              key={chapter.id}
+              key={id}
               ref={register}
-              aria-labelledby={`${chapter.id}-title`}
-              className="flex min-h-[135svh] items-end px-5 pb-[10svh] sm:items-center sm:px-[7vw] sm:pb-0"
+              aria-labelledby={`${id}-title`}
+              className="flex min-h-[135svh] items-end px-4 pb-[10svh] sm:items-center sm:px-[7vw] sm:pb-0"
             >
-              <div className="max-w-xl rounded-3xl bg-gradient-to-t from-night/85 to-night/40 p-5 backdrop-blur-[2px] sm:bg-none sm:p-0 sm:backdrop-blur-none">
-                <p className="eyebrow mb-5">{chapter.eyebrow}</p>
+              <div className="max-w-xl rounded-3xl border border-line bg-cream/85 p-5 backdrop-blur-md sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                <p className="eyebrow mb-4">{chapter.eyebrow}</p>
                 <h2
-                  id={`${chapter.id}-title`}
-                  className="text-[clamp(1.9rem,4.1vw,3.6rem)] leading-[1.08] font-light tracking-tight"
+                  id={`${id}-title`}
+                  className={`font-display text-[clamp(1.9rem,4.1vw,3.5rem)] leading-[1.08] font-extrabold tracking-tight ${haloFromSm}`}
                 >
                   {chapter.lead}
-                  <span className="text-accent">{chapter.accent}</span>
+                  <span className="mark">{chapter.accent}</span>
                   {chapter.tail}
                 </h2>
-                {chapter.note && (
-                  <p className="mt-6 max-w-md text-[0.95rem] leading-relaxed text-mist">{chapter.note}</p>
-                )}
+                <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-muted">{chapter.note}</p>
               </div>
             </section>
           )
@@ -250,25 +265,28 @@ export function HomeExperience() {
       </div>
 
       <nav
-        aria-label="Chapters"
+        aria-label={story.indexLabel}
         className={`fixed top-1/2 right-5 z-30 hidden -translate-y-1/2 transition-opacity duration-500 lg:block ${
           inStory && gate === 'closed' ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <ol className="space-y-3 text-right">
-          {CHAPTERS.map((chapter, index) => (
-            <li key={chapter.id}>
+        <ol className="space-y-2 rounded-2xl border border-line bg-cream/80 p-3 text-right backdrop-blur">
+          {CHAPTERS.map((id, index) => (
+            <li key={id}>
               <button
                 type="button"
                 onClick={() => goTo(index)}
                 aria-current={active === index ? 'step' : undefined}
-                className={`group flex w-full items-center justify-end gap-3 text-sm tracking-wide transition-colors ${
-                  active === index ? 'text-ink' : 'text-haze hover:text-mist'
+                className={`group flex w-full items-center justify-end gap-3 rounded-lg px-1 font-display text-sm font-semibold transition-colors ${
+                  active === index ? 'text-ink' : 'text-muted hover:text-ink'
                 }`}
               >
-                {chapter.nav}
+                {navLabel(id)}
                 <span
-                  className={`h-px transition-all ${active === index ? 'w-8 bg-moon' : 'w-4 bg-haze group-hover:w-6'}`}
+                  aria-hidden
+                  className={`h-1.5 rounded-full transition-all ${
+                    active === index ? 'w-8 bg-leaf' : 'w-3 bg-edge group-hover:w-5'
+                  }`}
                 />
               </button>
             </li>

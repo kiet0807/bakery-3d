@@ -15,7 +15,7 @@ const CRAFT = [
   },
   {
     title: 'Lit by a real café',
-    body: 'Reflections come from a photographed café interior, with ambient occlusion and soft shadows on capable graphics cards.',
+    body: 'Reflections come from a photographed café interior. On a desktop, "Studio photo" path-traces the cake ray by ray into a picture you can keep.',
   },
   {
     title: 'Fast on any device',

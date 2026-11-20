@@ -2,7 +2,7 @@
 
 import { Stars, useProgress } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
 import { normalizeConfig } from '@/lib/cake'
 import { Cake, type CakeControls } from '../cake/Cake'
@@ -159,11 +159,14 @@ export default function StoryScene({
   started: boolean
   onProgress: (percent: number) => void
 }) {
+  // Without WebGL the 2D drawing is all there is to load.
+  const done = useCallback(() => onProgress(100), [onProgress])
   return (
     <CanvasShell
       className="h-full w-full"
       label="A strawberry layer cake resting on a cloud under the night sky. As the page scrolls the camera moves around it and a slice slides out to show the layers inside."
       camera={{ position: [0, 1.2, 7.8], fov: 32, near: 0.1, far: 120 }}
+      onFallback={done}
     >
       <LoadingReporter onProgress={onProgress} />
       <Studio floor={-0.4} shadows={false} />

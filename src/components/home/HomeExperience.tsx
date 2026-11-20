@@ -46,6 +46,13 @@ export function HomeExperience() {
 
   const onProgress = useCallback((value: number) => setPercent((current) => Math.max(current, value)), [])
 
+  // Safety net: if the scene never reports back (a stalled download, a scene chunk that failed), the welcome
+  // screen still lets the visitor in.
+  useEffect(() => {
+    const timer = window.setTimeout(() => onProgress(100), 15000)
+    return () => window.clearTimeout(timer)
+  }, [onProgress])
+
   const start = () => {
     try {
       window.sessionStorage.setItem(SEEN_KEY, '1')

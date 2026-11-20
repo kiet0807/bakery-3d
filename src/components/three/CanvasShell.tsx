@@ -37,13 +37,17 @@ function startingQuality(): Quality {
   return small || cores <= 4 ? 'low' : 'high'
 }
 
-class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+class SceneBoundary extends Component<
+  { fallback: ReactNode; children: ReactNode; onError?: () => void },
+  { failed: boolean }
+> {
   state = { failed: false }
   static getDerivedStateFromError() {
     return { failed: true }
   }
   componentDidCatch(error: unknown) {
     console.warn('3D scene failed, showing the 2D version instead.', error)
+    this.props.onError?.()
   }
   render() {
     return this.state.failed ? this.props.fallback : this.props.children
@@ -59,6 +63,8 @@ export interface CanvasShellProps {
   /** "demand" renders only when something changes; "always" for scenes with idle animation. */
   mode?: 'always' | 'demand'
   onCreated?: CanvasProps['onCreated']
+  /** Called when the 2D drawing is shown instead: no WebGL, or the scene crashed. */
+  onFallback?: () => void
 }
 
 /**
@@ -72,6 +78,7 @@ export function CanvasShell({
   className,
   mode = 'always',
   onCreated,
+  onFallback,
 }: CanvasShellProps) {
   const wrapper = useRef<HTMLDivElement>(null)
   // Device facts are read after hydration (the server renders no canvas at all).
@@ -110,6 +117,11 @@ export function CanvasShell({
     return () => observer.disconnect()
   }, [])
 
+  // Pages that wait for the scene (the home page's welcome screen) must not wait for one that never comes.
+  useEffect(() => {
+    if (webgl === false) onFallback?.()
+  }, [webgl, onFallback])
+
   const fallback = <CakeFallback />
   const maxDpr = typeof window === 'undefined' ? 2 : Math.min(2, window.devicePixelRatio || 1)
   const high = quality === 'high'
@@ -118,7 +130,7 @@ export function CanvasShell({
     <div ref={wrapper} className={className} role="img" aria-label={label}>
       {webgl === false && fallback}
       {webgl && (
-        <SceneBoundary fallback={fallback}>
+        <SceneBoundary fallback={fallback} onError={onFallback}>
           <ReducedMotionContext.Provider value={reduced}>
             <QualityContext.Provider value={quality}>
               <Canvas

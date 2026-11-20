@@ -7,9 +7,9 @@
 
 /**
  * The site's public address, for canonical links, the sitemap, robots.txt and social previews. Set
- * NEXT_PUBLIC_SITE_URL when deploying; the fallback is the planned Vercel address.
+ * NEXT_PUBLIC_SITE_URL to change it (a preview, a fork); the fallback is the live address.
  */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bakery-3d.vercel.app'
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bakery.kaidev.io.vn'
 
 /** False while the shop is a showcase: checkout ends in a demo and says plainly that nothing was sent. */
 export const ORDERING_OPEN = false

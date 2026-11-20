@@ -3,6 +3,8 @@
 A cake shop website built to show what real-time 3D on the web can do in 2026: design a layer cake in 3D,
 slice it to see the layers, and watch it get boxed up. Vietnamese by default, with an English version.
 
+**Live: [bakery.kaidev.io.vn](https://bakery.kaidev.io.vn)** (English at [/en](https://bakery.kaidev.io.vn/en))
+
 **Kai's Bakery is not a real shop.** It is a web project by Kai. The cakes, prices and policies are
 realistic on purpose, but no order is ever sent and nobody is charged; every page says so.
 
@@ -169,8 +171,8 @@ pnpm check                # typecheck, lint, format check, unit tests, productio
 pnpm build && pnpm e2e    # end-to-end tests against the production build
 ```
 
-Set `NEXT_PUBLIC_SITE_URL` to the public address when deploying: canonical links, the sitemap and the
-social preview image (`public/og/kais-bakery.jpg`) use it.
+Canonical links, the sitemap and the social preview image (`public/og/kais-bakery.jpg`) use
+`https://bakery.kaidev.io.vn`. To deploy a fork or a preview under another address, set `NEXT_PUBLIC_SITE_URL`.
 
 ## Project structure
 

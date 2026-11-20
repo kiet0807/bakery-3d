@@ -186,8 +186,16 @@ export function stemGeometry() {
   return new THREE.TubeGeometry(curve, 12, 0.0055, 5, false)
 }
 
-/** Stripes for candles, painted once. */
+const stripes = new Map<string, THREE.CanvasTexture | null>()
+
+/** Stripes for candles, painted once per colour pair and shared by every candle on the page. */
 export function stripeTexture(colors: [string, string]) {
+  const key = colors.join()
+  if (!stripes.has(key)) stripes.set(key, paintStripes(colors))
+  return stripes.get(key) ?? null
+}
+
+function paintStripes(colors: [string, string]) {
   const canvas = document.createElement('canvas')
   canvas.width = 64
   canvas.height = 64

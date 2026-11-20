@@ -5,9 +5,18 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { dripOf, fillingOf, frostingOf, spongeOf, type CakeConfig } from '@/lib/cake'
-import { MILK_CHOCOLATE } from '../palette'
+import { MILK_CHOCOLATE, PLAQUE_LETTERING } from '../palette'
 import { BEVEL, FROSTING, SLICE_ANGLE, cutFace, cutFaceTexture, faceRotation, tierSurface } from './geometry'
-import { computeLayout, type CakeLayout, type Drip, type Part, type TierLayout } from './layout'
+import {
+  PLAQUE_HEIGHT,
+  PLAQUE_LINE_HEIGHT,
+  computeLayout,
+  plaqueLines,
+  type CakeLayout,
+  type Drip,
+  type Part,
+  type TierLayout,
+} from './layout'
 import { buttercreamTexture, shared } from './shared'
 import { Toppings } from './Toppings'
 
@@ -179,8 +188,10 @@ interface SyncedText extends THREE.Object3D {
 function Plaque({ layout, message }: { layout: CakeLayout; message: string }) {
   if (!layout.plaque) return null
   const { y, z, width, scale, lift } = layout.plaque
-  const height = 0.27 * scale
-  // Long messages on small plaques shrink until they fit inside the chocolate, instead of spilling over it.
+  const height = PLAQUE_HEIGHT * scale
+  const fontSize = 0.072 * scale
+  const lines = plaqueLines(message, width * 0.9, height * 0.84, fontSize)
+  // Then the block shrinks until it fits inside the chocolate, instead of spilling over it.
   const fit = (text: SyncedText) => {
     const bounds = text.textRenderInfo?.blockBounds
     if (!bounds) return
@@ -203,17 +214,16 @@ function Plaque({ layout, message }: { layout: CakeLayout; message: string }) {
       <Suspense fallback={null}>
         <Text
           font="/fonts/Pacifico-Subset.woff"
-          fontSize={0.072 * scale}
-          maxWidth={width * 0.9}
+          fontSize={fontSize}
           onSync={fit}
-          lineHeight={1.05}
+          lineHeight={PLAQUE_LINE_HEIGHT}
           textAlign="center"
           anchorX="center"
           anchorY="middle"
           position={[0, 0.006, 0.0135]}
-          color="#fff3df"
+          color={PLAQUE_LETTERING}
         >
-          {message}
+          {lines}
         </Text>
       </Suspense>
     </group>

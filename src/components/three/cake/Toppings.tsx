@@ -5,17 +5,19 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import {
   BLUEBERRY,
+  BLUEBERRY_SHEEN,
   CANDLE_STRIPES,
   CHERRY,
   DARK_CHOCOLATE,
   GOLD,
   LEAF,
   MACARON_COLORS,
+  MACARON_CREAM,
   SPRINKLE_COLORS,
   STEM,
   STRAWBERRY,
 } from '../palette'
-import { useReducedMotionScene } from '../motion'
+import { useQuality, useReducedMotionScene } from '../motion'
 import { stripeTexture } from './geometry'
 import type { CakeLayout, Part, Placement } from './layout'
 import { glowTexture, shared } from './shared'
@@ -49,7 +51,7 @@ function Blueberries({ p }: { p: Placement }) {
     <group position={[p.x, p.y, p.z]} rotation-y={p.yaw} scale={p.scale}>
       {BERRY_CLUSTER.map((offset, i) => (
         <mesh key={i} geometry={g.blueberry} position={offset} castShadow>
-          <meshPhysicalMaterial color={BLUEBERRY} roughness={0.45} sheen={0.6} sheenColor="#b9c4ff" />
+          <meshPhysicalMaterial color={BLUEBERRY} roughness={0.45} sheen={0.6} sheenColor={BLUEBERRY_SHEEN} />
         </mesh>
       ))}
     </group>
@@ -66,7 +68,7 @@ function Macaron({ p }: { p: Placement }) {
           <meshStandardMaterial color={color} roughness={0.7} />
         </mesh>
         <mesh geometry={g.macaronFilling}>
-          <meshStandardMaterial color="#fff6e6" roughness={0.6} />
+          <meshStandardMaterial color={MACARON_CREAM} roughness={0.6} />
         </mesh>
         <mesh geometry={g.macaronShell} position-y={-0.026} castShadow>
           <meshStandardMaterial color={color} roughness={0.7} />
@@ -177,8 +179,13 @@ function GoldLeaf({ p }: { p: Placement }) {
   )
 }
 
+/** The flame in high dynamic range: well over the high tier's bloom threshold (BLOOM_FROM in Effects). */
+const FLAME_HDR = new THREE.Color(SCENE.candle.flame).multiplyScalar(6)
+
 function Candle({ p, lit }: { p: Placement; lit: boolean }) {
   const g = shared()
+  // The light tier has no bloom and would clip the bright flame to white: it keeps the plain colour.
+  const high = useQuality() === 'high'
   const flame = useRef<THREE.Group>(null)
   const still = useReducedMotionScene()
   const stripes = CANDLE_STRIPES[p.variant % CANDLE_STRIPES.length]
@@ -202,7 +209,7 @@ function Candle({ p, lit }: { p: Placement; lit: boolean }) {
       {lit && (
         <group ref={flame} position-y={0.296}>
           <mesh geometry={g.flame}>
-            <meshBasicMaterial color={SCENE.candle.flame} toneMapped={false} />
+            <meshBasicMaterial color={high ? FLAME_HDR : SCENE.candle.flame} toneMapped={false} />
           </mesh>
           {glow && (
             <sprite position-y={0.035} scale={0.2}>

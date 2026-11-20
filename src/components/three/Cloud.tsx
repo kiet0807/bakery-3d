@@ -6,6 +6,11 @@ import { createRandom } from '@/lib/random'
 import { SCENE } from './theme'
 
 const sphere = new THREE.SphereGeometry(1, 28, 18)
+/**
+ * Light of their own, so the undersides (lit only by the mint bounce from below) stay cream-white instead of
+ * turning grey-green, most visibly on the light tier, which has no café HDRI to fill them.
+ */
+const CLOUD_GLOW = 0.38
 
 export interface CloudProps {
   seed: number
@@ -74,7 +79,7 @@ export function Cloud({
       <meshPhysicalMaterial
         color={color}
         emissive={SCENE.cloud.glow}
-        emissiveIntensity={0.24}
+        emissiveIntensity={CLOUD_GLOW}
         roughness={1}
         sheen={0.7}
         sheenColor={SCENE.cloud.sheen}

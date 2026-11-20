@@ -80,6 +80,56 @@ export interface LayoutOptions {
 /** Toppings shrink a little on small cakes (a 10 cm bento), so they keep their proportions. */
 const toppingScale = (radius: number) => Math.min(1, Math.max(0.72, radius / 0.85))
 
+/** Height of the chocolate plaque at full size, and of a candle from the cake top to the tip of its flame. */
+export const PLAQUE_HEIGHT = 0.27
+const FLAME_TIP = 0.385
+
+/**
+ * The plaque for a message on a top tier of this radius. On a small top crowded with candles it stands on longer
+ * sticks, like a cake topper, so its lower edge clears the flame tips and every word stays readable.
+ */
+function plaqueShape(topRadius: number, candles: number) {
+  const scale = Math.min(1, Math.max(0.78, topRadius / 0.8))
+  const lift = candles > 0 && topRadius < 0.75 ? FLAME_TIP * toppingScale(topRadius) - 0.03 : 0
+  return { z: -topRadius * 0.38, width: Math.min(1.05, topRadius * 1.15), scale, lift }
+}
+
+/** Rough advance of a Pacifico letter, in ems: enough to choose between one line and two. */
+const SCRIPT_ADVANCE = 0.52
+export const PLAQUE_LINE_HEIGHT = 1.05
+
+/**
+ * Lays a message out on one line or two, whichever lets the letters stay bigger in a box of this size. Two
+ * lines break at the space nearest the middle ("Chúc mừng / sinh nhật Mẹ"), so no short word is left alone.
+ */
+export function plaqueLines(message: string, width: number, height: number, fontSize: number): string {
+  const middle = message.length / 2
+  let split = -1
+  for (let i = message.indexOf(' '); i !== -1; i = message.indexOf(' ', i + 1))
+    if (split === -1 || Math.abs(i - middle) < Math.abs(split - middle)) split = i
+  if (split === -1) return message
+  const em = fontSize * SCRIPT_ADVANCE
+  const line = fontSize * PLAQUE_LINE_HEIGHT
+  const one = Math.min(1, width / (message.length * em), height / line)
+  const longest = Math.max(split, message.length - split - 1)
+  const two = Math.min(1, width / (longest * em), height / (2 * line))
+  return two > one ? `${message.slice(0, split)}\n${message.slice(split + 1)}` : message
+}
+
+/**
+ * Room needed above the top tier for what stands on it (plaque, candles, toppings). Cameras, the vitrine's glass
+ * cloche and the cake box all size themselves with this, so a lifted plaque never pokes through a lid.
+ */
+export function headroom(config: CakeConfig): number {
+  const tiers = sizeOf(config).tiers
+  const top = tiers[tiers.length - 1].radius
+  if (config.message) {
+    const { scale, lift } = plaqueShape(top, config.candles)
+    return 0.03 + lift + PLAQUE_HEIGHT * scale + 0.12
+  }
+  return config.candles ? 0.4 : 0.22
+}
+
 export function computeLayout(config: CakeConfig, { light = false }: LayoutOptions = {}): CakeLayout {
   // Sweetness does not show on the cake, so changing it must not reshuffle the sprinkles.
   const seed = hashString(configKey({ ...config, sweetness: 'less' }))
@@ -232,15 +282,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
     })
   }
 
-  const plaque = config.message
-    ? {
-        y: topY,
-        z: -top.radius * 0.38,
-        width: Math.min(1.05, top.radius * 1.15),
-        scale: Math.min(1, Math.max(0.78, top.radius / 0.8)),
-        lift: config.candles > 0 && top.radius < 0.75 ? 0.24 * small : 0,
-      }
-    : null
+  const plaque = config.message ? { y: topY, ...plaqueShape(top.radius, config.candles) } : null
 
   return {
     seed,

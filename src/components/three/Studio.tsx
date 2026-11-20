@@ -35,6 +35,15 @@ function Panels() {
         rotation-y={-Math.PI / 2}
         scale={[3, 4, 1]}
       />
+      {/* Warm light bounced up from a cream floor: keeps cloud undersides cream instead of grey-green. */}
+      <Lightformer
+        form="rect"
+        intensity={0.55}
+        color={SCENE.light.panelFloor}
+        position={[0, -4, 0]}
+        rotation-x={-Math.PI / 2}
+        scale={[10, 10, 1]}
+      />
     </>
   )
 }

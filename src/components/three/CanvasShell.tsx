@@ -131,7 +131,13 @@ export function CanvasShell({
   const high = quality === 'high'
 
   return (
-    <div ref={wrapper} className={className} role="img" aria-label={label}>
+    // Without WebGL the 2D drawing's own sentence is read out, not a description of a scene that is not there.
+    <div
+      ref={wrapper}
+      className={className}
+      role={webgl === false ? undefined : 'img'}
+      aria-label={webgl === false ? undefined : label}
+    >
       {webgl === false && fallback}
       {webgl && (
         <SceneBoundary fallback={fallback} onError={onFallback}>

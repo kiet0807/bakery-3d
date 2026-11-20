@@ -2,12 +2,13 @@
 
 import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { Suspense, useMemo, useRef, type ReactNode } from 'react'
+import { Suspense, useMemo, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
+import { headroom } from '../cake/layout'
 import { CanvasShell } from '../CanvasShell'
 import { Effects } from '../Effects'
 import { useReducedMotionScene } from '../motion'
@@ -28,6 +29,16 @@ const SIDES = [0, Math.PI / 2, Math.PI, -Math.PI / 2]
 /** The ribbon is tied off-centre, towards the back right, leaving the front of the lid for the name. */
 const RIBBON_X = 0.28
 const RIBBON_Z = -0.22
+/** Size of the shop's print on the lid: big enough to read at the camera's grazing angle. */
+const PRINT = 1.35
+
+/** When each side folds up (front, right, back, left), in seconds from the start. */
+const FOLD_TIMES: [number, number][] = [
+  [0.9, 1.5],
+  [1.1, 1.7],
+  [1.5, 2.1],
+  [1.3, 1.9],
+]
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
@@ -44,8 +55,7 @@ export function boxSize(config: CakeConfig) {
   const tiers = sizeOf(config).tiers
   const width = 2 * (tiers[0].radius + FROSTING) + 0.3
   const cake = tiers.reduce((sum, tier) => sum + tier.height, 0)
-  const height = cake + (config.message ? 0.42 : config.candles ? 0.4 : 0.22) + 0.1
-  return { width, height }
+  return { width, height: cake + headroom(config) + 0.1 }
 }
 
 /** Camera distance at which a subject of this half-width and height fits the view. */
@@ -149,12 +159,13 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
 /**
  * The closing scene: the cake lowers onto the board, the four sides fold up, the lid closes, and a ribbon
  * ties it all up. Driven by the time since the scene appeared; with reduced motion it starts at the end.
+ * `startedAt` lives outside the canvas: when a slow device drops to the light tier the canvas is rebuilt, and
+ * the box must carry on where it was instead of unpacking itself and folding up again.
  */
-function FoldingBox({ config }: { config: CakeConfig }) {
+function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefObject<number | null> }) {
   const { scenes } = useDict()
   const still = useReducedMotionScene()
   const { width: W, height: H } = useMemo(() => boxSize(config), [config])
-  const startedAt = useRef<number | null>(null)
   const turn = useRef<THREE.Group>(null)
   const cake = useRef<THREE.Group>(null)
   const folds = useRef<(THREE.Group | null)[]>([])
@@ -172,18 +183,13 @@ function FoldingBox({ config }: { config: CakeConfig }) {
   const boxRadius = W * 0.78
 
   useFrame((state, delta) => {
-    startedAt.current ??= state.clock.elapsedTime
-    const t = still ? END : state.clock.elapsedTime - startedAt.current
+    const now = performance.now() / 1000
+    startedAt.current ??= now
+    const t = still ? END : now - startedAt.current
 
     if (cake.current) cake.current.position.y = (1 - settle(range(t, 0, 0.9))) * (H + 0.5)
-    const foldTimes: [number, number][] = [
-      [0.9, 1.5],
-      [1.1, 1.7],
-      [1.5, 2.1],
-      [1.3, 1.9],
-    ]
     folds.current.forEach((pivot, i) => {
-      if (pivot) pivot.rotation.x = OPEN * (1 - smooth(range(t, ...foldTimes[i])))
+      if (pivot) pivot.rotation.x = OPEN * (1 - smooth(range(t, ...FOLD_TIMES[i])))
     })
     if (lid.current) lid.current.rotation.x = OPEN * (1 - smooth(range(t, 2.2, 2.9)))
 
@@ -242,7 +248,7 @@ function FoldingBox({ config }: { config: CakeConfig }) {
                   {/* Turned back to face the front, so the name reads from the camera. */}
                   <group rotation-y={Math.PI} position-y={T / 2 + 0.002}>
                     {/* The free corner of the lid: front left of the ribbon's cross. */}
-                    <group position={[(-W / 2 + rx) / 2, 0, (W / 2 + rz) / 2]}>
+                    <group position={[(-W / 2 + rx) / 2, 0, (W / 2 + rz) / 2]} scale={PRINT}>
                       <group position={[-W * 0.17, 0, 0]}>
                         <LidSticker size={W * 0.075} />
                       </group>
@@ -254,7 +260,7 @@ function FoldingBox({ config }: { config: CakeConfig }) {
                           position={[W * 0.05, 0, -W * 0.02]}
                           anchorX="center"
                           anchorY="middle"
-                          color={INK}
+                          color={SCENE.box.printAccent}
                         >
                           {scenes.boxName}
                         </Text>
@@ -265,7 +271,7 @@ function FoldingBox({ config }: { config: CakeConfig }) {
                           position={[W * 0.06, 0, W * 0.065]}
                           anchorX="center"
                           anchorY="middle"
-                          color={RIBBON}
+                          color={INK}
                         >
                           {scenes.boxLine}
                         </Text>
@@ -307,6 +313,7 @@ function FoldingBox({ config }: { config: CakeConfig }) {
 
 export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
   const { scenes } = useDict()
+  const startedAt = useRef<number | null>(null)
   return (
     <CanvasShell
       className="h-full w-full"
@@ -316,7 +323,7 @@ export default function BoxScene({ config, children }: { config: CakeConfig; chi
     >
       <Studio floor={-T} shadows={false} />
       <ShadowBlob radius={boxSize(config).width * 1.05} y={-T} />
-      <FoldingBox config={config} />
+      <FoldingBox config={config} startedAt={startedAt} />
       {children}
       <Effects />
     </CanvasShell>

@@ -14,3 +14,7 @@ export const STEM = '#5d6b2c'
 export const DARK_CHOCOLATE = '#3a2219'
 export const GOLD = '#e6b94a'
 export const MILK_CHOCOLATE = '#4a2c22'
+export const BLUEBERRY_SHEEN = '#b9c4ff'
+export const MACARON_CREAM = '#fff6e6'
+/** White-chocolate lettering on the plaque. */
+export const PLAQUE_LETTERING = '#fff3df'

@@ -10,6 +10,7 @@ import { useDict } from '@/i18n/LangProvider'
 import type { Preset } from '@/lib/presets'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
+import { headroom } from '../cake/layout'
 import { CakeStand, STAND_HEIGHT } from '../CakeStand'
 import { CanvasShell } from '../CanvasShell'
 import { CaptureBridge, type Capture } from '../Capture'
@@ -38,8 +39,7 @@ function clocheSize(config: CakeConfig) {
   const tiers = sizeOf(config).tiers
   const radius = tiers[0].radius + FROSTING + 0.16
   const cake = tiers.reduce((sum, tier) => sum + tier.height, 0)
-  const extra = config.message ? 0.5 : config.candles ? 0.48 : 0.32
-  return { radius, height: cake + extra }
+  return { radius, height: cake + headroom(config) + 0.09 }
 }
 
 /** A bell of glass: straight walls, a rounded shoulder and a small knob, turned on a lathe. */

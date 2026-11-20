@@ -5,6 +5,7 @@ import type { EffectComposer as Composer } from 'postprocessing'
 import { useMemo, useRef, type RefObject } from 'react'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
+import { headroom } from '../cake/layout'
 import { CakeStand, STAND_HEIGHT } from '../CakeStand'
 import { CanvasShell } from '../CanvasShell'
 import { CaptureBridge, type Capture } from '../Capture'
@@ -39,10 +40,10 @@ export default function DesignScene({
   const radius = tiers[0].radius + FROSTING
   const cakeHeight = tiers.reduce((sum, tier) => sum + tier.height, 0)
   const frame = useMemo(() => {
-    const top = cakeHeight + (config.message ? 0.42 : config.candles ? 0.4 : 0.22)
+    const top = cakeHeight + headroom(config)
     const bottom = -STAND_HEIGHT
     return { radius: radius + 0.55, height: top - bottom, center: (top + bottom) / 2 + 0.05 }
-  }, [radius, cakeHeight, config.message, config.candles])
+  }, [radius, cakeHeight, config])
 
   return (
     <CanvasShell

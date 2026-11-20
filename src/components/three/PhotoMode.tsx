@@ -12,6 +12,8 @@ import { CAFE_HDRI } from './Studio'
 
 /** Samples per pixel for a finished photo: clean enough on glaze and cream, about 15–25 s on a laptop GPU. */
 export const PHOTO_SAMPLES = 256
+/** How brightly candle flames shine in the photo, as emissive intensity. */
+const FLAME_GLOW = 6
 
 /** The subset of troika's Text mesh that the photo needs. */
 interface TroikaText extends THREE.Mesh {
@@ -32,6 +34,20 @@ const isTroikaText = (object: THREE.Object3D): object is TroikaText =>
  * copies glossy materials without it and moves their roughness towards the coat's, which keeps most of the shine.
  */
 function photoMaterial(material: THREE.Material, owned: { dispose: () => void }[]): THREE.Material {
+  // Unlit materials (candle flames) would come out as dull orange cones: in the photo they give off light.
+  const basic = material as THREE.MeshBasicMaterial
+  if (basic.isMeshBasicMaterial && !basic.map && !basic.transparent) {
+    // The high tier draws flames brighter than white for its bloom: bring the colour back to 0–1 first.
+    const glow = basic.color.clone()
+    glow.multiplyScalar(1 / Math.max(1, glow.r, glow.g, glow.b))
+    const flame = new THREE.MeshStandardMaterial({
+      color: 0x000000,
+      emissive: glow,
+      emissiveIntensity: FLAME_GLOW,
+    })
+    owned.push(flame)
+    return flame
+  }
   const physical = material as THREE.MeshPhysicalMaterial
   if (!physical.isMeshPhysicalMaterial || !(physical.clearcoat > 0)) return material
   const copy = physical.clone()
@@ -139,14 +155,16 @@ async function textPlane(text: TroikaText): Promise<THREE.Mesh | null> {
   ctx.fillStyle = new THREE.Color(text.color).getStyle()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  // Wrap like troika does, at its max width.
-  const words = text.text.split(' ')
+  // Break where the text breaks (the plaque sets its own line breaks), then wrap like troika at its max width.
   const lines: string[] = []
-  for (const word of words) {
-    const last = lines[lines.length - 1]
-    if (last && ctx.measureText(`${last} ${word}`).width <= text.maxWidth * scale)
-      lines[lines.length - 1] = `${last} ${word}`
-    else lines.push(word)
+  for (const paragraph of text.text.split('\n')) {
+    const first = lines.length
+    for (const word of paragraph.split(' ')) {
+      const last = lines.length > first ? lines[lines.length - 1] : undefined
+      if (last !== undefined && ctx.measureText(`${last} ${word}`).width <= text.maxWidth * scale)
+        lines[lines.length - 1] = `${last} ${word}`
+      else lines.push(word)
+    }
   }
   const step = canvas.height / lines.length
   lines.forEach((line, i) => ctx.fillText(line, canvas.width / 2, step * (i + 0.5)))
@@ -189,15 +207,10 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
       copy.matrix.copy(mesh.matrixWorld)
       copy.matrixWorld.copy(mesh.matrixWorld)
       photo.add(copy)
-    } else if (
-      (object as THREE.DirectionalLight).isDirectionalLight ||
-      (object as THREE.PointLight).isPointLight
-    ) {
-      const light = (object as THREE.Light).clone(false) as THREE.DirectionalLight | THREE.PointLight
-      light.position.setFromMatrixPosition(object.matrixWorld)
-      photo.add(light)
-      if ('target' in light && light.target) photo.add(light.target)
     }
+    // The live scene's sun and fill lights are left out: their hard shadows came out as a coarse maze-like grain
+    // on the floor at 1× DPR. The café HDRI alone lights the photo like a soft box; a finer grain still shows in
+    // deep shade on 1× screens.
   })
 
   for (const plane of await Promise.all(pending)) {
@@ -236,7 +249,8 @@ async function buildPhotoScene(scene: THREE.Scene, floorY: number, environment: 
   // The café HDRI itself, as an equirect image. The live scenes light with a cube map (the HDRI plus soft
   // panels), which this path tracer cannot convert under three r187.
   photo.environment = environment
-  photo.environmentIntensity = 0.6
+  // The only light in the photo (with the flames), so brighter than the live scene's share of it.
+  photo.environmentIntensity = 1.3
   photo.updateMatrixWorld(true)
 
   return { photo, dispose: () => owned.forEach((item) => item.dispose()) }

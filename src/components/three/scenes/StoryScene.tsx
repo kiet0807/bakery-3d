@@ -64,23 +64,25 @@ const range = (t: number, from: number, to: number) => clamp01((t - from) / (to 
 function Director({
   chapterRef,
   started,
+  startedAt,
   children,
 }: {
   chapterRef: RefObject<number>
   started: boolean
+  /** When the opening act began, kept outside the canvas so a rebuilt canvas (light tier) does not replay it. */
+  startedAt: RefObject<number | null>
   /** Rendered next to the cake, inside the same bobbing group (the cloud it rests on). */
   children?: ReactNode
 }) {
   const camera = useThree((state) => state.camera)
   const still = useReducedMotionScene()
   const chapter = useRef(0)
-  const startedAt = useRef<number | null>(null)
   const controls = useRef<CakeControls>({ slice: 0, drips: 0, toppings: 0 })
 
   useEffect(() => () => (camera as THREE.PerspectiveCamera).clearViewOffset(), [camera])
 
   useFrame((state, delta) => {
-    const { clock, size } = state
+    const { size } = state
     const view = state.camera as THREE.PerspectiveCamera
     const { position, target, a, b } = scratch
     chapter.current = still
@@ -120,8 +122,9 @@ function Director({
       dripsIntro = 1
       toppingsIntro = 1
     } else if (started) {
-      startedAt.current ??= clock.elapsedTime
-      const t = clock.elapsedTime - startedAt.current
+      const now = performance.now() / 1000
+      startedAt.current ??= now
+      const t = now - startedAt.current
       dripsIntro = range(t, 0.4, 1.8)
       toppingsIntro = range(t, 1.2, 2.6)
     }
@@ -165,6 +168,7 @@ export default function StoryScene({
   onProgress: (percent: number) => void
 }) {
   const { scenes } = useDict()
+  const startedAt = useRef<number | null>(null)
   // Without WebGL the 2D drawing is all there is to load.
   const done = useCallback(() => onProgress(100), [onProgress])
   return (
@@ -177,7 +181,7 @@ export default function StoryScene({
       <LoadingReporter onProgress={onProgress} />
       <Studio floor={-0.4} shadows={false} />
       <FloatingSprinkles count={80} />
-      <Director chapterRef={chapterRef} started={started}>
+      <Director chapterRef={chapterRef} started={started} startedAt={startedAt}>
         <Cloud
           seed={3}
           puffs={34}

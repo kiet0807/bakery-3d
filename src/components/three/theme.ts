@@ -16,9 +16,12 @@ export const SCENE = {
     glow: '#fffcf2',
   },
   light: {
-    /** Hemisphere: warm white from above, a mint bounce from below, so shadows lean green, never grey. */
+    /**
+     * Hemisphere: warm white from above, a butter-cream bounce from below. A mint bounce turned cloud undersides
+     * grey-green on the light tier; the mint now comes from the fill light and the sheen on the clouds.
+     */
     sky: '#fff5e4',
-    ground: '#cdeee1',
+    ground: '#f2eedb',
     /** The sun: warm morning light from the front right. */
     key: '#fff0dc',
     /** Mint fill from behind left, where the old moonlight was. */
@@ -28,6 +31,8 @@ export const SCENE = {
     /** Environment panels for reflections on glaze, glass and porcelain. */
     panelWarm: '#ffe9cf',
     panelMint: '#d6f5ea',
+    /** A cream floor under everything, bouncing light up into undersides. */
+    panelFloor: '#fff3dc',
   },
   /** Ink of the brand, used for shadows (thinned) and for print on the box. */
   ink: '#1f3d36',
@@ -62,6 +67,8 @@ export const SCENE = {
     ribbon: '#ef7a4f',
     ribbonSheen: '#ffd3bd',
     print: '#1f3d36',
+    /** "Kai's" on the lid, in the buying red of the header's wordmark. */
+    printAccent: '#c24620',
     stickerMint: '#8ed9c2',
     stickerCherry: '#f2789f',
   },

@@ -12,6 +12,17 @@ import { CAFE_HDRI } from './Studio'
 
 /** Samples per pixel for a finished photo: clean enough on glaze and cream, about 15–25 s on a laptop GPU. */
 export const PHOTO_SAMPLES = 256
+
+/**
+ * The path tracer's random numbers: 1 is Sobol. The library's default (2, a stratified list offset by blue
+ * noise per pixel) left a fixed maze of light and dark pixels on diffuse surfaces at 1x pixel ratio that did
+ * not fade with more samples; Sobol and plain PCG both converge to a clean picture in the same time.
+ */
+const RANDOM_SOBOL = 1
+
+/** The renderer inside `WebGLPathTracer` is private in three-gpu-pathtracer 0.0.28; its material is not. */
+type WithMaterial = { _pathTracer?: { material?: { setDefine?: (name: string, value: number) => void } } }
+
 /** How brightly candle flames shine in the photo, as emissive intensity. */
 const FLAME_GLOW = 6
 
@@ -309,6 +320,10 @@ function PathTracedPhoto({ floorY, drawRef, onProgress, onError, samples = PHOTO
           pathTracer.minSamples = 1
           pathTracer.fadeDuration = 400
           pathTracer.tiles.set(2, 2)
+          ;(pathTracer as unknown as WithMaterial)._pathTracer?.material?.setDefine?.(
+            'RANDOM_TYPE',
+            RANDOM_SOBOL,
+          )
           pathTracer.setScene(photo, camera)
         } catch (error) {
           dispose()

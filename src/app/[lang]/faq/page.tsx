@@ -55,7 +55,7 @@ export default async function FaqPage({ params }: PageProps<'/[lang]/faq'>) {
           {t.more.title}
         </h2>
         <p className="text-lg">{t.more.body}</p>
-        <ContactLinks hotline={t.more.hotline} />
+        <ContactLinks lang={lang} hotline={t.more.hotline} />
       </section>
     </div>
   )

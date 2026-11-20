@@ -132,7 +132,6 @@ export const home = {
     all: 'Xem tủ kính 3D',
     cta: 'Đổi theo ý bạn',
     lead: (hours: number) => `Đặt trước ${hours} giờ`,
-    from: 'Giá',
   },
   steps: {
     eyebrow: 'Đặt bánh trong 3 bước',
@@ -161,7 +160,7 @@ export const home = {
     eyebrow: 'Hậu trường',
     title: 'Web này ',
     accent: 'làm bằng gì?',
-    lead: 'Tiệm thì "ảo", nhưng code là thật. Mọi thứ bạn thấy chạy ngay trong trình duyệt, không tải một file 3D nào.',
+    lead: 'Tiệm thì "ảo", nhưng code là thật. Mọi thứ bạn thấy chạy ngay trong trình duyệt, không tải một mô hình 3D nào.',
     cards: [
       {
         icon: '🎂',
@@ -176,7 +175,7 @@ export const home = {
       {
         icon: '📸',
         title: 'Ảnh studio bằng path tracing',
-        body: 'Trên máy tính, nút "Studio photo" dò từng tia sáng để ra một tấm ảnh bánh như chụp thật.',
+        body: 'Trên máy tính, nút "Chụp ảnh studio" dò từng tia sáng để ra một tấm ảnh bánh như chụp thật.',
       },
       {
         icon: '♿',

@@ -149,19 +149,23 @@ export function HomeExperience() {
           ref={tint}
           className="absolute inset-0 bg-[radial-gradient(120%_90%_at_60%_50%,var(--color-peach-soft)_0%,var(--color-cream-deep)_50%,var(--color-cream)_100%)] opacity-0"
         />
+        {/*
+          The cake's top sits a little below the middle of the screen and is drawn over this title, so the whole
+          title has to end above it: the sticker goes first, and the words scale with the screen's height too.
+        */}
         <h1
           ref={title}
           aria-label={`${home.stage.script} ${home.stage.word}, ${home.stage.subtitle}`}
-          className="absolute inset-x-0 top-[12svh] flex flex-col items-center text-center will-change-transform"
+          className="absolute inset-x-0 top-[max(5.5rem,9svh)] flex flex-col items-center text-center will-change-transform"
         >
-          <span className="font-script text-[clamp(4.4rem,15vw,12rem)] leading-[1] text-buy [text-shadow:4px_4px_0_var(--color-ink)]">
+          <span className="mb-1 chip rotate-[-3deg] border border-ink/80 px-3 py-1 text-sm sm:text-base">
+            {home.stage.subtitle}
+          </span>
+          <span className="font-script text-[clamp(4.4rem,min(15vw,19svh),12rem)] leading-[1] text-buy [text-shadow:4px_4px_0_var(--color-ink)]">
             {home.stage.script}
           </span>
-          <span className="-mt-[0.15em] font-display text-[clamp(3rem,11vw,9rem)] leading-[0.9] font-extrabold tracking-tight text-ink uppercase">
+          <span className="-mt-[0.15em] font-display text-[clamp(3rem,min(11vw,14svh),9rem)] leading-[0.9] font-extrabold tracking-tight text-ink uppercase">
             {home.stage.word}
-          </span>
-          <span className="mt-3 chip rotate-[-2deg] border border-ink/80 px-3 py-1 text-sm">
-            {home.stage.subtitle}
           </span>
         </h1>
         <div className="absolute inset-0">

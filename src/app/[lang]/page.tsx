@@ -42,10 +42,10 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               >
                 {item.icon}
               </span>
-              <span className="space-y-1.5">
-                <span className="block font-display text-xl font-bold">{item.title}</span>
-                <span className="block leading-relaxed text-muted">{item.body}</span>
-              </span>
+              <div className="space-y-1.5">
+                <h3 className="font-display text-xl font-bold">{item.title}</h3>
+                <p className="leading-relaxed text-muted">{item.body}</p>
+              </div>
             </li>
           ))}
         </ul>
@@ -133,8 +133,13 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
         </ol>
       </section>
 
-      <section aria-label={dict.common.notice.badge} className="mx-auto max-w-4xl px-4 pt-28 sm:px-8">
-        <NoticeCard lang={lang} title={home.notice.title} linkLabel={home.notice.more} />
+      <section aria-labelledby="notice-title" className="mx-auto max-w-4xl px-4 pt-28 sm:px-8">
+        <NoticeCard
+          lang={lang}
+          title={home.notice.title}
+          titleId="notice-title"
+          linkLabel={home.notice.more}
+        />
       </section>
 
       <section aria-labelledby="tech-title" className="mx-auto max-w-7xl px-4 pt-28 sm:px-8">

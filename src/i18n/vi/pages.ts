@@ -56,7 +56,7 @@ const policySections: Record<PolicyId, PolicySection> = {
             ['Bánh tự thiết kế trên web', '24 giờ'],
             ['Bánh theo ảnh mẫu bạn gửi, tạo hình phức tạp', '48 giờ, nhắn Zalo kèm ảnh'],
             ['Bánh 2 tầng', '48 giờ'],
-            ['Ngày lễ (14/2, 8/3, 20/10, 20/11, 24/12, cận Tết)', '48 giờ cho mọi đơn'],
+            ['Ngày lễ (14/2, 8/3, 20/10, 20/11, 24/12, 7 ngày cận Tết)', '48 giờ cho mọi đơn'],
           ],
         },
         text: 'Giờ tính theo giờ Việt Nam, kể cả khi bạn đặt từ nước ngoài cho người nhà.',
@@ -70,7 +70,7 @@ const policySections: Record<PolicyId, PolicySection> = {
       {
         items: [
           'Trả tiền khi nhận (COD), chuyển khoản (VietQR) hoặc MoMo, chọn lúc đặt.',
-          'Mẫu trong menu và bánh tự thiết kế đến 20 cm: không cần cọc. Tiệm nhắn hoặc gọi xác nhận trước khi làm.',
+          'Mẫu trong menu và bánh tự thiết kế đến 20 cm: không cần cọc, trừ các trường hợp bên dưới. Tiệm nhắn hoặc gọi xác nhận trước khi làm.',
         ],
       },
       {
@@ -166,7 +166,7 @@ const policySections: Record<PolicyId, PolicySection> = {
         ],
       },
       {
-        text: 'Nếu sau này tiệm bán thật, phần này sẽ được viết lại theo Luật Bảo vệ dữ liệu cá nhân và Nghị định 13/2023/NĐ-CP.',
+        text: 'Nếu sau này tiệm bán thật, phần này sẽ được viết lại theo Luật Bảo vệ dữ liệu cá nhân (có hiệu lực từ 1/1/2026) và các văn bản hướng dẫn.',
       },
     ],
   },
@@ -264,7 +264,7 @@ export const pages = {
       showsTitle: 'Dự án này khoe gì',
       shows: [
         'Bánh 3D dựng hoàn toàn bằng code, đổi theo từng lựa chọn, cắt ra xem từng lớp.',
-        'Ảnh "Studio photo" dựng bằng path tracing ngay trong trình duyệt.',
+        'Ảnh studio (nút "Chụp ảnh studio") dựng bằng path tracing ngay trong trình duyệt.',
         'Song ngữ Việt – Anh, tiếng Việt là mặc định, mỗi ngôn ngữ có địa chỉ trang riêng.',
         'Dùng được bằng bàn phím và trình đọc màn hình, có chế độ giảm chuyển động và hình 2D khi máy không có WebGL.',
         'Chạy mượt cả trên máy yếu: chất lượng tự hạ khi khung hình tụt.',

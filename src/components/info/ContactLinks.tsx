@@ -1,13 +1,18 @@
-import { SHOP } from '@/lib/shop'
+import type { Locale } from '@/i18n/config'
+import { dictionaries } from '@/i18n/dictionaries'
+import { SHOP, SHOP_LINKS } from '@/lib/shop'
 
 /** The shop's phone number and its social links, as they are shared publicly. */
-export function ContactLinks({ hotline, className = '' }: { hotline: string; className?: string }) {
-  const links = [
-    { href: SHOP.zalo, label: 'Zalo' },
-    { href: SHOP.social.facebook, label: 'Facebook' },
-    { href: SHOP.social.instagram, label: 'Instagram' },
-    { href: SHOP.social.tiktok, label: 'TikTok' },
-  ]
+export function ContactLinks({
+  lang,
+  hotline,
+  className = '',
+}: {
+  lang: Locale
+  hotline: string
+  className?: string
+}) {
+  const { common } = dictionaries[lang]
   return (
     <div className={`space-y-3 ${className}`}>
       <p>
@@ -20,7 +25,7 @@ export function ContactLinks({ hotline, className = '' }: { hotline: string; cla
         </a>
       </p>
       <ul className="flex flex-wrap gap-2">
-        {links.map((link) => (
+        {SHOP_LINKS.map((link) => (
           <li key={link.label}>
             <a
               href={link.href}
@@ -29,6 +34,7 @@ export function ContactLinks({ hotline, className = '' }: { hotline: string; cla
               className="inline-flex rounded-full border-2 border-ink/20 bg-surface px-3.5 py-1.5 text-sm font-semibold transition-colors hover:border-ink hover:bg-soft"
             >
               {link.label}
+              <span className="sr-only"> {common.newTab}</span>
             </a>
           </li>
         ))}

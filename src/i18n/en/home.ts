@@ -102,7 +102,7 @@ export const home: HomeDict = {
       {
         icon: '🛵',
         title: 'Pick up or delivery',
-        body: 'Drop by 6:30–22:45, or we book Grab, Be or Ahamove to bring it across inner Ho Chi Minh City. You pay the app fee.',
+        body: 'Drop by 6:30–22:45, or we book Grab, Be or Ahamove to bring it across the old inner districts of Ho Chi Minh City. You pay the app fee.',
       },
     ],
   },
@@ -113,7 +113,6 @@ export const home: HomeDict = {
     all: 'See the 3D vitrine',
     cta: 'Make it yours',
     lead: (hours: number) => `Order ${hours} h ahead`,
-    from: 'Price',
   },
   steps: {
     eyebrow: 'Order in 3 steps',
@@ -142,7 +141,7 @@ export const home: HomeDict = {
     eyebrow: 'Behind the scenes',
     title: 'What is this site ',
     accent: 'made of?',
-    lead: "The shop is pretend, the code is real. Everything you see runs right in your browser, and there isn't a single 3D file to download.",
+    lead: "The shop is pretend, the code is real. Everything you see runs right in your browser, and there isn't a single 3D model to download.",
     cards: [
       {
         icon: '🎂',

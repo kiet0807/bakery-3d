@@ -17,8 +17,8 @@ function Block({ block }: { block: PolicyBlock }) {
     <div className="space-y-3">
       {block.heading && <h3 className="font-display text-xl font-bold">{block.heading}</h3>}
       {block.table && (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className="w-full min-w-[30rem] text-left text-[0.95rem]">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <table className="w-full text-left text-[0.95rem]">
             <thead className="bg-soft font-display">
               <tr>
                 {block.table.head.map((cell) => (

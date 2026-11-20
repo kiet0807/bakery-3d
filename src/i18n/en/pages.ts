@@ -19,7 +19,7 @@ const policySections: Record<PolicyId, PolicySection> = {
       },
       {
         heading: 'Where we deliver',
-        text: 'Inner Ho Chi Minh City, listed by the district names everyone still uses (before the July 2025 merger):',
+        text: "Ho Chi Minh City's old inner districts, listed by the names everyone still uses (from before the July 2025 merger):",
         areas: true,
       },
       {
@@ -38,7 +38,7 @@ const policySections: Record<PolicyId, PolicySection> = {
             ],
             ['Two-tier cakes', '48 hours ahead'],
             [
-              'Holidays (14/2, 8/3, 20/10, 20/11, 24/12, the days before Tết)',
+              'Holidays (14/2, 8/3, 20/10, 20/11, 24/12, the 7 days before Tết)',
               '48 hours ahead for every order',
             ],
           ],
@@ -54,7 +54,7 @@ const policySections: Record<PolicyId, PolicySection> = {
       {
         items: [
           'Cash on delivery (COD), bank transfer (VietQR) or MoMo; you choose when you order.',
-          'Menu cakes and your own designs up to 20 cm: no deposit. We text or call to confirm before we bake.',
+          'Menu cakes and your own designs up to 20 cm: no deposit, except in the cases below. We text or call to confirm before we bake.',
         ],
       },
       {
@@ -155,7 +155,7 @@ const policySections: Record<PolicyId, PolicySection> = {
         ],
       },
       {
-        text: "If the shop ever opens for real, this section will be rewritten under Vietnam's Personal Data Protection Law and Decree 13/2023/NĐ-CP.",
+        text: "If the shop ever opens for real, this section will be rewritten under Vietnam's Personal Data Protection Law (in force since 1 January 2026) and its implementing rules.",
       },
     ],
   },
@@ -173,7 +173,7 @@ const faqItems: FaqItem[] = [
   },
   {
     q: 'How much is delivery?',
-    a: 'It depends on the distance. We book Grab, Be or Ahamove and tell you the app fee before booking; you pay the driver or add it to your transfer. Delivery runs 8:00–21:30 across inner Ho Chi Minh City.',
+    a: 'It depends on the distance. We book Grab, Be or Ahamove and tell you the app fee before booking; you pay the driver or add it to your transfer. Delivery runs 8:00–21:30 across the old inner districts of Ho Chi Minh City.',
   },
   {
     q: 'How sweet is "less sweet"?',
@@ -270,7 +270,7 @@ export const pages: PagesDict = {
     },
     areas: {
       title: 'Where we deliver',
-      lead: 'Across inner Ho Chi Minh City by Grab, Be or Ahamove. The delivery fee is whatever the app charges, and you pay it.',
+      lead: "Across Ho Chi Minh City's old inner districts by Grab, Be or Ahamove. The delivery fee is whatever the app charges, and you pay it.",
       merger:
         "Since 1 July 2025, Ho Chi Minh City has no districts and has merged with Bình Dương and Bà Rịa – Vũng Tàu. We still list the old district names because everyone knows them, and we don't deliver to the newly merged provinces yet.",
     },

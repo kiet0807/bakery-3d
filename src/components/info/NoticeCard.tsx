@@ -6,11 +6,14 @@ import { LocalLink } from '@/i18n/LangProvider'
 export function NoticeCard({
   lang,
   title,
+  titleId,
   linkLabel,
   className = '',
 }: {
   lang: Locale
+  /** A heading for the card (an h2), so the notice can be found by heading like any other section. */
   title?: string
+  titleId?: string
   /** When set, links to the project section of the about page. */
   linkLabel?: string
   className?: string
@@ -21,7 +24,11 @@ export function NoticeCard({
       <span className="chip absolute -top-3 left-6 -rotate-3 border border-ink/80 px-3 py-1 text-sm">
         <span aria-hidden>✦</span> {common.notice.badge}
       </span>
-      {title && <p className="mb-2 font-display text-2xl font-extrabold">{title}</p>}
+      {title && (
+        <h2 id={titleId} className="mb-2 font-display text-2xl font-extrabold">
+          {title}
+        </h2>
+      )}
       <p className="max-w-2xl text-lg leading-relaxed">{common.notice.text}</p>
       {linkLabel && (
         <p className="mt-4">

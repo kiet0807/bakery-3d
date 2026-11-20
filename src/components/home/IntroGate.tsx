@@ -19,6 +19,7 @@ export function IntroGate({
 }) {
   const { home, common } = useDict()
   const t = home.intro
+  const dialog = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
   const ready = percent >= 100
   useEffect(() => {
@@ -32,9 +33,28 @@ export function IntroGate({
       root.style.overflow = previous
     }
   }, [])
+  // A real modal: everything else on the page (header, story, footer) is made inert while the gate is up, so
+  // Tab cannot wander to links hidden behind it. The gate sits inside <main>, so every ancestor's siblings
+  // are covered, not just the top level.
+  useEffect(() => {
+    const made: Element[] = []
+    for (
+      let node: Element | null = dialog.current;
+      node && node !== document.body;
+      node = node.parentElement
+    ) {
+      for (const sibling of node.parentElement?.children ?? []) {
+        if (sibling === node || sibling.hasAttribute('inert') || sibling.tagName === 'SCRIPT') continue
+        sibling.setAttribute('inert', '')
+        made.push(sibling)
+      }
+    }
+    return () => made.forEach((element) => element.removeAttribute('inert'))
+  }, [])
 
   return (
     <div
+      ref={dialog}
       role="dialog"
       aria-modal="true"
       aria-labelledby="intro-title"

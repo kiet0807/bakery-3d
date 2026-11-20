@@ -130,7 +130,7 @@ export default async function AboutPage({ params }: PageProps<'/[lang]/about'>) 
         </div>
         <div id="contact" className="card scroll-mt-28 space-y-4 self-start p-6 sm:p-8">
           <h2 className="font-display text-3xl font-extrabold">{t.contact.title}</h2>
-          <ContactLinks hotline={t.contact.hotline} />
+          <ContactLinks lang={lang} hotline={t.contact.hotline} />
           <p className="leading-relaxed text-muted">{t.contact.note}</p>
         </div>
       </section>

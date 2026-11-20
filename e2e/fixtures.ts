@@ -55,13 +55,30 @@ export async function skipIntro(page: Page) {
  * Scrolls an element to two thirds down the screen, then clicks it. On phones the builder's 3D stage sticks
  * under the header and the price bar is fixed at the bottom; Playwright's own scrolling (top, centre or end)
  * would leave the target under one of them, while a person scrolls it into the open band between.
+ *
+ * With two 3D pages in parallel on the software renderer, frames come seconds apart. The share button then sat
+ * still and uncovered in the band (traced frame by frame), yet Playwright's stability check kept failing and its
+ * own retries scrolled the button under the price bar until the test timed out, on about half of the phone runs.
+ * So each attempt scrolls the target back into the band and checks that its centre is really the target (the same
+ * test Playwright makes: visible, and nothing on top). The first attempt clicks normally with a short timeout; later
+ * ones trust that check and skip Playwright's. An attempt that times out has not clicked, so none clicks twice.
  */
 export async function clickInBand(target: Locator) {
-  await target.evaluate((element) => {
-    const { top } = element.getBoundingClientRect()
-    window.scrollBy(0, top - window.innerHeight * 0.66)
-  })
-  await target.click()
+  let attempt = 0
+  await expect(async () => {
+    attempt += 1
+    const clear = await target.evaluate(async (element) => {
+      await document.fonts.ready
+      const { top } = element.getBoundingClientRect()
+      window.scrollBy(0, top - window.innerHeight * 0.66)
+      await new Promise((settled) => requestAnimationFrame(() => requestAnimationFrame(settled)))
+      const box = element.getBoundingClientRect()
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+      return hit !== null && element.contains(hit)
+    })
+    expect(clear, 'the target is clear of the sticky stage and the fixed bars').toBe(true)
+    await target.click({ timeout: 5_000, force: attempt > 1 })
+  }).toPass({ timeout: 60_000 })
 }
 
 /** The number in the header's cart button. */

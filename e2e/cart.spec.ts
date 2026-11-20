@@ -90,6 +90,8 @@ test.describe('cart and test checkout', () => {
 
     await page.getByLabel('Ngày nhận', { exact: true }).fill('2020-01-01')
     await expect(page.getByText(/Ngày này gấp quá/)).toBeVisible()
+    // The error points at the earliest day, so that hint stays under it.
+    await expect(page.getByText(/^Sớm nhất: /)).toBeVisible()
     await submit.click()
     await expect(page.getByLabel('Ngày nhận', { exact: true })).toBeFocused()
 
@@ -108,7 +110,11 @@ test.describe('cart and test checkout', () => {
     await page.getByText('Giao tận nơi', { exact: true }).click()
     await page.getByRole('textbox', { name: 'Địa chỉ giao' }).fill('12 Võ Văn Ngân')
     await page.getByLabel('Ngày nhận', { exact: true }).fill(await safeDay(page, 'Ngày nhận'))
-    await page.getByLabel('Giờ nhận', { exact: true }).selectOption('14:00')
+    // Delivery runs 8:00–21:30 (pickup follows the shop's 6:30–22:45).
+    const time = page.getByLabel('Giờ nhận', { exact: true })
+    await expect(time.locator('option').nth(1)).toHaveText('08:00')
+    await expect(time.locator('option').last()).toHaveText('21:30')
+    await time.selectOption('14:00')
     await page.getByText('Ví MoMo', { exact: true }).click()
     await expect(page.getByRole('radio', { name: /Ví MoMo/ })).toBeChecked()
     await page.getByRole('textbox', { name: /Nhắn tiệm/ }).fill('Ít ngọt thêm xíu nha')

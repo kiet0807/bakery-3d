@@ -12,7 +12,7 @@ export const cart = {
   eyebrow: 'Giỏ bánh của bạn',
   title: (n: number) => `${n} chiếc bánh,`,
   titleMark: 'chờ vô hộp nè',
-  linesLabel: 'Bánh trong giỏ',
+  linesLabel: 'Bánh bạn đã chọn',
   addAnother: 'Thêm bánh nữa cho vui',
   empty: {
     eyebrow: 'Giỏ bánh',
@@ -52,7 +52,7 @@ export const cart = {
     } satisfies Record<LeadKind, string>,
     holidayLead: 'Ngày lễ đông đơn lắm, nên ngày này cần đặt trước 48 giờ nha',
     sameDay: 'Bánh trong menu: muốn nhận trong ngày thì đặt trước 18:00 nha.',
-    name: { label: 'Tên người nhận', hint: 'Tiệm ghi tên này lên hộp bánh.', placeholder: 'Linh' },
+    name: { label: 'Tên người nhận', hint: 'Tiệm ghi tên này lên hộp bánh.', placeholder: 'Ví dụ: Linh' },
     phone: {
       label: 'Số điện thoại',
       hint: 'Tiệm gọi hoặc nhắn Zalo để xác nhận đơn.',
@@ -70,7 +70,7 @@ export const cart = {
     address: {
       label: 'Địa chỉ giao',
       hint: 'Số nhà, đường, phường. Ghi thêm tên quận cũ cho shipper dễ tìm nha.',
-      placeholder: '12 Võ Văn Ngân, phường Thủ Đức',
+      placeholder: 'Ví dụ: 12 Võ Văn Ngân, phường Thủ Đức',
     },
     delivery: {
       title: 'Ship khắp nội thành TP.HCM cũ',
@@ -149,10 +149,9 @@ export const cart = {
       note: { tooLong: 'Lời nhắn tối đa 200 ký tự.' },
       summary: (n: number) => (n === 1 ? 'Còn 1 ô cần sửa ở trên nha.' : `Còn ${n} ô cần sửa ở trên nha.`),
     },
-    demo: 'Tiệm không có thật nha: đây là đơn thử, không gửi đi đâu và không trừ tiền ai. Trang cũng không hỏi thẻ ngân hàng.',
+    demo: 'Tiệm không có thật nha: đây là đơn thử, không gửi đi đâu và không trừ tiền ai. Trang không hỏi thẻ ngân hàng, cũng không lưu tên, số điện thoại hay địa chỉ bạn nhập.',
     submitDemo: 'Chốt đơn thử',
     submitZalo: 'Gửi đơn qua Zalo',
-    zaloCopied: 'Đã chép đơn. Dán vào Zalo của tiệm là xong nha.',
     zaloManual: 'Trình duyệt không cho chép tự động. Bạn chép đoạn này rồi gửi Zalo cho tiệm nha.',
     zaloOpen: 'Mở Zalo của tiệm',
     zaloText: 'Nội dung đơn',
@@ -190,7 +189,7 @@ export const cart = {
     phone: 'Số điện thoại',
     note: 'Lời nhắn',
     demo: 'Đơn thử thôi nha: không gửi đi đâu, không ai bị trừ tiền.',
-    sent: 'Đơn đã được chép. Gửi qua Zalo cho tiệm là tiệm gọi xác nhận liền.',
+    sent: 'Đơn đã được chép. Mở Zalo của tiệm, dán vào và gửi là tiệm gọi xác nhận liền.',
     design: 'Thiết kế thêm bánh',
     menu: 'Quay lại menu',
     boxLoading: 'Đang gấp hộp…',

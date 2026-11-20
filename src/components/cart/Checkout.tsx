@@ -56,16 +56,16 @@ function Field({
         {label}
       </label>
       {children}
-      {error ? (
+      {error && (
         <p id={`${id}-error`} className="text-sm font-medium text-error">
           {error}
         </p>
-      ) : (
-        hint && (
-          <p id={`${id}-hint`} className="text-xs leading-relaxed text-muted">
-            {hint}
-          </p>
-        )
+      )}
+      {/* The hint stays under the error: some errors point at it ("the earliest day shown below"). */}
+      {hint && (
+        <p id={`${id}-hint`} className="text-xs leading-relaxed text-muted">
+          {hint}
+        </p>
       )}
     </div>
   )
@@ -106,7 +106,7 @@ function OptionCard({
         aria-describedby={describedBy}
         className="peer sr-only"
       />
-      <span className="flex h-full flex-col gap-0.5 rounded-2xl border-2 border-edge bg-surface px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] group-hover:border-ink peer-checked:border-ink peer-checked:bg-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf peer-disabled:border-line peer-disabled:bg-cream peer-disabled:shadow-none">
+      <span className="flex h-full flex-col gap-0.5 rounded-2xl border-2 border-edge bg-surface px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] group-hover:border-ink peer-checked:border-ink peer-checked:bg-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf peer-disabled:border-line peer-disabled:bg-cream peer-disabled:text-muted peer-disabled:shadow-none">
         <span className="font-display text-[0.95rem] leading-tight font-bold">{title}</span>
         <span className="text-xs leading-snug text-muted">{note}</span>
       </span>
@@ -158,7 +158,8 @@ export function Checkout({
     return (t.errors[field] as Partial<Record<FieldError, string>>)[code]
   }
   const describedBy = (field: keyof OrderForm, hasHint = true) =>
-    errors[field] ? `${ids[field]}-error` : hasHint ? `${ids[field]}-hint` : undefined
+    [errors[field] && `${ids[field]}-error`, hasHint && `${ids[field]}-hint`].filter(Boolean).join(' ') ||
+    undefined
 
   const set = <K extends keyof OrderForm>(field: K, value: OrderForm[K]) =>
     setForm((current) => ({ ...current, [field]: value }))
@@ -168,6 +169,20 @@ export function Checkout({
       // Keep the chosen time only if the new method still offers it.
       const keep = now && current.date ? slotsFor(current.date, { now, method, items }) : []
       return { ...current, method, time: keep.includes(current.time) ? current.time : '' }
+    })
+
+  const setDate = (date: string) =>
+    setForm((current) => {
+      // A new day keeps the time only if that day offers it, and a day that brings a deposit (a holiday)
+      // unticks cash: the deposit is paid by transfer or MoMo.
+      const keep = now && date ? slotsFor(date, { now, method: current.method, items }) : []
+      const cashOff = current.payment === 'cod' && depositFor(items, date || undefined).amount > 0
+      return {
+        ...current,
+        date,
+        time: keep.includes(current.time) ? current.time : '',
+        payment: cashOff ? '' : current.payment,
+      }
     })
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -186,12 +201,11 @@ export function Checkout({
       onPlaced(order)
       return
     }
+    // Copy first; the receipt then offers a plain link to the shop's Zalo. Opening a window from inside the
+    // promise would be blocked as a pop-up by Safari, and would take the focus the clipboard needs.
     const text = orderText({ order, items, dict, lang, origin: window.location.origin })
     navigator.clipboard.writeText(text).then(
-      () => {
-        window.open(SHOP.zalo, '_blank', 'noopener,noreferrer')
-        onPlaced(order)
-      },
+      () => onPlaced(order),
       () => setManualText(text),
     )
   }
@@ -310,9 +324,9 @@ export function Checkout({
             min={earliest ?? range?.min}
             max={range?.max}
             value={form.date}
-            onChange={(event) => set('date', event.target.value)}
+            onChange={(event) => setDate(event.target.value)}
             aria-invalid={Boolean(errors.date)}
-            aria-describedby={describedBy('date')}
+            aria-describedby={describedBy('date', Boolean(now))}
             className="field min-h-12"
           />
         </Field>
@@ -453,6 +467,7 @@ export function Checkout({
           />
           <a className="btn btn-ghost" href={SHOP.zalo} target="_blank" rel="noopener noreferrer">
             {t.zaloOpen}
+            <span className="sr-only"> {dict.common.newTab}</span>
           </a>
         </div>
       )}

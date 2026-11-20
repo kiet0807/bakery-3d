@@ -8,7 +8,7 @@ import { priceOf } from '@/lib/cake'
 import type { CartItem } from '@/lib/cart'
 import { money } from '@/lib/money'
 import { formatDay, formatPhone, type Order } from '@/lib/order'
-import { ORDERING_OPEN } from '@/lib/shop'
+import { ORDERING_OPEN, SHOP } from '@/lib/shop'
 import { ScenePoster } from '../ScenePoster'
 
 function BoxLoading() {
@@ -119,7 +119,13 @@ export function OrderDone({ order }: { order: PlacedOrder }) {
         </p>
 
         <div className="flex flex-wrap gap-3">
-          <LocalLink href="/design" className="btn btn-buy">
+          {ORDERING_OPEN && (
+            <a className="btn btn-buy" href={SHOP.zalo} target="_blank" rel="noopener noreferrer">
+              {dict.cart.checkout.zaloOpen}
+              <span className="sr-only"> {dict.common.newTab}</span>
+            </a>
+          )}
+          <LocalLink href="/design" className={ORDERING_OPEN ? 'btn btn-ghost' : 'btn btn-buy'}>
             {t.design}
           </LocalLink>
           <LocalLink href="/menu" className="btn btn-ghost">

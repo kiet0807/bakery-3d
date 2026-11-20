@@ -97,7 +97,8 @@ export function CartView() {
         </LocalLink>
       </div>
 
-      <aside className="sticker space-y-6 self-start p-6 sm:p-7 lg:sticky lg:top-28" aria-label={t.label}>
+      {/* Not sticky: the form is taller than a screen, and a pinned column would hide the order button. */}
+      <aside className="sticker space-y-6 self-start p-6 sm:p-7" aria-label={t.label}>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted">{t.subtotal}</dt>

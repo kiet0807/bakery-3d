@@ -30,7 +30,7 @@ export const MAX_DAYS_AHEAD = 30
 /** Orders from this total (in đồng) pay half up front. */
 export const DEPOSIT_FROM = 1_000_000
 export const DEPOSIT_SHARE = 0.5
-/** Holidays (MM-DD) when every order needs two days' notice and a deposit. */
+/** Holidays (MM-DD) when every order needs two days' notice and a deposit; the week before Tết is added below. */
 export const HOLIDAYS = ['02-14', '03-08', '10-20', '11-20', '12-24'] as const
 const HOLIDAY_HOURS = 48
 const SLOT_MINUTES = 30
@@ -126,6 +126,10 @@ const dateOfWall = (wall: number) => {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
 }
 
+const DATE = /^\d{4}-\d{2}-\d{2}$/
+/** YYYY-MM-DD and a real day of the calendar (no 30 February). */
+const isDate = (date: string) => DATE.test(date) && dateOfWall(wallOf(date)) === date
+
 const timeOfWall = (wall: number) => {
   const d = new Date(wall)
   return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
@@ -143,25 +147,42 @@ export function dateRange(now: Date): { min: string; max: string } {
   return { min: today, max: addShopDays(today, MAX_DAYS_AHEAD) }
 }
 
-export const isHoliday = (date: string) => (HOLIDAYS as readonly string[]).includes(date.slice(5))
+/**
+ * The first day of Tết (Lunar New Year) for the years the 30-day order window can reach. It moves with the
+ * lunar calendar, so the dates are listed rather than computed; add the next year before the last one passes.
+ */
+export const TET_DAYS = ['2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03'] as const
+/** "Cận Tết": the week before Tết counts as a holiday, from the 23rd of the last lunar month or so. */
+export const TET_RUSH_DAYS = 7
+
+const nearTet = (date: string) =>
+  TET_DAYS.some((tet) => date < tet && date >= addShopDays(tet, -TET_RUSH_DAYS))
+
+export const isHoliday = (date: string) =>
+  (HOLIDAYS as readonly string[]).includes(date.slice(5)) || nearTet(date)
 
 // ---------------------------------------------------------------------------------------------------------
 // Slots and lead time
 
+/** Every 30-minute mark from `first` to `last`, both inclusive when they fall on a mark. */
 function slotsBetween(first: string, last: string): string[] {
+  const step = SLOT_MINUTES * 60_000
   const slots: string[] = []
   for (
-    let wall = wallOf('2000-01-01', first);
+    let wall = Math.ceil(wallOf('2000-01-01', first) / step) * step;
     wall <= wallOf('2000-01-01', last);
-    wall += SLOT_MINUTES * 60_000
+    wall += step
   )
     slots.push(timeOfWall(wall))
   return slots
 }
 
-/** Every slot of the day: pickup every 30 minutes inside opening hours, delivery while the riders run. */
+/**
+ * Every slot of the day: pickup every 30 minutes while the shop is open (6:30 to the last half hour before
+ * 22:45), delivery while the riders run. Both come from `SHOP`, so the hours shown and the slots agree.
+ */
 export const SLOTS: Record<Method, string[]> = {
-  pickup: slotsBetween('07:00', '22:30'),
+  pickup: slotsBetween(SHOP.hours.open, SHOP.hours.close),
   delivery: slotsBetween(SHOP.deliveryHours.first, SHOP.deliveryHours.last),
 }
 
@@ -195,7 +216,7 @@ export interface SlotContext {
 
 /** The slots still open on a date for this cart. */
 export function slotsFor(date: string, { now, method, items }: SlotContext): string[] {
-  if (!DATE.test(date)) return []
+  if (!isDate(date)) return []
   const { min, max } = dateRange(now)
   if (date < min || date > max) return []
   const nowWall = shopWall(now)
@@ -246,18 +267,23 @@ export function depositFor(items: OrderItem[], date?: string): Deposit {
 // ---------------------------------------------------------------------------------------------------------
 // Validation
 
-/** A Vietnamese mobile number in its usual 10-digit form, or null. Accepts +84 / 84 and any spacing. */
+/**
+ * A Vietnamese mobile number in its usual 10-digit form, or null. Accepts +84, 0084 or 84 in front (with or
+ * without the 0 people often keep after it, as in "+84 0347…") and any spacing.
+ */
 export function normalizePhone(raw: string): string | null {
   let digits = raw.replace(/[\s.\-()]/g, '')
-  if (digits.startsWith('+84')) digits = `0${digits.slice(3)}`
-  else if (digits.startsWith('84') && digits.length === 11) digits = `0${digits.slice(2)}`
+  if (digits.startsWith('+')) {
+    if (!digits.startsWith('+84')) return null
+    digits = digits.slice(3)
+  } else if (digits.startsWith('0084')) digits = digits.slice(4)
+  else if (digits.startsWith('84') && digits.length >= 11) digits = digits.slice(2)
+  if (!digits.startsWith('0')) digits = `0${digits}`
   return /^0[35789]\d{8}$/.test(digits) ? digits : null
 }
 
 /** "0347 551 122", for receipts. */
 export const formatPhone = (phone: string) => phone.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3')
-
-const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /** Field by field error codes; an empty object means the order can be placed. */
 export function validateOrder(form: OrderForm, context: { now: Date; items: OrderItem[] }): OrderErrors {
@@ -279,7 +305,7 @@ export function validateOrder(form: OrderForm, context: { now: Date; items: Orde
   const { min, max } = dateRange(context.now)
   const slotContext = { ...context, method: form.method }
   if (!form.date) errors.date = 'required'
-  else if (!DATE.test(form.date) || Number.isNaN(wallOf(form.date))) errors.date = 'invalid'
+  else if (!isDate(form.date)) errors.date = 'invalid'
   else if (form.date > max) errors.date = 'tooFar'
   else if (form.date < min || !slotsFor(form.date, slotContext).length) errors.date = 'tooSoon'
 
@@ -328,7 +354,7 @@ export function orderNumber(): string {
 
 /** "Thứ Năm, 24 tháng 12" or "Thursday 24 December" for a shop date. */
 export function formatDay(date: string, lang: Locale): string {
-  if (!DATE.test(date)) return date
+  if (!isDate(date)) return date
   return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'vi-VN', {
     weekday: 'long',
     day: 'numeric',

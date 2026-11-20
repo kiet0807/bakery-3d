@@ -12,6 +12,7 @@ import {
   earliestDate,
   formatDay,
   formatPhone,
+  isHoliday,
   leadFor,
   normalizePhone,
   orderNumber,
@@ -19,6 +20,7 @@ import {
   orderTotal,
   shopToday,
   slotsFor,
+  TET_DAYS,
   validateOrder,
   type OrderForm,
   type OrderItem,
@@ -76,9 +78,10 @@ describe("the shop's clock", () => {
 
 describe('slots', () => {
   it('offers pickup every 30 minutes in opening hours and delivery while riders run', () => {
-    expect(SLOTS.pickup[0]).toBe('07:00')
+    // The counter opens at 6:30 and closes at 22:45: the last half-hour mark inside is 22:30.
+    expect(SLOTS.pickup[0]).toBe('06:30')
     expect(SLOTS.pickup.at(-1)).toBe('22:30')
-    expect(SLOTS.pickup).toHaveLength(32)
+    expect(SLOTS.pickup).toHaveLength(33)
     expect(SLOTS.delivery[0]).toBe('08:00')
     expect(SLOTS.delivery.at(-1)).toBe('21:30')
   })
@@ -98,7 +101,7 @@ describe('slots', () => {
     const now = shopTime('2026-11-21', '18:00')
     expect(slotsFor('2026-11-21', { now, method: 'pickup', items: MENU })).toEqual([])
     expect(earliestDate({ now, method: 'pickup', items: MENU })).toBe('2026-11-22')
-    expect(slotsFor('2026-11-22', { now, method: 'pickup', items: MENU })[0]).toBe('07:00')
+    expect(slotsFor('2026-11-22', { now, method: 'pickup', items: MENU })[0]).toBe('06:30')
   })
 
   it('needs 24 hours for a designed cake and 48 for two tiers', () => {
@@ -117,6 +120,17 @@ describe('slots', () => {
     expect(earliestDate({ now, method: 'pickup', items: MENU })).toBe('2026-11-19')
     const evening = shopTime('2026-11-19', '19:00')
     expect(earliestDate({ now: evening, method: 'pickup', items: MENU })).toBe('2026-11-21')
+  })
+
+  it('treats the week before Tết as a holiday', () => {
+    expect(isHoliday('2027-01-29')).toBe(false)
+    expect(isHoliday('2027-01-30')).toBe(true)
+    expect(isHoliday('2027-02-05')).toBe(true)
+    expect(isHoliday('2027-02-06')).toBe(false)
+    expect(leadFor(MENU, '2027-02-01')).toEqual({ kind: 'menu', hours: 48, holiday: true })
+    expect(depositFor(MENU, '2027-02-01').reasons).toEqual(['holiday'])
+    // Listed in order, so a mistyped year stands out.
+    expect([...TET_DAYS].sort()).toEqual([...TET_DAYS])
   })
 
   it('has nothing outside the 30-day window', () => {
@@ -143,14 +157,31 @@ describe('deposit', () => {
 
 describe('phone numbers', () => {
   it('accepts Vietnamese mobiles in their usual shapes', () => {
-    for (const raw of ['0347551122', '0347 551 122', '0347.551.122', '+84 347 551 122', '84347551122'])
+    for (const raw of [
+      '0347551122',
+      '0347 551 122',
+      '0347.551.122',
+      '+84 347 551 122',
+      '+84 0347 551 122',
+      '(+84) 347-551-122',
+      '0084 347 551 122',
+      '84347551122',
+    ])
       expect(normalizePhone(raw)).toBe('0347551122')
     expect(normalizePhone('0912-345-678')).toBe('0912345678')
     expect(formatPhone('0347551122')).toBe('0347 551 122')
   })
 
   it('refuses landlines, short or long numbers and letters', () => {
-    for (const raw of ['0247551122', '034755112', '03475511223', 'không có', '', '+1 347 551 1222'])
+    for (const raw of [
+      '0247551122',
+      '034755112',
+      '03475511223',
+      'không có',
+      '',
+      '+1 347 551 1222',
+      '+44 7700 900123',
+    ])
       expect(normalizePhone(raw)).toBeNull()
   })
 })
@@ -194,11 +225,13 @@ describe('validateOrder', () => {
 
   it('checks the day and the time against the rules', () => {
     expect(check({ date: '22/11/2026' }).date).toBe('invalid')
+    expect(check({ date: '2026-11-31' }).date).toBe('invalid')
     expect(check({ date: '2026-11-20' }).date).toBe('tooSoon')
     expect(check({ date: '2026-12-22' }).date).toBe('tooFar')
     expect(check({ date: '2026-11-21', time: '12:00' }).time).toBe('unavailable')
     expect(check({ date: '2026-11-21', time: '14:00' })).toEqual({})
-    expect(check({ time: '06:30' }).time).toBe('unavailable')
+    expect(check({ time: '06:00' }).time).toBe('unavailable')
+    expect(check({ time: '06:30' })).toEqual({})
     expect(check({ method: 'delivery', address: 'x', time: '22:00' }).time).toBe('unavailable')
     expect(check({ date: '2026-11-21', time: '14:00' }, CUSTOM).date).toBe('tooSoon')
   })

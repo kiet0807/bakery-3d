@@ -80,6 +80,26 @@ export interface LayoutOptions {
 /** Toppings shrink a little on small cakes (a 10 cm bento), so they keep their proportions. */
 const toppingScale = (radius: number) => Math.min(1, Math.max(0.72, radius / 0.85))
 
+/** Radius of the ring of fruit, macarons and shards on a top tier; it moves in when piped kisses line the edge. */
+const ringRadius = (topRadius: number, kisses: boolean) => topRadius * (kisses ? 0.62 : 0.72)
+
+/** Diameter of a macaron shell at scale 1 (Toppings.tsx), in scene units (1 unit = 10 cm). */
+const MACARON_DIAMETER = 0.17
+/** How far the top of a macaron standing on the cake reaches, at scale 1 (it leans back 0.45 rad). */
+const MACARON_REACH = 0.18
+/** A real macaron is about 3.5 cm across; on a small top it shrinks with the other toppings. */
+const MACARON_SCALE = 2
+
+/**
+ * Where the macarons sit on the ring: `pitch` is the length of ring each one owns, `width` its size across.
+ * They are full size, but leave room between them for one piece of fruit when other ring toppings are chosen.
+ */
+function macaronRing(topRadius: number, kisses: boolean, count: number, shared: boolean) {
+  const pitch = (Math.PI * 2 * ringRadius(topRadius, kisses)) / count
+  const full = MACARON_DIAMETER * MACARON_SCALE * toppingScale(topRadius)
+  return { pitch, width: Math.min(full, pitch - (shared ? 0.17 : 0.03)) }
+}
+
 /** Height of the chocolate plaque at full size, and of a candle from the cake top to the tip of its flame. */
 export const PLAQUE_HEIGHT = 0.27
 const FLAME_TIP = 0.385
@@ -123,11 +143,19 @@ export function plaqueLines(message: string, width: number, height: number, font
 export function headroom(config: CakeConfig): number {
   const tiers = sizeOf(config).tiers
   const top = tiers[tiers.length - 1].radius
+  let plain = config.candles ? 0.4 : 0.22
   if (config.message) {
     const { scale, lift } = plaqueShape(top, config.candles)
-    return 0.03 + lift + PLAQUE_HEIGHT * scale + 0.12
+    plain = 0.03 + lift + PLAQUE_HEIGHT * scale + 0.12
   }
-  return config.candles ? 0.4 : 0.22
+  if (!config.toppings.includes('macarons')) return plain
+  // Full-size macarons stand taller than the other toppings; the largest random scale is 1.04.
+  const kisses = config.toppings.includes('cream-kisses')
+  const shared = config.toppings.some(
+    (id) => id !== 'macarons' && (RING_TOPPINGS as readonly string[]).includes(id),
+  )
+  const { width } = macaronRing(top, kisses, macaronCount(config.size), shared)
+  return Math.max(plain, (width / MACARON_DIAMETER) * 1.04 * MACARON_REACH + 0.05)
 }
 
 export function computeLayout(config: CakeConfig, { light = false }: LayoutOptions = {}): CakeLayout {
@@ -188,24 +216,39 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
     }
   }
 
-  // Fruit, macarons and shards share one ring on the top tier. Macarons are counted (macaronCount, the number the
-  // topping promises) and spread evenly; the other kinds fill the rest of the ring, taking turns.
+  // Fruit, macarons and shards share one ring on the top tier, every piece at an angle along it.
   const kinds = RING_TOPPINGS.filter((id) => config.toppings.includes(id))
   if (kinds.length) {
-    const radius = top.radius * (kisses ? 0.62 : 0.72)
-    const macarons = kinds.includes('macarons') ? macaronCount(config.size) : 0
+    const radius = ringRadius(top.radius, kisses)
     const others = kinds.filter((id) => id !== 'macarons')
-    const spacing = macarons ? 0.24 : 0.2
-    const slots = Math.max(others.length * 2, Math.round((Math.PI * 2 * radius) / spacing))
-    const count = others.length ? Math.max(slots, macarons * 2) : macarons
-    // Slot i holds a macaron when the running share of macarons steps up there: exactly `macarons` slots, evenly.
-    const macaronAt = (i: number) =>
-      Math.floor(((i + 1) * macarons) / count) > Math.floor((i * macarons) / count)
     const offset = random() * 0.4
-    let turn = 0
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + offset
-      const kind = macaronAt(i) ? 'macarons' : others[turn++ % others.length]
+    const pieces: { angle: number; kind: (typeof RING_TOPPINGS)[number]; macaronScale?: number }[] = []
+    if (kinds.includes('macarons')) {
+      // Macarons are counted (macaronCount, the number the topping promises) and full size, spread evenly; the
+      // other kinds fill the gaps between them, taking turns, at least one piece per gap.
+      const macarons = macaronCount(config.size)
+      const { pitch, width } = macaronRing(top.radius, kisses, macarons, others.length > 0)
+      const between = others.length ? Math.max(1, Math.floor((pitch - width) / 0.2)) : 0
+      // With candles or a message, the front (angle 0) falls between two macarons, so they frame the candles and
+      // the plaque instead of standing in front of them.
+      const framed = config.candles > 0 || Boolean(config.message)
+      const first = framed ? pitch / 2 / radius + (offset - 0.2) / 2 : offset
+      let turn = 0
+      for (let k = 0; k < macarons; k++) {
+        const start = (k * pitch) / radius + first
+        pieces.push({ angle: start, kind: 'macarons', macaronScale: width / MACARON_DIAMETER })
+        for (let j = 0; j < between; j++) {
+          const along = width / 2 + ((pitch - width) * (j + 0.5)) / between
+          pieces.push({ angle: start + along / radius, kind: others[turn++ % others.length] })
+        }
+      }
+    } else {
+      const count = Math.max(others.length * 2, Math.round((Math.PI * 2 * radius) / 0.2))
+      for (let i = 0; i < count; i++)
+        pieces.push({ angle: (i / count) * Math.PI * 2 + offset, kind: others[i % others.length] })
+    }
+    let macaron = 0
+    pieces.forEach(({ angle, kind, macaronScale }, i) => {
       const { x, z } = polar(radius, angle)
       ring[kind].push({
         x,
@@ -214,11 +257,12 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
         // Macarons and shards turn their flat face outwards; fruit is turned at random.
         yaw: kind === 'macarons' || kind === 'chocolate-shards' ? angle : random() * Math.PI * 2,
         tilt: kind === 'macarons' ? 0.45 : kind === 'chocolate-shards' ? 0.25 + random() * 0.2 : 0,
-        scale: (0.9 + random() * 0.2) * small,
+        scale: macaronScale ? macaronScale * (0.96 + random() * 0.08) : (0.9 + random() * 0.2) * small,
         part: partAt(angle),
-        variant: i,
+        // Each macaron its own colour, in turn.
+        variant: kind === 'macarons' ? macaron++ : i,
       })
-    }
+    })
   }
 
   // Sprinkles over every exposed top surface.

@@ -147,10 +147,16 @@ body::after {
   color: var(--color-ink);
 }
 
-:focus-visible {
-  outline: 3px solid var(--color-leaf);
-  outline-offset: 3px;
-  border-radius: 8px;
+/*
+ * In the base layer, so a button, chip or swatch keeps its own rounding (the utilities layer wins) and the ring
+ * follows its shape; only an element with no rounding of its own (a link in text) gets the soft 8px corners.
+ */
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-leaf);
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
 }
 
 h1,

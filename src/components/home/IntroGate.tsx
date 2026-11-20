@@ -22,8 +22,21 @@ export function IntroGate({
   const dialog = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
   const ready = percent >= 100
+  // The start button takes focus as soon as it appears, so Enter (or a screen reader) goes straight in. It shows
+  // the focus ring only to someone using the keyboard: browsers draw it for any focus moved by script before the
+  // first click, which looked like a stray outline around the button.
+  const keyboard = useRef(false)
   useEffect(() => {
-    if (ready) button.current?.focus()
+    const onKey = () => {
+      keyboard.current = true
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  useEffect(() => {
+    // `focusVisible` is in Chromium, Firefox and Safari but not yet in TypeScript's DOM types.
+    const options: FocusOptions & { focusVisible?: boolean } = { focusVisible: keyboard.current }
+    if (ready) button.current?.focus(options)
   }, [ready])
   useEffect(() => {
     const root = document.documentElement

@@ -1,6 +1,6 @@
 # Credits
 
-Crumb & Cloud is a demo. The code is MIT licensed (see [LICENSE](LICENSE)); the assets below keep their own
+Kai's Bakery is a web project, not a real shop. The code is MIT licensed (see [LICENSE](LICENSE)); the assets below keep their own
 licences.
 
 ## Light
@@ -10,10 +10,12 @@ licences.
 
 ## Fonts
 
-- **Barlow** and **Barlow Condensed** by Jeremy Tribby, SIL Open Font License 1.1. Loaded through
-  `next/font/google` and served from this site.
-- **Pacifico** by Vernon Adams (The Pacifico Project Authors), SIL Open Font License 1.1. Used for the writing
-  on the cake and the box lid. The licence text sits next to the file: `public/fonts/Pacifico-OFL.txt`.
+- **Baloo 2** by Ek Type, SIL Open Font License 1.1. Headings. Loaded through `next/font/google` and served
+  from this site.
+- **Be Vietnam Pro** by Lâm Bảo, Tony Le and ViệtAnh Nguyễn, SIL Open Font License 1.1. Body text, chosen for
+  its Vietnamese diacritics. Loaded through `next/font/google`.
+- **Pacifico** by Vernon Adams (The Pacifico Project Authors), SIL Open Font License 1.1. Used for the logo,
+  the writing on the cake and the box lid. The licence text sits next to the file: `public/fonts/Pacifico-OFL.txt`.
 
 ## 3D models
 
@@ -42,8 +44,11 @@ All are MIT licensed, except postprocessing (zlib) and N8AO (ISC).
 
 ## Colour
 
-- **Luminous Blue**, WGSN × Coloro colour of the year 2027, and the S/S 27 key colours (Pop Pink, Energy
-  Orange, Clay).
-- **Cloud Dancer** (Pantone 11-4201), Pantone colour of the year 2026.
+- Palette "Bơ Bạc Hà" (butter and mint), picked by the owner from three options on 2026-11-20. Every text pair
+  is measured against WCAG 2.2 AA by `src/lib/contrast.test.ts`.
 
-The hex values in the code are approximate screen matches, not official swatches.
+## Market research
+
+- Prices, sizes and lead times were set from cake shops that publish them online in Ho Chi Minh City and Hà Nội
+  (Tín Phát Bakery, Bánh kem Hannie, Sweet Cakes). Style reference: KICA Bakery in Thủ Đức. No text, photos
+  or branding from any shop were used.

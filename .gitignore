@@ -49,3 +49,6 @@ PLAN.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Design-lint cache (the ignore list in .impeccable/config.json is kept)
+.impeccable/hook.cache.json

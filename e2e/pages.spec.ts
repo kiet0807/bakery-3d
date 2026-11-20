@@ -47,8 +47,8 @@ test.describe('info pages', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
 
     await page.getByRole('link', { name: LANGS[1].switchTo }).click()
-    await expect(page).toHaveURL(/\/about$/)
-    expect(new URL(page.url()).pathname).toBe('/about')
+    // \/about$ would also match /en/about before the switch lands: wait for the exact path.
+    await expect(page).toHaveURL((url) => url.pathname === '/about')
     await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(INFO['/about'].vi)
     await expect(page.locator('html')).toHaveAttribute('lang', 'vi')
   })

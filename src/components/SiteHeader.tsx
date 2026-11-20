@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
 import { LOCALES, localeHref, stripLocale } from '@/i18n/config'
@@ -69,7 +68,12 @@ export function SiteHeader() {
             </LocalLink>
           )
         })}
-        <Link
+        {/*
+          A plain link on purpose: the other language has its own root layout, so switching is a full page load
+          anyway, and a router prefetch of a Vietnamese page from an English one goes through the proxy's rewrite
+          and comes back 404 (segment prefetch), which logs an error on every English page.
+        */}
+        <a
           href={localeHref(other, path)}
           hrefLang={other}
           lang={other}
@@ -77,7 +81,7 @@ export function SiteHeader() {
           className="rounded-full border-2 border-ink/15 px-2.5 py-1 font-display text-sm font-bold text-muted transition-colors hover:border-ink hover:text-ink"
         >
           {common.otherLang.short}
-        </Link>
+        </a>
         <LocalLink
           href="/cart"
           aria-current={path === '/cart' ? 'page' : undefined}

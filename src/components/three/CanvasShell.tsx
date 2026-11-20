@@ -1,0 +1,128 @@
+'use client'
+
+import { PerformanceMonitor } from '@react-three/drei'
+import { Canvas, type CanvasProps } from '@react-three/fiber'
+import { Component, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { CakeFallback } from '../CakeFallback'
+import { QualityContext, ReducedMotionContext, type Quality } from './motion'
+
+let webglSupport: boolean | null = null
+
+/** Checked once per page; the answer cannot change while the page is open. */
+function supportsWebGL(): boolean {
+  if (webglSupport !== null) return webglSupport
+  try {
+    const canvas = document.createElement('canvas')
+    webglSupport = Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+  } catch {
+    webglSupport = false
+  }
+  return webglSupport
+}
+
+const noSubscription = () => () => {}
+
+/** Phones and machines with few cores start on the light tier; the frame rate can still move them down. */
+function startingQuality(): Quality {
+  if (typeof window === 'undefined') return 'high'
+  const small = window.matchMedia('(max-width: 767px)').matches
+  const cores = navigator.hardwareConcurrency ?? 8
+  return small || cores <= 4 ? 'low' : 'high'
+}
+
+class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  componentDidCatch(error: unknown) {
+    console.warn('3D scene failed, showing the 2D version instead.', error)
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children
+  }
+}
+
+export interface CanvasShellProps {
+  children: ReactNode
+  /** What the scene shows, for screen readers. */
+  label: string
+  camera?: CanvasProps['camera']
+  className?: string
+  /** "demand" renders only when something changes; "always" for scenes with idle animation. */
+  mode?: 'always' | 'demand'
+  onCreated?: CanvasProps['onCreated']
+}
+
+/**
+ * Every 3D scene goes through here: WebGL check with a 2D fallback, rendering paused while the canvas is
+ * off screen, a quality tier that follows the measured frame rate, and the reduced-motion preference.
+ */
+export function CanvasShell({
+  children,
+  label,
+  camera,
+  className,
+  mode = 'always',
+  onCreated,
+}: CanvasShellProps) {
+  const wrapper = useRef<HTMLDivElement>(null)
+  // Device facts are read after hydration (the server renders no canvas at all).
+  const webgl = useSyncExternalStore<boolean | null>(noSubscription, supportsWebGL, () => null)
+  const deviceQuality = useSyncExternalStore<Quality>(noSubscription, startingQuality, () => 'high')
+  const [downgraded, setDowngraded] = useState(false)
+  const quality: Quality = downgraded ? 'low' : deviceQuality
+  const [inView, setInView] = useState(true)
+  const [dpr, setDpr] = useState(1.5)
+  const reduced = useReducedMotion()
+
+  useEffect(() => {
+    const element = wrapper.current
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: '160px',
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  const fallback = <CakeFallback />
+  const maxDpr = typeof window === 'undefined' ? 2 : Math.min(2, window.devicePixelRatio || 1)
+  const high = quality === 'high'
+
+  return (
+    <div ref={wrapper} className={className} role="img" aria-label={label}>
+      {webgl === false && fallback}
+      {webgl && (
+        <SceneBoundary fallback={fallback}>
+          <ReducedMotionContext.Provider value={reduced}>
+            <QualityContext.Provider value={quality}>
+              <Canvas
+                key={quality}
+                dpr={Math.min(high ? dpr : 1.25, maxDpr)}
+                shadows={high ? 'percentage' : false}
+                camera={camera}
+                frameloop={inView ? mode : 'never'}
+                gl={{ antialias: !high, alpha: true, powerPreference: 'high-performance' }}
+                onCreated={onCreated}
+                aria-hidden
+              >
+                <PerformanceMonitor
+                  onIncline={() => setDpr(2)}
+                  onDecline={() => {
+                    setDpr(1)
+                    setDowngraded(true)
+                  }}
+                  flipflops={3}
+                  onFallback={() => setDowngraded(true)}
+                />
+                {children}
+              </Canvas>
+            </QualityContext.Provider>
+          </ReducedMotionContext.Provider>
+        </SceneBoundary>
+      )}
+    </div>
+  )
+}

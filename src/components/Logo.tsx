@@ -36,13 +36,24 @@ export function Logo({ className }: { className?: string }) {
   )
 }
 
-/** "Kai's" in the script face with the shop's line under it. Decorative: pair it with an accessible name. */
-export function Wordmark({ lang, className = '' }: { lang: Locale; className?: string }) {
+/**
+ * "Kai's" in the script face with the shop's line under it. Decorative: pair it with an accessible name.
+ * `taglineClassName` lets a tight spot (the header on phones) keep "Kai's Bakery" and drop the rest of the line.
+ */
+export function Wordmark({
+  lang,
+  className = '',
+  taglineClassName = '',
+}: {
+  lang: Locale
+  className?: string
+  taglineClassName?: string
+}) {
   return (
     <span className={`flex flex-col leading-none ${className}`} aria-hidden>
       <span className="font-script text-[1.55rem] leading-[1.05] text-brand">Kai&apos;s</span>
       <span className="font-display text-[0.62rem] font-bold tracking-[0.14em] whitespace-nowrap text-muted uppercase">
-        Bakery · {SHOP.tagline[lang]}
+        Bakery<span className={taglineClassName}> · {SHOP.tagline[lang]}</span>
       </span>
     </span>
   )

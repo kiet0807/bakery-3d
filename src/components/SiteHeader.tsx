@@ -25,7 +25,8 @@ export function SiteHeader() {
   const scrolled = useSyncExternalStore(subscribeScroll, readScrolled, () => false)
   const other = LOCALES.find((l) => l !== lang) ?? 'en'
   const links = [
-    { href: '/design', label: common.nav.design },
+    // On phones the builder is one tap away on the home page, the menu cards and the footer.
+    { href: '/design', label: common.nav.design, hideOnSmall: true },
     { href: '/menu', label: common.nav.menu },
     { href: '/about', label: common.nav.about, hideOnSmall: true },
   ]
@@ -36,9 +37,10 @@ export function SiteHeader() {
       }`}
     >
       {/*
-        Widths, measured 2026-11-20 with the colour switch in (`max-[359px]`, then 360, 390, 412, 640, 768, 1024):
-        below 640 the cart is a bag icon with its count and "About" waits for the footer; the wordmark joins the
-        logo from 768, where the links leave it room. Links never wrap (`whitespace-nowrap`).
+        Widths, measured 2026-11-20 with the colour switch in (320, 360, 390, 412, 430, 640, 700, 768, 1024, both
+        languages): below 640 the cart is a bag icon with its count, and "Design" and "About" wait for the page and
+        the footer. The name is always there: "Kai's Bakery" below 768 (at least 26 px to spare), the full line with
+        the tagline from 768 (176 px wide, it overflowed phones under about 430). Links never wrap.
       */}
       <nav
         aria-label={common.nav.label}
@@ -50,7 +52,7 @@ export function SiteHeader() {
           className="mr-auto flex items-center gap-2 rounded-xl"
         >
           <Logo className="h-9 w-9 shrink-0 max-[359px]:h-8 max-[359px]:w-8 sm:h-10 sm:w-10" />
-          <Wordmark lang={lang} className="hidden md:flex" />
+          <Wordmark lang={lang} taglineClassName="hidden md:inline" />
         </LocalLink>
         <LocalLink
           href="/about#project"

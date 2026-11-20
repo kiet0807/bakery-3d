@@ -190,4 +190,19 @@ test.describe('palette switch', () => {
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(width)
   })
+
+  test('the header keeps the shop name, clear of the links', async ({ page }) => {
+    for (const path of ['/', '/en']) {
+      await page.goto(path)
+      const { width, room } = await page.evaluate(() => {
+        const nav = document.querySelector('header nav')!
+        const name = nav.querySelector('a')!.querySelector(':scope > span')!.getBoundingClientRect()
+        // When the row is too full, flexbox squeezes the space after the name down to the bare gap (4 px).
+        const next = [...nav.children].slice(1).find((item) => item.getBoundingClientRect().width > 0)!
+        return { width: name.width, room: next.getBoundingClientRect().left - name.right }
+      })
+      expect(width, `the name "Kai's Bakery" on ${path}`).toBeGreaterThan(40)
+      expect(room, `room after the name on ${path}`).toBeGreaterThan(12)
+    }
+  })
 })

@@ -53,6 +53,8 @@ test.describe('vitrine', () => {
     // A short pull to the left, less than half a cake, still brings the next one round; to the right, back.
     await drag(-60)
     await expect(page.getByRole('radio', { name: /Socola Crush/ })).toBeChecked()
+    // No words selected on the way: the browser would drag a selection away itself next time, and cancel the turn.
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('')
     await expect(page.getByRole('heading', { level: 2, name: 'Socola Crush' })).toBeVisible()
     await drag(60)
     await expect(page.getByRole('radio', { name: /Dâu Tây Mây Hồng/ })).toBeChecked()

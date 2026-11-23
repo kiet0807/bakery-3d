@@ -117,10 +117,13 @@ export function Vitrine() {
       </header>
 
       <div
-        className="sticky top-16 z-20 h-[46svh] min-h-[300px] cursor-grab touch-pan-y border-y-2 active:cursor-grabbing border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-none"
+        className="sticky top-16 z-20 h-[46svh] min-h-[300px] cursor-grab touch-pan-y border-y-2 select-none active:cursor-grabbing border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-none"
         onPointerDown={(event) => {
           // The buttons on the stage keep their own clicks.
           if (event.button !== 0 || (event.target as Element).closest('button')) return
+          // A mouse dragging over the stage selects no text: a selection would then be dragged away by the browser
+          // itself the next time, which cancels the turn (the 2D drawing's sentence, where 3D does not run).
+          if (event.pointerType === 'mouse') event.preventDefault()
           press.current = {
             x: event.clientX,
             y: event.clientY,

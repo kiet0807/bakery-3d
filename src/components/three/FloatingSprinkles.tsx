@@ -42,9 +42,12 @@ export function FloatingSprinkles({
     if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true
   }, [seeds])
   const dummy = useMemo(() => new THREE.Object3D(), [])
+  const placed = useRef<object | null>(null)
   useFrame(({ clock }) => {
     const instanced = mesh.current
-    if (!instanced) return
+    // Asked for less motion: placed once, then left alone.
+    if (!instanced || (still && placed.current === seeds)) return
+    placed.current = seeds
     const t = still ? 0 : clock.elapsedTime
     seeds.forEach((s, i) => {
       const y = ((s.y + t * s.speed) % height) - height * 0.35

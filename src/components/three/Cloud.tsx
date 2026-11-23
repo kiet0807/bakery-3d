@@ -6,11 +6,15 @@ import { createRandom } from '@/lib/random'
 import { useScene } from './theme'
 
 const sphere = new THREE.SphereGeometry(1, 28, 18)
+/** Puffs are a little wider than tall. */
+const FLATTEN = 0.82
 /**
  * Light of their own, so the undersides (lit only by the mint bounce from below) stay cream-white instead of
  * turning grey-green, most visibly on the light tier, which has no café HDRI to fill them.
  */
-const CLOUD_GLOW = 0.38
+const CLOUD_GLOW = 0.3
+/** How far the lowest puffs lean to the cloud's shade colour: on a cream page a white cloud has no edge of its own. */
+const SHADE = 0.85
 
 export interface CloudProps {
   seed: number
@@ -23,6 +27,11 @@ export interface CloudProps {
   color?: string
   position?: [number, number, number]
   scale?: number
+  /**
+   * Something round rests on the cloud: no puff rises above `y` (in the cloud's own units) within `radius` of the
+   * middle, and the ones around it climb from there only behind it, so the cloud never hides what it carries.
+   */
+  rest?: { radius: number; y: number }
 }
 
 /**
@@ -38,12 +47,17 @@ export function Cloud({
   color,
   position,
   scale = 1,
+  rest,
 }: CloudProps) {
   const { cloud } = useScene()
+  const near = color ?? cloud.near
+  const { shade } = cloud
   const mesh = useRef<THREE.InstancedMesh>(null)
+  const restRadius = rest?.radius
+  const restY = rest?.y
   const items = useMemo(() => {
     const random = createRandom(seed)
-    return Array.from({ length: puffs }, () => {
+    const puffsAt = Array.from({ length: puffs }, () => {
       const angle = random() * Math.PI * 2
       const reach = Math.sqrt(random())
       const x = Math.cos(angle) * reach * width
@@ -53,21 +67,39 @@ export function Cloud({
       const y = random() * height * centre
       return { x, y: Math.max(y, radius * 0.25), z, radius }
     })
-  }, [seed, puffs, width, height, depth])
+    if (restRadius !== undefined && restY !== undefined)
+      for (const puff of puffsAt) {
+        // Well behind what rests here the cloud may climb a little; beneath, beside and in front it stays below.
+        const beyond = Math.max(0, Math.hypot(puff.x, puff.z) - restRadius)
+        const ceiling = restY + Math.min(beyond, Math.max(0, -puff.z - 0.8)) * 0.6
+        puff.y = Math.min(puff.y, ceiling - puff.radius * FLATTEN)
+      }
+    return puffsAt
+  }, [seed, puffs, width, height, depth, restRadius, restY])
 
   useLayoutEffect(() => {
     const instanced = mesh.current
     if (!instanced) return
     const dummy = new THREE.Object3D()
+    const tint = new THREE.Color()
+    const base = new THREE.Color(near)
+    const low = new THREE.Color(shade)
+    const tops = items.map((p) => p.y + p.radius * FLATTEN)
+    const [bottom, top] = [Math.min(...tops), Math.max(...tops)]
     items.forEach((p, i) => {
+      instanced.setColorAt(
+        i,
+        tint.copy(base).lerp(low, SHADE * (1 - (tops[i] - bottom) / (top - bottom || 1))),
+      )
       dummy.position.set(p.x, p.y, p.z)
-      dummy.scale.set(p.radius, p.radius * 0.82, p.radius)
+      dummy.scale.set(p.radius, p.radius * FLATTEN, p.radius)
       dummy.updateMatrix()
       instanced.setMatrixAt(i, dummy.matrix)
     })
     instanced.instanceMatrix.needsUpdate = true
+    if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true
     instanced.computeBoundingSphere()
-  }, [items])
+  }, [items, near, shade])
 
   return (
     <instancedMesh
@@ -79,7 +111,6 @@ export function Cloud({
       receiveShadow
     >
       <meshPhysicalMaterial
-        color={color ?? cloud.near}
         emissive={cloud.glow}
         emissiveIntensity={CLOUD_GLOW}
         roughness={1}

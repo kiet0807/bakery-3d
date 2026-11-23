@@ -62,6 +62,8 @@ const BASE = {
     far: '#f7fcf8',
     /** The warm cloud on the right of the story scene. */
     peach: '#fff3ea',
+    /** The lower puffs: a pastel of the set, so a white cloud still reads on the cream page. */
+    shade: '#cfeee2',
     /** Sheen on the puffs: a cool rim against the warm light. */
     sheen: '#d3f1e6',
     /** A little light of their own keeps the undersides white instead of grey. */
@@ -108,7 +110,7 @@ const OVERRIDES: Record<PaletteId, Override> = {
     },
     table: { top: '#fcfcf5', rim: '#a8cf8e', markRest: '#d6e9c4', markChosen: '#e0607e' },
     glass: { body: '#f6fdf0' },
-    cloud: { far: '#f8fbf3', peach: '#fff1f3', sheen: '#e3f0d6', glow: '#fbfcf4' },
+    cloud: { far: '#f8fbf3', peach: '#fff1f3', shade: '#d9ebc4', sheen: '#e3f0d6', glow: '#fbfcf4' },
     box: { ribbon: '#f08aa3', ribbonSheen: '#ffd6e0', stickerBody: '#ffd6e0' },
     photo: { floor: '#f8f7ea' },
   },
@@ -128,7 +130,7 @@ const OVERRIDES: Record<PaletteId, Override> = {
     },
     table: { top: '#fbfdf6', rim: '#8fd99a', markRest: '#d4ecc9', markChosen: '#3f9a52' },
     glass: { body: '#f4fdf0' },
-    cloud: { far: '#f6fbf1', peach: '#fff6e8', sheen: '#dcf2d4', glow: '#fbfdf3' },
+    cloud: { far: '#f6fbf1', peach: '#fff6e8', shade: '#cbeec2', sheen: '#dcf2d4', glow: '#fbfdf3' },
     box: { ribbon: '#2f8a45', ribbonSheen: '#a6dcae', stickerBody: '#fff1c9' },
     photo: { floor: '#f6f9ec' },
   },
@@ -146,7 +148,7 @@ const OVERRIDES: Record<PaletteId, Override> = {
     },
     table: { rim: '#9cc8a8', markRest: '#d5e6d6', markChosen: '#ef7a4f' },
     glass: { body: '#f5fbf6' },
-    cloud: { far: '#f8faf6', sheen: '#e1ece2', glow: '#fff9f1' },
+    cloud: { far: '#f8faf6', shade: '#d3e4d3', sheen: '#e1ece2', glow: '#fff9f1' },
     box: { ribbon: '#1f5c3d', ribbonSheen: '#7fae8f', stickerBody: '#fbe3d6' },
     photo: { floor: '#fbf0dc' },
   },

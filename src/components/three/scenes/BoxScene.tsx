@@ -4,6 +4,7 @@ import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useMemo, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { FROSTING } from '../cake/geometry'
@@ -319,10 +320,12 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
 export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
   const { scenes, cart } = useDict()
   const startedAt = useRef<number | null>(null)
+  // Asked for less motion, the box is there tied up and still: nothing to draw again.
+  const reduced = useReducedMotion()
   return (
     <CanvasShell
       className="h-full w-full"
-      mode="always"
+      mode={reduced ? 'demand' : 'always'}
       label={scenes.box}
       poster={cart.done.boxLoading}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}

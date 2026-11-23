@@ -4,9 +4,12 @@ import { useProgress } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useDict } from '@/i18n/LangProvider'
 import { normalizeConfig } from '@/lib/cake'
 import { Cake, type CakeControls } from '../cake/Cake'
+import { computeLayout } from '../cake/layout'
+import { CakeBoard } from '../CakeBoard'
 import { CanvasShell } from '../CanvasShell'
 import { Cloud } from '../Cloud'
 import { Effects } from '../Effects'
@@ -27,6 +30,8 @@ export const STORY_CAKE = normalizeConfig({
   drip: 'white-chocolate',
   toppings: ['strawberries', 'macarons', 'cream-kisses', 'gold-leaf'],
 })
+
+const STORY_RADIUS = computeLayout(STORY_CAKE).maxRadius
 
 type Vec = [number, number, number]
 
@@ -101,6 +106,17 @@ function Director({
 
   useEffect(() => () => (camera as THREE.PerspectiveCamera).clearViewOffset(), [camera])
 
+  // Asked for less motion, the scene draws only when something changes: the page scrolls, the story starts, or the
+  // cake is still on its way in. A few frames, not one: the page works out the chapter in a frame of its own.
+  const invalidate = useThree((state) => state.invalidate)
+  useEffect(() => {
+    if (!still) return
+    const draw = () => invalidate(3)
+    draw()
+    window.addEventListener('scroll', draw, { passive: true })
+    return () => window.removeEventListener('scroll', draw)
+  }, [still, started, invalidate])
+
   useFrame((state, delta) => {
     const { size } = state
     const view = state.camera as THREE.PerspectiveCamera
@@ -137,6 +153,7 @@ function Director({
     const toppingsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 3.3, 4))
     const now = performance.now() / 1000
     if (!ready.current) {
+      if (still) state.invalidate()
       frames.current += 1
       if (frames.current >= FIRST_FRAMES) drawnAt.current ??= now
       // drei's loading store is global; on the home page this canvas is the only thing loading.
@@ -203,6 +220,7 @@ export default function StoryScene({
   const { scenes } = useDict()
   const { cloud } = useScene()
   const startedAt = useRef<number | null>(null)
+  const reduced = useReducedMotion()
   // Without WebGL the 2D drawing is all there is to load.
   const done = useCallback(() => {
     onProgress(100)
@@ -213,19 +231,23 @@ export default function StoryScene({
       className="h-full w-full"
       label={scenes.story}
       camera={{ position: [0, 1.2, 7.8], fov: 32, near: 0.1, far: 120 }}
+      mode={reduced ? 'demand' : 'always'}
       onFallback={done}
     >
       <LoadingReporter onProgress={onProgress} />
-      <Studio floor={-0.4} shadows={false} />
+      {/* The story's cameras skim the white glaze from low down: there it has to mirror the bright page. */}
+      <Studio floor={-0.4} shadows={false} horizon={0.72} />
       <FloatingSprinkles count={80} />
       <Director chapterRef={chapterRef} started={started} startedAt={startedAt} onReady={onReady}>
+        <CakeBoard radius={STORY_RADIUS} />
         <Cloud
           seed={3}
-          puffs={34}
-          width={1.75}
+          puffs={40}
+          width={2.1}
           height={0.36}
-          depth={1.55}
+          depth={1.6}
           position={[0, -0.62, 0]}
+          rest={{ radius: STORY_RADIUS, y: 0.62 - 0.03 }}
           color={cloud.near}
         />
       </Director>

@@ -107,12 +107,13 @@ export const PLAQUE_HEIGHT = 0.27
 const FLAME_TIP = 0.385
 
 /**
- * The plaque for a message on a top tier of this radius. On a small top crowded with candles it stands on longer
- * sticks, like a cake topper, so its lower edge clears the flame tips and every word stays readable.
+ * The plaque for a message on a top tier of this radius. With candles it stands on longer sticks, like a cake
+ * topper, so its lower edge clears the flame tips and every word stays readable (on the bigger tops too: the middle
+ * candle of five used to burn right in front of the "B" of "Birthday").
  */
 function plaqueShape(topRadius: number, candles: number) {
   const scale = Math.min(1, Math.max(0.78, topRadius / 0.8))
-  const lift = candles > 0 && topRadius < 0.75 ? FLAME_TIP * toppingScale(topRadius) - 0.03 : 0
+  const lift = candles > 0 ? FLAME_TIP * toppingScale(topRadius) - 0.03 : 0
   return { z: -topRadius * 0.38, width: Math.min(1.05, topRadius * 1.15), scale, lift }
 }
 

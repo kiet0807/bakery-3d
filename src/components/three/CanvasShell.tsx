@@ -14,6 +14,7 @@ import {
   type RefObject,
 } from 'react'
 import * as THREE from 'three'
+import { usePalette } from '@/lib/usePalette'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { CakeFallback } from '../CakeFallback'
 import { ScenePoster } from '../ScenePoster'
@@ -126,8 +127,9 @@ function CanvasReady({
 /**
  * For scenes that render on demand: draws again whenever the canvas itself changes underneath the scene. A new
  * size or pixel ratio clears the drawing buffer, and coming back on screen (the loop was "never") or switching
- * loop modes may follow changes made meanwhile (a palette switched while scrolled away). Tweens started from
- * React effects get their first frame through the settler (`connect`), wired up here too.
+ * loop modes may follow changes made meanwhile (a palette switched while scrolled away); a palette switched in view
+ * recolours lights and materials. Tweens started from React effects get their first frame through the settler
+ * (`connect`), wired up here too.
  */
 function KeepFresh() {
   const invalidate = useThree((state) => state.invalidate)
@@ -136,7 +138,8 @@ function KeepFresh() {
   const dpr = useThree((state) => state.viewport.dpr)
   const settler = useSettler()
   useLayoutEffect(() => settler.connect(invalidate), [settler, invalidate])
-  useEffect(() => invalidate(), [invalidate, frameloop, size, dpr])
+  const palette = usePalette()
+  useEffect(() => invalidate(), [invalidate, frameloop, size, dpr, palette])
   return null
 }
 

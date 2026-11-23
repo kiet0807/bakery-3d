@@ -29,9 +29,13 @@ describe('plaque and headroom', () => {
     expect(layout.topY + 0.03 + layout.plaque!.lift).toBeGreaterThanOrEqual(flameTip - 1e-9)
   })
 
-  it('keeps the plaque low when there are no candles or the cake is big', () => {
+  it('keeps the plaque low when there are no candles, and above the flames on every size when there are', () => {
     expect(computeLayout(normalizeConfig({ size: 'bento', message: 'Hi' })).plaque!.lift).toBe(0)
-    expect(computeLayout(normalizeConfig({ size: 's18', candles: 5, message: 'Hi' })).plaque!.lift).toBe(0)
+    expect(computeLayout(normalizeConfig({ size: 's18', message: 'Hi' })).plaque!.lift).toBe(0)
+    for (const size of ['s14', 's16', 's18', 's20', 'tier2'] as const)
+      expect(
+        computeLayout(normalizeConfig({ size, candles: 5, message: 'Hi' })).plaque!.lift,
+      ).toBeGreaterThan(0.2)
   })
 
   it('leaves room for the whole plaque, so a box lid or a cloche never cuts through it', () => {

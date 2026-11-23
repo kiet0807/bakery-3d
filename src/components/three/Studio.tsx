@@ -12,12 +12,63 @@ import { Timeline, useSettler } from './tween'
 export const CAFE_HDRI = '/hdri/comfy_cafe_1k.hdr'
 
 /**
+ * How much of the horizon covers what is behind it, where the camera stays above the cake: enough to lift the black
+ * out of a low view, little enough that a red glaze keeps its depth and a box its shaded sides.
+ */
+const HORIZON_STRENGTH = 0.25
+/** The hemisphere's intensity without a horizon, per tier, and how much of it a full horizon replaces. */
+const HEMISPHERE = { high: 1.05, low: 1.35 }
+const HORIZON_SHARE = 0.26
+/** The horizon's height, in degrees above eye level: full strength between the inner pair, none outside the outer. */
+const HORIZON = { from: -38, full: -8, until: 24, to: 58 }
+let horizonDome: THREE.BufferGeometry | null = null
+
+/** A dome around the scene whose vertices carry how much of the horizon shows there, as alpha. Shared by every canvas. */
+function horizonGeometry() {
+  if (horizonDome) return horizonDome
+  const dome = new THREE.SphereGeometry(30, 24, 48)
+  const position = dome.getAttribute('position')
+  const colors = new Float32Array(position.count * 4).fill(1)
+  for (let i = 0; i < position.count; i++) {
+    const height = THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(position.getY(i) / 30, -1, 1)))
+    colors[i * 4 + 3] =
+      THREE.MathUtils.smoothstep(height, HORIZON.from, HORIZON.full) *
+      (1 - THREE.MathUtils.smoothstep(height, HORIZON.until, HORIZON.to))
+  }
+  dome.setAttribute('color', new THREE.BufferAttribute(colors, 4))
+  return (horizonDome = dome)
+}
+
+/**
+ * The bright page around the cake, for reflections. Glaze and porcelain mirror whatever lies behind them when seen
+ * at a low angle, and that was the black of an empty cube (light tier) or the café's dark walls (high tier): the top
+ * of a white-chocolate cake turned grey-brown and every drip wore a dark outline, on a page that is cream all round.
+ */
+function Horizon({ color, strength }: { color: string; strength: number }) {
+  return (
+    <mesh geometry={horizonGeometry()}>
+      <meshBasicMaterial
+        color={color}
+        vertexColors
+        transparent
+        opacity={strength}
+        side={THREE.BackSide}
+        depthWrite={false}
+        toneMapped={false}
+        fog={false}
+      />
+    </mesh>
+  )
+}
+
+/**
  * Soft panels around the cake: shaped highlights on glaze and porcelain. Rendered once, no download. A new
  * palette gives new children, and drei's Environment renders its cube again (once) when its children change.
  */
-function Panels({ light }: { light: Scene['light'] }) {
+function Panels({ light, horizon }: { light: Scene['light']; horizon: number }) {
   return (
     <>
+      <Horizon color={light.panelFloor} strength={horizon} />
       <Lightformer
         form="rect"
         intensity={1.6}
@@ -122,7 +173,7 @@ class CafeCube {
  * frame of the fade draws the cube again (and three refilters it). With reduced motion the café light is simply
  * there; a saved picture or studio photo (the settler) jumps to the end.
  */
-function CafeLight({ light }: { light: Scene['light'] }) {
+function CafeLight({ light, horizon }: { light: Scene['light']; horizon: number }) {
   const cafe = useEnvironment({ files: CAFE_HDRI })
   const get = useThree((state) => state.get)
   const still = useReducedMotionScene()
@@ -184,7 +235,7 @@ function CafeLight({ light }: { light: Scene['light'] }) {
 
   return createPortal(
     <>
-      <Panels light={light} />
+      <Panels light={light} horizon={horizon} />
       <cubeCamera ref={(camera) => cube.attach(camera)} args={[0.1, 1000, cube.target]} />
     </>,
     cube.virtual,
@@ -217,21 +268,28 @@ export function Studio({
   floor,
   shadowScale = 7,
   shadows = true,
+  horizon = HORIZON_STRENGTH,
 }: {
   floor: number
   shadowScale?: number
   shadows?: boolean
+  /** How bright the page shows in reflections seen at a low angle, 0 to 1 (see `Horizon`). */
+  horizon?: number
 }) {
   const quality = useQuality()
   const high = quality === 'high'
   const { light, ink } = useScene()
   // The same element while the colours stay: drei's Environment draws its cube again (and resets the scene's
   // light) whenever its children change, which a new element on every render of the scene would cause.
-  const panels = useMemo(() => <Panels light={light} />, [light])
+  const panels = useMemo(() => <Panels light={light} horizon={horizon} />, [light, horizon])
   return (
     <>
       {/* Colours as props, not args: a palette change recolours the light instead of replacing it. */}
-      <hemisphereLight color={light.sky} groundColor={light.ground} intensity={high ? 1.05 : 1.35} />
+      <hemisphereLight
+        color={light.sky}
+        groundColor={light.ground}
+        intensity={(high ? HEMISPHERE.high : HEMISPHERE.low) * (1 - HORIZON_SHARE * horizon)}
+      />
       <directionalLight
         position={[3, 5.5, 4.5]}
         intensity={high ? 2.5 : 2.3}
@@ -255,7 +313,7 @@ export function Studio({
       {high && (
         <CafeLightBoundary>
           <Suspense fallback={null}>
-            <CafeLight light={light} />
+            <CafeLight light={light} horizon={horizon} />
           </Suspense>
         </CafeLightBoundary>
       )}

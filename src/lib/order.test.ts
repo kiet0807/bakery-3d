@@ -149,6 +149,11 @@ describe('slots', () => {
     expect(isHoliday('2030-02-05')).toBe(false)
     expect(isHoliday('2031-01-22')).toBe(true)
     expect(isHoliday('2032-02-10')).toBe(true)
+    // Tết 2033 falls in January: its rush week starts on 24 January.
+    expect(isHoliday('2033-01-23')).toBe(false)
+    expect(isHoliday('2033-01-24')).toBe(true)
+    expect(isHoliday('2033-02-02')).toBe(true)
+    expect(isHoliday('2035-02-07')).toBe(true)
   })
 
   it('offers the next days that still have a slot, skipping full ones', () => {

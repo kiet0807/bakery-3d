@@ -74,11 +74,11 @@ export function MobileNav() {
           {/* Two bars that cross into an X. */}
           <path
             d="M5 8.5h14"
-            className={`origin-center transition-[translate,rotate] duration-300 ease-out ${open ? 'translate-y-[3.5px] rotate-45' : ''}`}
+            className={`origin-center transition-[translate,rotate] transform-fill duration-300 ease-out ${open ? 'translate-y-[3.5px] rotate-45' : ''}`}
           />
           <path
             d="M5 15.5h14"
-            className={`origin-center transition-[translate,rotate] duration-300 ease-out ${open ? '-translate-y-[3.5px] -rotate-45' : ''}`}
+            className={`origin-center transition-[translate,rotate] transform-fill duration-300 ease-out ${open ? '-translate-y-[3.5px] -rotate-45' : ''}`}
           />
         </svg>
       </button>

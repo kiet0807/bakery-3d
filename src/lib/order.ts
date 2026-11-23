@@ -160,6 +160,9 @@ export const TET_DAYS = [
   '2030-02-02',
   '2031-01-23',
   '2032-02-11',
+  '2033-01-31',
+  '2034-02-19',
+  '2035-02-08',
 ] as const
 /** "Cận Tết": the week before Tết counts as a holiday, from the 23rd of the last lunar month or so. */
 export const TET_RUSH_DAYS = 7

@@ -26,7 +26,7 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
   On phones a bar under the stage jumps between the groups of choices. Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the
   exact same cake (`/design#cake=…`, in the fragment so it never reaches a server) to send to the shop on Zalo.
 - **Vitrine** (`/menu`): the six house cakes on a turning table under glass cloches. The chosen cake comes to
-  the front and its cloche lifts. Add it as it is, or open it in the builder.
+  the front and its cloche lifts. Drag the table round with a mouse or a finger, or use the arrows. Add it as it is, or open it in the builder.
 - **Cart** (`/cart`): quantities, then a demo checkout in two steps (who and how, then when and how to pay):
   pickup at the shop or delivery, chips for the next seven open days, time slots in the shop's own time zone,
   lead times, holiday rules and a 50% deposit where the policy needs one. A cake in the cart can be reopened in the

@@ -38,6 +38,29 @@ test.describe('vitrine', () => {
     ).toBeVisible()
   })
 
+  test('dragging the table with the mouse turns the cakes round', async ({ page }) => {
+    await page.goto('/menu')
+    // The stage reads the pointer whether it shows the 3D table or the drawing that stands in for it.
+    const box = (await page.getByText(/Máy này chưa chạy được 3D/).boundingBox())!
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+    const drag = async (dx: number, dy = 0) => {
+      await page.mouse.move(x, y)
+      await page.mouse.down()
+      await page.mouse.move(x + dx, y + dy, { steps: 8 })
+      await page.mouse.up()
+    }
+    // A short pull to the left, less than half a cake, still brings the next one round; to the right, back.
+    await drag(-60)
+    await expect(page.getByRole('radio', { name: /Socola Crush/ })).toBeChecked()
+    await expect(page.getByRole('heading', { level: 2, name: 'Socola Crush' })).toBeVisible()
+    await drag(60)
+    await expect(page.getByRole('radio', { name: /Dâu Tây Mây Hồng/ })).toBeChecked()
+    // Mostly up or down is not a turn of the table.
+    await drag(-40, 160)
+    await expect(page.getByRole('radio', { name: /Dâu Tây Mây Hồng/ })).toBeChecked()
+  })
+
   test('house cakes show how far ahead to order', async ({ page }) => {
     await page.goto('/menu')
     await expect(page.getByTestId('lead-time')).toHaveText(/Đặt trước 4 giờ/)

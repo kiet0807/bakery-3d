@@ -2,11 +2,12 @@
 
 import { MeshReflectorMaterial } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { useDict } from '@/i18n/LangProvider'
 import type { Preset } from '@/lib/presets'
+import { DRAG_START_PX, type TableDrag } from '../../menu/tableDrag'
 import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
@@ -80,6 +81,9 @@ function Showcase({
   const still = useReducedMotionScene()
   const low = useQuality() === 'low'
   const { table, glass: glassColours } = useScene()
+  // The hand over a cake is the canvas's own cursor: over the rest of the stage it shows the grab of the table.
+  const get = useThree((state) => state.get)
+  const pointAt = (cursor: string) => (get().gl.domElement.style.cursor = cursor)
   // The ring under each cake blends from the rest colour to the chosen one as it comes to the front.
   const marks = useMemo(
     () => ({ rest: new THREE.Color(table.markRest), chosen: new THREE.Color(table.markChosen) }),
@@ -140,6 +144,8 @@ function Showcase({
 
   const select = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
+    // Let go after turning the table: not a click on this cake.
+    if (event.delta > DRAG_START_PX) return
     onSelect()
   }
 
@@ -151,11 +157,9 @@ function Showcase({
       onClick={select}
       onPointerOver={(event) => {
         event.stopPropagation()
-        document.body.style.cursor = 'pointer'
+        pointAt('pointer')
       }}
-      onPointerOut={() => {
-        document.body.style.cursor = ''
-      }}
+      onPointerOut={() => pointAt('')}
     >
       <CakeStand radius={standRadius} />
       <ShadowBlob radius={standRadius + 0.7} y={FLOOR} opacity={0.9} />
@@ -232,7 +236,17 @@ function Turntable() {
 }
 
 /** Turns the table so the chosen cake comes to the front, the short way round, and keeps the camera framed. */
-function Rig({ index, count, children }: { index: number; count: number; children: React.ReactNode }) {
+function Rig({
+  index,
+  count,
+  drag,
+  children,
+}: {
+  index: number
+  count: number
+  drag?: RefObject<TableDrag>
+  children: React.ReactNode
+}) {
   const still = useReducedMotionScene()
   const table = useRef<THREE.Group>(null)
   const step = TAU / count
@@ -246,6 +260,8 @@ function Rig({ index, count, children }: { index: number; count: number; childre
   const source = useThree((state) => state.events.connected) as EventTarget | null | undefined
   // A new cake to bring round, or the pointer moving (the camera drifts after it): frames until it has settled.
   useEffect(() => invalidate(), [index, invalidate])
+  // The stage moves the table while it is dragged: each move asks for a frame.
+  useEffect(() => drag?.current.watch(() => invalidate()), [drag, invalidate])
   useEffect(() => {
     if (still || !source) return
     const wake = () => invalidate()
@@ -261,9 +277,14 @@ function Rig({ index, count, children }: { index: number; count: number; childre
       goal.current += turn
       shown.current = index
     }
-    angle.current = still ? goal.current : THREE.MathUtils.damp(angle.current, goal.current, 2.6, dt)
-    if (Math.abs(angle.current - goal.current) < SETTLED) angle.current = goal.current
-    else invalidate()
+    if (drag?.current.active) {
+      // Dragged: the table follows the pointer. Let go, it turns on from there to the cake chosen.
+      angle.current = goal.current - drag.current.offset * step
+    } else {
+      angle.current = still ? goal.current : THREE.MathUtils.damp(angle.current, goal.current, 2.6, dt)
+      if (Math.abs(angle.current - goal.current) < SETTLED) angle.current = goal.current
+      else invalidate()
+    }
     if (table.current) table.current.rotation.y = angle.current
 
     // Frame the front cake. On wide screens the stage runs behind the side columns, so the cake only gets the
@@ -338,11 +359,14 @@ export default function VitrineScene({
   index,
   sliced,
   onSelect,
+  drag,
 }: {
   presets: Preset[]
   index: number
   sliced: boolean
   onSelect: (index: number) => void
+  /** The table dragged round by the stage (see `TableDrag`). */
+  drag?: RefObject<TableDrag>
 }) {
   const dict = useDict()
   const { page } = useScene()
@@ -362,7 +386,7 @@ export default function VitrineScene({
       {/* Fixed args and the colour as a prop: a palette change recolours the fog instead of replacing it. */}
       <fog attach="fog" args={['#ffffff', 11, 19]} color={page} />
       <Studio />
-      <Rig index={index} count={presets.length}>
+      <Rig index={index} count={presets.length} drag={drag}>
         <Turntable />
         {presets.map((preset, i) => (
           <Showcase
@@ -377,14 +401,6 @@ export default function VitrineScene({
       </Rig>
       <Effects />
       <ToppingsOutOfReflection />
-      <ResetCursor />
     </CanvasShell>
   )
-}
-
-/** Leaves the pointer as it was when the scene goes away while hovering a cake. */
-function ResetCursor() {
-  const gl = useThree((state) => state.gl)
-  useEffect(() => () => void (document.body.style.cursor = ''), [gl])
-  return null
 }

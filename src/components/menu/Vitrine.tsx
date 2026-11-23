@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, type PointerEvent } from 'react'
 import type { ClientDictionary } from '@/i18n/dictionaries'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { allergensOf, sizeOf, type CakeConfig } from '@/lib/cake'
@@ -11,12 +11,21 @@ import { useCart } from '@/lib/store'
 import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
 import { VitrineScene } from '../three/sceneCode'
+import { DRAG_START_PX, createTableDrag } from './tableDrag'
 
 function VitrineLoading() {
   return <ScenePoster label={useDict().menu.loading} />
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+/** A drag of up to this many cakes either way: let go, and the nearest cake comes to the front. */
+const MOST_CAKES = 2.4
+/** A quicker, shorter swipe than half a cake still moves one cake on. */
+const FLICK_PX = 48
+
+/** How far the pointer goes for one cake: about a third of the stage. */
+const pixelsPerCake = (stage: number) => Math.min(360, Math.max(140, stage * 0.3))
 
 function specs(config: CakeConfig, dict: ClientDictionary): { label: string; value: string }[] {
   const c = dict.cake
@@ -59,7 +68,10 @@ export function Vitrine() {
   const [added, setAdded] = useState<string | null>(null)
   const [status, setStatus] = useState('')
   const add = useCart((state) => state.add)
-  const swipe = useRef<{ x: number; y: number } | null>(null)
+  // The table dragged round with a mouse or a finger (see `TableDrag`): it follows the pointer, and letting go
+  // brings the nearest cake to the front.
+  const drag = useRef(createTableDrag())
+  const press = useRef<{ x: number; y: number; id: number; perCake: number } | null>(null)
 
   const preset = PRESETS[index]
   const count = PRESETS.length
@@ -70,6 +82,21 @@ export function Vitrine() {
     setIndex(wrapped)
     setSliced(false)
     setStatus(m.status.chosen(nameOf(PRESETS[wrapped]), money(presetPrice(PRESETS[wrapped]), lang)))
+  }
+
+  /** The end of a drag: the nearest cake comes round (none if the browser took the gesture over). */
+  const letGo = (event: PointerEvent<HTMLDivElement>, cancelled: boolean) => {
+    const start = press.current
+    if (!start || start.id !== event.pointerId) return
+    press.current = null
+    const held = drag.current
+    if (!held.active) return
+    let cakes = cancelled ? 0 : Math.round(held.offset)
+    if (!cancelled && !cakes && Math.abs(event.clientX - start.x) > FLICK_PX) cakes = held.offset > 0 ? 1 : -1
+    held.active = false
+    held.offset = 0
+    if (cakes) choose(index + cakes)
+    held.wake()
   }
 
   // The cart shows the house cake's own picture: a frame of the table could catch it still turning.
@@ -90,24 +117,44 @@ export function Vitrine() {
       </header>
 
       <div
-        className="sticky top-16 z-20 h-[46svh] min-h-[300px] touch-pan-y border-y-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-none"
+        className="sticky top-16 z-20 h-[46svh] min-h-[300px] cursor-grab touch-pan-y border-y-2 active:cursor-grabbing border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:top-20 md:h-[56svh] xl:absolute xl:inset-0 xl:z-0 xl:h-auto xl:border-0 xl:bg-none"
         onPointerDown={(event) => {
-          if (event.pointerType !== 'mouse') swipe.current = { x: event.clientX, y: event.clientY }
+          // The buttons on the stage keep their own clicks.
+          if (event.button !== 0 || (event.target as Element).closest('button')) return
+          press.current = {
+            x: event.clientX,
+            y: event.clientY,
+            id: event.pointerId,
+            perCake: pixelsPerCake(event.currentTarget.clientWidth),
+          }
         }}
-        onPointerUp={(event) => {
-          const start = swipe.current
-          swipe.current = null
-          if (!start) return
+        onPointerMove={(event) => {
+          const start = press.current
+          if (!start || start.id !== event.pointerId) return
           const dx = event.clientX - start.x
-          if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(event.clientY - start.y) * 1.5)
-            choose(index + (dx < 0 ? 1 : -1))
+          const held = drag.current
+          if (!held.active) {
+            if (Math.abs(dx) <= DRAG_START_PX) return
+            // Mostly up or down: not a turn of the table (a finger scrolls the page).
+            if (Math.abs(dx) < Math.abs(event.clientY - start.y) * 1.5) {
+              press.current = null
+              return
+            }
+            held.active = true
+            event.currentTarget.setPointerCapture(event.pointerId)
+          }
+          held.offset = Math.max(-MOST_CAKES, Math.min(MOST_CAKES, -dx / start.perCake))
+          held.wake()
         }}
+        onPointerUp={(event) => letGo(event, false)}
+        onPointerCancel={(event) => letGo(event, true)}
       >
         <VitrineScene
           presets={PRESETS}
           index={index}
           sliced={sliced}
           onSelect={choose}
+          drag={drag}
           fallback={<VitrineLoading />}
         />
         {/* Wide screens: the cakes at the sides fade into the cream page, so the title and the card stay clear. */}

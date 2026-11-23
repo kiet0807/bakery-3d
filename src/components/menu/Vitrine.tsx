@@ -1,6 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useRef, useState } from 'react'
 import type { ClientDictionary } from '@/i18n/dictionaries'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
@@ -11,15 +10,11 @@ import { PRESETS, presetPrice, type Preset } from '@/lib/presets'
 import { useCart } from '@/lib/store'
 import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
+import { VitrineScene } from '../three/sceneCode'
 
 function VitrineLoading() {
   return <ScenePoster label={useDict().menu.loading} />
 }
-
-const VitrineScene = dynamic(() => import('../three/scenes/VitrineScene'), {
-  ssr: false,
-  loading: () => <VitrineLoading />,
-})
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -108,7 +103,13 @@ export function Vitrine() {
             choose(index + (dx < 0 ? 1 : -1))
         }}
       >
-        <VitrineScene presets={PRESETS} index={index} sliced={sliced} onSelect={choose} />
+        <VitrineScene
+          presets={PRESETS}
+          index={index}
+          sliced={sliced}
+          onSelect={choose}
+          fallback={<VitrineLoading />}
+        />
         {/* Wide screens: the cakes at the sides fade into the cream page, so the title and the card stay clear. */}
         <div
           aria-hidden

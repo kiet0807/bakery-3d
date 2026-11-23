@@ -22,6 +22,7 @@ import {
 } from '@/lib/order'
 import { ORDERING_OPEN, SHOP } from '@/lib/shop'
 import { getSmoothScroll } from '@/lib/smoothScroll'
+import { prefetchBox } from '../three/sceneCode'
 import type { CheckoutKit } from './checkoutKit'
 import { StepWhen } from './StepWhen'
 import { StepWho } from './StepWho'
@@ -107,6 +108,8 @@ export function Checkout({
   const stepRef = useRef<Step>(1)
   useEffect(() => {
     stepRef.current = step
+    // On the last step the order is near: the boxed-up cake that ends it loads in a quiet moment.
+    if (step === 2) prefetchBox()
   }, [step])
   // The steps whose errors show: a step's errors appear once the visitor has tried to leave it, then follow
   // every change.

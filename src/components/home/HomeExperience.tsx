@@ -1,14 +1,12 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { LocalLink, useDict } from '@/i18n/LangProvider'
 import { scrollToElement } from '@/lib/smoothScroll'
+import { StoryScene } from '../three/sceneCode'
 import { CHAPTERS, isStoryChapter } from './chapters'
 import { IntroGate } from './IntroGate'
-
-const StoryScene = dynamic(() => import('../three/scenes/StoryScene'), { ssr: false })
 
 /** Remembers, for this browser tab, that the visitor already pressed the start button. */
 const SEEN_KEY = 'kais-bakery-intro-seen'
@@ -191,7 +189,13 @@ export function HomeExperience() {
           </span>
         </h1>
         <div className="absolute inset-0">
-          <StoryScene chapterRef={chapterRef} started={started} onProgress={onProgress} onReady={onReady} />
+          <StoryScene
+            chapterRef={chapterRef}
+            started={started}
+            onProgress={onProgress}
+            onReady={onReady}
+            fallback={null}
+          />
         </div>
         {/*
           Came in before the scene was there: a small note where the cake is about to appear, gone once it is.

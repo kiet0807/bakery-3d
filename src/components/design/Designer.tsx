@@ -1,6 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { allergenText, lineLabel } from '@/i18n/cake-text'
 import { localeHref } from '@/i18n/config'
@@ -34,6 +33,7 @@ import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
 import { TickingMoney } from '../TickingMoney'
 import type { Capture } from '../three/Capture'
+import { DesignScene } from '../three/sceneCode'
 import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
 import { DragHint } from './DragHint'
 import { PresetPicks } from './PresetPicks'
@@ -42,11 +42,6 @@ import { SectionNav } from './SectionNav'
 function DesignLoading() {
   return <ScenePoster label={useDict().design.loading} />
 }
-
-const DesignScene = dynamic(() => import('../three/scenes/DesignScene'), {
-  ssr: false,
-  loading: () => <DesignLoading />,
-})
 
 /**
  * Opens a design from the address, then tidies it: `#cake=…` is a design someone shared (`?cake=…` in links made
@@ -243,6 +238,7 @@ export function Designer() {
         className="sticky top-16 z-10 -mx-3 h-(--stage) overflow-hidden transition-[height] delay-300 duration-0 max-lg:group-has-[[data-typing]:focus]/builder:delay-0 sm:top-20 border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
       >
         <DesignScene
+          fallback={<DesignLoading />}
           config={config}
           sliced={sliced}
           captureRef={captureRef}

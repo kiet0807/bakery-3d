@@ -1,6 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useEffect, useRef } from 'react'
 import { cakeName, describeCake } from '@/i18n/cake-text'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
@@ -10,16 +9,12 @@ import { money } from '@/lib/money'
 import { formatDay, formatPhone, type Order } from '@/lib/order'
 import { ORDERING_OPEN, SHOP } from '@/lib/shop'
 import { ScenePoster } from '../ScenePoster'
+import { BoxScene } from '../three/sceneCode'
 
 function BoxLoading() {
   const { cart } = useDict()
   return <ScenePoster label={cart.done.boxLoading} />
 }
-
-const BoxScene = dynamic(() => import('../three/scenes/BoxScene'), {
-  ssr: false,
-  loading: () => <BoxLoading />,
-})
 
 export interface PlacedOrder extends Order {
   items: CartItem[]
@@ -38,7 +33,7 @@ export function OrderDone({ order }: { order: PlacedOrder }) {
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 pt-20 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(340px,1fr)] lg:gap-12 lg:pt-28">
       <div className="sticker h-[52svh] min-h-80 overflow-hidden bg-soft lg:sticky lg:top-28 lg:h-[calc(100svh-9rem)]">
-        <BoxScene config={order.items[0].config} />
+        <BoxScene config={order.items[0].config} fallback={<BoxLoading />} />
       </div>
       <div className="space-y-8 self-center pb-10">
         <header className="space-y-3">

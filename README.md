@@ -136,7 +136,17 @@ unless the visitor asked for reduced motion.
   saved cart holds cakes, so nothing shifts as it loads.
 - `node scripts/vitals.mjs <url> 3 / /design /menu /cart` measures loading on an emulated mid-range phone
   (Lighthouse's mobile throttling: 4x CPU, 150 ms, 1.6 Mbps) with Playwright: FCP, LCP, CLS, long tasks, bytes.
-- Scenes load with `next/dynamic` and `ssr: false`; every page is prerendered as static HTML.
+- Scenes load on demand in the browser only (`sceneCode.tsx`, like `next/dynamic` with `ssr: false`); every page
+  is prerendered as static HTML. Once a first scene is on screen, the others load one at a time in idle moments
+  (not with Data Saver; the box when checkout reaches its last step), and a page whose scene is already loaded
+  renders it at once: `next/dynamic` suspended even then, and React holds what replaces a fallback for 300 ms.
+- A scene's loading poster fades in only after 300 ms, so a scene that is quick to appear never flashes it.
+- Moving between pages: Next.js keeps the last three pages alive but hidden (`<Activity>`), canvas included, so
+  going back to one is instant. Effects run again when such a page shows, so arrivals, the café light's fade and
+  the camera's framing remember what they last did: nothing falls again, and the camera stays where the visitor
+  left it. Every composer resizes its renderer to a size @react-three/postprocessing shares between canvases, so
+  `Effects` keeps each renderer at its own canvas's size. `node scripts/nav-frames.mjs <url> phone` measures
+  frame pacing on the way between the 3D pages.
 
 ### Four palettes without a flash
 

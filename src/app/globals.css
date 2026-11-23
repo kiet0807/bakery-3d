@@ -92,6 +92,8 @@
   --animate-pop: pop 0.5s var(--ease-spring) both;
   --animate-bump: bump 0.55s var(--ease-out);
   --animate-nudge: nudge 2.2s var(--ease-in-out) infinite;
+  /* Its delay is ScenePoster's, written on the element. */
+  --animate-poster: poster-in 0.4s var(--ease-out) both;
 }
 
 /* The Pacifico subset already shipped for the cake lettering in 3D, reused for the logo (one download). */
@@ -126,6 +128,13 @@
   from {
     opacity: 0;
     scale: 0.86;
+  }
+}
+
+/* A 3D scene's loading poster, only if the scene is not there in a blink. */
+@keyframes poster-in {
+  from {
+    opacity: 0;
   }
 }
 

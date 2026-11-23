@@ -25,6 +25,7 @@ import {
   type PerformanceHold,
   type Quality,
 } from './motion'
+import { prefetchScenes } from './sceneCode'
 import { SettleContext, createSettler, useSettler } from './tween'
 
 let webglSupport: boolean | null = null
@@ -321,7 +322,10 @@ export function CanvasShell({
   }, [])
 
   useEffect(() => {
-    if (drawn) onReady?.()
+    if (!drawn) return
+    onReady?.()
+    // This device draws 3D: the other scenes load in quiet moments, ready before the visitor opens them.
+    prefetchScenes()
   }, [drawn, onReady])
 
   // Pages that wait for the scene (the home page's welcome screen) must not wait for one that never comes.

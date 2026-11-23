@@ -35,7 +35,7 @@ export const home: HomeDict = {
         lead: 'Our sponge is baked every morning and cut into ',
         accent: 'three thin layers',
         tail: ', so every bite gets its fair share of cream.',
-        note: 'The slice is its own wedge that fits the cake exactly. Its cut face is painted live on a canvas from the flavours you pick.',
+        note: 'The slice is its own wedge that fits the cake exactly. Its cut face is painted live on a canvas from the flavors you pick.',
       },
       filling: {
         nav: 'The filling',
@@ -77,32 +77,32 @@ export const home: HomeDict = {
     accent: 'just sweet enough.',
     items: [
       {
-        icon: '🍰',
+        icon: 'cake',
         title: 'Less sweet by default',
         body: 'Sweet enough that the second slice still slaps. Sweet tooth? Pick "regular sweet", it costs nothing extra.',
       },
       {
-        icon: '🥛',
+        icon: 'cream',
         title: 'Cream-cheese whipped cream',
         body: 'Whipping cream beaten with cream cheese: milky, light, and it holds up in Saigon heat. No vegetable cream, ever.',
       },
       {
-        icon: '✍️',
+        icon: 'pen',
         title: 'Free lettering',
         body: 'Up to 22 characters, Vietnamese accents and all. Candles, knife and plates come free too.',
       },
       {
-        icon: '🧁',
+        icon: 'turn',
         title: 'See it in 3D first',
         body: 'Every choice changes the cake, slice it to check the layers, and the price updates instantly. No guessing.',
       },
       {
-        icon: '⏰',
+        icon: 'clock',
         title: 'Order from 4 hours ahead',
         body: 'Menu cakes: 4 hours. Your own design: 24 hours. Two tiers and holiday orders: 48 hours.',
       },
       {
-        icon: '🛵',
+        icon: 'scooter',
         title: 'Pick up or delivery',
         body: 'Drop by 6:30–22:45, or we book Grab, Be or Ahamove to bring it across the old inner districts of Ho Chi Minh City. You pay the app fee.',
       },

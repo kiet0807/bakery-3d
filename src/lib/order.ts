@@ -31,7 +31,7 @@ export const MAX_DAYS_AHEAD = 30
 export const DEPOSIT_FROM = 1_000_000
 export const DEPOSIT_SHARE = 0.5
 /** Holidays (MM-DD) when every order needs two days' notice and a deposit; the days around Tết are added below. */
-export const HOLIDAYS = ['02-14', '03-08', '10-20', '11-20', '12-24'] as const
+export const HOLIDAYS = ['01-01', '02-14', '03-08', '06-01', '10-20', '11-20', '12-24', '12-25'] as const
 const HOLIDAY_HOURS = 48
 const SLOT_MINUTES = 30
 

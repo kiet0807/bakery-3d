@@ -1,3 +1,5 @@
+import type { IconName } from '@/lib/icons'
+
 /** The info pages: /about, /policies, /faq. Owned by the copy agent. */
 
 /** One block of a policy section: a sub-heading, a paragraph, a list, a two-column table, or the delivery areas. */
@@ -56,7 +58,10 @@ const policySections: Record<PolicyId, PolicySection> = {
             ['Bánh tự thiết kế trên web', '24 giờ'],
             ['Bánh theo ảnh mẫu bạn gửi, tạo hình phức tạp', '48 giờ, nhắn Zalo kèm ảnh'],
             ['Bánh 2 tầng', '48 giờ'],
-            ['Ngày lễ (14/2, 8/3, 20/10, 20/11, 24/12, 7 ngày cận Tết, mùng 1–3)', '48 giờ cho mọi đơn'],
+            [
+              'Ngày lễ (1/1, 14/2, 8/3, 1/6, 20/10, 20/11, 24–25/12, 7 ngày cận Tết, mùng 1–3)',
+              '48 giờ cho mọi đơn',
+            ],
           ],
         },
         text: 'Giờ tính theo giờ Việt Nam, kể cả khi bạn đặt từ nước ngoài cho người nhà.',
@@ -253,10 +258,10 @@ export const pages = {
     rules: {
       title: 'Luật nhà Kai',
       items: [
-        { icon: '🍰', text: 'Ít ngọt là mặc định' },
-        { icon: '🥛', text: 'Kem tươi phô mai, không kem thực vật' },
-        { icon: '✍️', text: 'Chữ, nến, dao, đĩa: free hết' },
-      ],
+        { icon: 'cake', text: 'Ít ngọt là mặc định' },
+        { icon: 'cream', text: 'Kem tươi phô mai, không kem thực vật' },
+        { icon: 'pen', text: 'Chữ, nến, dao, đĩa: free hết' },
+      ] satisfies { icon: IconName; text: string }[],
     },
     project: {
       title: 'Nói thật nè: ',

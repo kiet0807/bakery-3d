@@ -13,9 +13,14 @@ export const design: DesignDict = {
   titleMark: 'your own cake',
   intro:
     'Every pick redraws the cake in 3D and the price updates instantly, no DMs asking for a quote. Slice it open to check the layers before you commit.',
+  picks: {
+    title: 'Start from a house cake',
+    hint: 'Pick one, then change anything',
+    back: 'Bring back the cake you were designing',
+  },
   hints: {
     size: 'Base price includes candles, lettering, knife and plates',
-    frosting: 'Cream-cheese whipped cream, natural colours',
+    frosting: 'Cream-cheese whipped cream, natural colors',
     toppings: (chosen: number, max: number) => `${chosen} of ${max} picked`,
     toppingsFull: "That's four. Drop one if you want to swap.",
     sweetness: "Less sweet is Kai's signature",

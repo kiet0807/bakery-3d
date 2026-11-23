@@ -36,7 +36,7 @@ export const cake: CakeDict = {
   },
   frostings: {
     'cloud-white': { name: 'Milk white', note: 'Clean and white like a cloud' },
-    'strawberry-milk': { name: 'Strawberry pink', note: 'Coloured with freeze-dried strawberry' },
+    'strawberry-milk': { name: 'Strawberry pink', note: 'Colored with freeze-dried strawberry' },
     pistachio: { name: 'Pistachio', note: 'Nutty, creamy, pretty in green' },
     cocoa: { name: 'Milk chocolate', note: 'Mellow and warm brown' },
     'taro-purple': { name: 'Taro purple', note: 'Pastel purple, very aesthetic' },
@@ -56,7 +56,7 @@ export const cake: CakeDict = {
     cherries: { name: 'Cherries', note: 'Stems and all' },
     'cream-kisses': { name: 'Cream kisses', note: 'Piped all around, free' },
     'chocolate-shards': { name: 'Chocolate shards', note: 'Snapped by hand' },
-    sprinkles: { name: 'Rainbow sprinkles', note: 'Life needs more colour' },
+    sprinkles: { name: 'Rainbow sprinkles', note: 'Life needs more color' },
     'gold-leaf': { name: 'Edible gold leaf', note: 'A tiny flex' },
   },
   sweetness: {

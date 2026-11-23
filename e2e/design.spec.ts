@@ -105,7 +105,7 @@ test.describe('cake builder', () => {
     await page.goto('/design?preset=choco-crush')
     await expect(page).toHaveURL(/\/design$/)
     await expect(page.getByTestId('price')).toHaveText('520.000đ')
-    await expect(page.getByText('Socola Crush', { exact: true })).toBeVisible()
+    await expect(page.getByTestId('cake-name')).toHaveText('Socola Crush')
     await expect(option(page, 'Cốt bánh', 'radio', 'Socola')).toBeChecked()
     await expect(option(page, 'Nhân', 'radio', 'Ganache socola')).toBeChecked()
   })
@@ -180,6 +180,31 @@ test.describe('cake builder', () => {
     await choose(page, 'Size', '14 cm')
     await expect(page.getByTestId('price')).toHaveText('280,000 VND')
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeVisible()
+  })
+
+  test('a house cake is a place to start, and your own cake is one press away', async ({ page }) => {
+    await page.goto('/design')
+    const picks = page.getByRole('region', { name: /Bắt đầu từ mẫu/ })
+    const strawberry = picks.getByRole('button', { name: /Dâu Tây Mây Hồng/ })
+    await expect(picks.getByRole('button')).toHaveCount(6)
+    // The builder opens on a house cake, and says which.
+    await expect(strawberry).toHaveAttribute('aria-pressed', 'true')
+
+    const chocolate = picks.getByRole('button', { name: /Socola Crush/ })
+    await chocolate.click()
+    await expect(chocolate).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('price')).toHaveText('520.000đ')
+    // From one house cake to another there is nothing of the visitor's to bring back.
+    const back = picks.getByRole('button', { name: 'Lấy lại bánh bạn đang thiết kế' })
+    await expect(back).toHaveCount(0)
+
+    await page.getByRole('textbox', { name: 'Chữ trên bánh' }).fill('Mẹ yêu')
+    await expect(page.getByTestId('cake-name')).toHaveText('Bánh bạn tự thiết kế')
+    await strawberry.click()
+    await expect(page.getByTestId('price')).toHaveText('350.000đ')
+    await back.click()
+    await expect(page.getByRole('textbox', { name: 'Chữ trên bánh' })).toHaveValue('Mẹ yêu')
+    await expect(back).toHaveCount(0)
   })
 
   test('on a phone a bar under the stage jumps between the groups of choices', async ({ page, isMobile }) => {

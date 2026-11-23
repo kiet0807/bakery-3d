@@ -10,6 +10,7 @@ import { leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
 import { editPath } from '@/lib/share'
 import { useCart } from '@/lib/store'
+import { Icon } from '../Icon'
 import { CakeThumb } from './CakeThumb'
 
 /**
@@ -93,7 +94,7 @@ export function CartLine({ item }: { item: CartItem }) {
               lead === 'menu' ? 'bg-soft' : 'bg-peach-soft'
             }`}
           >
-            <span aria-hidden>⏱</span> {t.lead[lead]}
+            <Icon name="clock" bold className="h-3.5 w-3.5" /> {t.lead[lead]}
           </span>
         </p>
       </div>

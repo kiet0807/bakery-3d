@@ -14,6 +14,7 @@ import { useOnce } from '@/hooks/useOnce'
 import { useDict } from '@/i18n/LangProvider'
 import { PALETTES, PALETTE_IDS, type Palette, type PaletteId } from '@/lib/palettes'
 import { readPalette, setPalette, usePalette } from '@/lib/usePalette'
+import { Icon } from './Icon'
 
 /**
  * The colour switch in the header: a round button showing the set in use, opening a small card with the four
@@ -162,9 +163,7 @@ export function PaletteSwitcher() {
         }`}
       >
         <div className="flex items-start gap-2 px-1.5 pt-0.5 pb-2.5">
-          <span aria-hidden className="mt-0.5 text-lg leading-none">
-            🎨
-          </span>
+          <Icon name="palette" className="mt-0.5 h-6 w-6" />
           <div className="min-w-0">
             <p id={titleId} className="font-display text-lg leading-tight font-extrabold text-ink">
               {t.label}

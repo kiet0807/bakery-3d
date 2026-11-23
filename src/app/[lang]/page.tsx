@@ -10,6 +10,7 @@ import { sizeOf } from '@/lib/cake'
 import { leadHours } from '@/lib/leadTime'
 import { money } from '@/lib/money'
 import { PRESETS, presetPicture, presetPrice } from '@/lib/presets'
+import { Icon } from '@/components/Icon'
 import { PageTransition } from '@/components/PageTransition'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]'>): Promise<Metadata> {
@@ -44,7 +45,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
                   aria-hidden
                   className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-ink bg-soft text-2xl"
                 >
-                  {item.icon}
+                  <Icon name={item.icon} />
                 </span>
                 <div className="space-y-1.5">
                   <h3 className="font-display text-xl font-bold">{item.title}</h3>

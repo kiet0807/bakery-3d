@@ -12,7 +12,7 @@ const NAMES = {
 const html = (page: Page) => page.locator('html')
 const cssVar = (page: Page, name: string) =>
   page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name)
-const switchButton = (page: Page) => page.getByRole('button', { name: /^(Đổi màu tiệm|Shop colours)/ })
+const switchButton = (page: Page) => page.getByRole('button', { name: /^(Đổi màu tiệm|Shop colors)/ })
 const group = (page: Page) => page.getByRole('radiogroup')
 const radio = (page: Page, name: string) => page.getByRole('radio', { name })
 const themeColor = (page: Page) => page.locator('meta[name="theme-color"]')
@@ -165,13 +165,13 @@ test.describe('palette switch', () => {
   test('speaks English on /en', async ({ page }) => {
     await page.goto('/en')
     const button = switchButton(page)
-    await expect(button).toHaveAccessibleName('Shop colours, now Matcha Strawberry')
+    await expect(button).toHaveAccessibleName('Shop colors, now Matcha Strawberry')
     await button.click()
-    await expect(group(page)).toHaveAccessibleName('Shop colours')
+    await expect(group(page)).toHaveAccessibleName('Shop colors')
     for (const name of NAMES.en) await expect(radio(page, name)).toBeVisible()
     await radio(page, 'Forest Cream').click()
     await expect(html(page)).toHaveAttribute('data-palette', 'g3')
-    await expect(button).toHaveAccessibleName('Shop colours, now Forest Cream')
+    await expect(button).toHaveAccessibleName('Shop colors, now Forest Cream')
   })
 
   test('the card and the header fit the screen', async ({ page }) => {

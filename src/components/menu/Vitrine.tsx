@@ -9,6 +9,7 @@ import { LEAD_HOURS, leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
 import { PRESETS, presetPrice, type Preset } from '@/lib/presets'
 import { useCart } from '@/lib/store'
+import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
 import type { Capture } from '../three/Capture'
 
@@ -202,7 +203,7 @@ export function Vitrine() {
           <p className="flex flex-wrap gap-2">
             <span className="chip rotate-[-2deg] bg-soft">{sizeLine(preset, dict)}</span>
             <span className="chip rotate-[2deg] border border-ink/70" data-testid="lead-time">
-              <span aria-hidden>⏰</span> {m.lead(leadHours)}
+              <Icon name="clock" bold className="h-4 w-4" /> {m.lead(leadHours)}
             </span>
           </p>
           <dl className="space-y-1.5 border-t-2 border-line pt-4 text-sm">

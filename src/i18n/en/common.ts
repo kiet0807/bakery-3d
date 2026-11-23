@@ -16,10 +16,10 @@ export const common: CommonDict = {
     cartCount: (n: number) => `${n} ${n === 1 ? 'cake' : 'cakes'} in the cart`,
   },
   palette: {
-    label: 'Shop colours',
-    current: (name: string) => `Shop colours, now ${name}`,
+    label: 'Shop colors',
+    current: (name: string) => `Shop colors, now ${name}`,
     hint: 'Pick the look you love; the shop remembers it next visit.',
-    nudge: 'This dot recolours the whole shop. Try it!',
+    nudge: 'This dot recolors the whole shop. Try it!',
     sets: {
       g1: { name: 'Matcha Strawberry', note: 'Matcha latte with strawberries, cuteness overload' },
       b: { name: 'Butter Mint', note: 'Butter cream and mint, Saturday-morning chill' },

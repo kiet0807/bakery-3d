@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Icon } from '@/components/Icon'
 import { ContactLinks } from '@/components/info/ContactLinks'
 import { DeliveryAreas } from '@/components/info/DeliveryAreas'
 import { SectionHeading } from '@/components/info/SectionHeading'
@@ -35,7 +36,7 @@ export default async function AboutPage({ params }: PageProps<'/[lang]/about'>) 
                   }`}
                 >
                   <span aria-hidden className="text-xl">
-                    {rule.icon}
+                    <Icon name={rule.icon} className="h-7 w-7" />
                   </span>
                   {rule.text}
                 </li>

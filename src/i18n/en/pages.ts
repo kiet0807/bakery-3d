@@ -38,7 +38,7 @@ const policySections: Record<PolicyId, PolicySection> = {
             ],
             ['Two-tier cakes', '48 hours ahead'],
             [
-              'Holidays (14/2, 8/3, 20/10, 20/11, 24/12, the 7 days before Tết and its first 3 days)',
+              'Holidays (Jan 1, Feb 14, Mar 8, Jun 1, Oct 20, Nov 20, Dec 24–25, the 7 days before Tết and its first 3 days)',
               '48 hours ahead for every order',
             ],
           ],
@@ -70,14 +70,14 @@ const policySections: Record<PolicyId, PolicySection> = {
     ],
   },
   changes: {
-    title: 'Cancelling or changing an order',
+    title: 'Canceling or changing an order',
     summary: 'Tell us 24 hours ahead and it costs nothing.',
     blocks: [
       {
         heading: '24 hours or more before your time',
         items: [
           'Cancel for free and get 100% of the deposit back (or keep it for next time if you like).',
-          'Change the day, time, flavour or message for free.',
+          'Change the day, time, flavor or message for free.',
         ],
       },
       {
@@ -99,7 +99,7 @@ const policySections: Record<PolicyId, PolicySection> = {
       },
       {
         items: [
-          "Our mistake (wrong design, wrong message, wrong flavour, not up to standard): we remake it for free if there's time, or refund the cake in full.",
+          "Our mistake (wrong design, wrong message, wrong flavor, not up to standard): we remake it for free if there's time, or refund the cake in full.",
           "Damaged on a ride we booked (dented, tipped over): we fix or remake it for free if there's time, otherwise we refund the cake. We deal with the delivery app, not you.",
           "You carried it, booked your own ride, or stored it wrong (left in the sun, kept too long): no refund, but we'll tell you how to rescue it if we can.",
           "Taste is personal, so it isn't grounds for a refund. We'd still love to hear what you think, honestly.",
@@ -126,7 +126,7 @@ const policySections: Record<PolicyId, PolicySection> = {
     summary: 'Every cake has egg, milk and wheat. Some choices add soy or nuts.',
     blocks: [
       {
-        text: "The frosting is dairy whipping cream beaten with cream cheese, which we call cream-cheese whipped cream. We don't use vegetable cream. Colours come from ingredients such as freeze-dried strawberry, cocoa and taro.",
+        text: "The frosting is dairy whipping cream beaten with cream cheese, which we call cream-cheese whipped cream. We don't use vegetable cream. Colors come from ingredients such as freeze-dried strawberry, cocoa and taro.",
       },
       { heading: 'In every cake', text: 'Egg, milk, wheat (gluten).' },
       {
@@ -242,9 +242,9 @@ export const pages: PagesDict = {
     rules: {
       title: 'House rules',
       items: [
-        { icon: '🍰', text: 'Less sweet by default' },
-        { icon: '🥛', text: 'Cream-cheese whipped cream, no vegetable cream' },
-        { icon: '✍️', text: 'Lettering, candles, knife and plates: all free' },
+        { icon: 'cake', text: 'Less sweet by default' },
+        { icon: 'cream', text: 'Cream-cheese whipped cream, no vegetable cream' },
+        { icon: 'pen', text: 'Lettering, candles, knife and plates: all free' },
       ],
     },
     project: {
@@ -258,7 +258,7 @@ export const pages: PagesDict = {
         'Vietnamese and English, Vietnamese by default, with a separate address for each language.',
         'Works with a keyboard and a screen reader, has a reduced-motion mode and 2D drawings when WebGL is missing.',
         'Smooth on low-end devices too: quality steps down when the frame rate drops.',
-        'Smooth motion: the cake eases into every choice, toppings drop on, pages and colour sets cross-fade.',
+        'Smooth motion: the cake eases into every choice, toppings drop on, pages and color sets cross-fade.',
       ],
       stackLabel: 'Built with',
       stack: [
@@ -300,7 +300,7 @@ export const pages: PagesDict = {
     meta: {
       title: 'Policies',
       description:
-        'Pickup and delivery, payment and deposits, cancelling or changing an order, damaged cakes, storage and allergens, personal data.',
+        'Pickup and delivery, payment and deposits, canceling or changing an order, damaged cakes, storage and allergens, personal data.',
     },
     eyebrow: 'Policies',
     title: 'The stuff to know ',

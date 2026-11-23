@@ -12,6 +12,12 @@ export const design = {
   titleMark: 'bánh của bạn',
   intro:
     'Chọn gì là bánh 3D đổi liền, giá cũng nhảy theo, khỏi inbox hỏi giá. Cắt bánh ra xem ruột trước khi chốt nha.',
+  /** The house cakes to start from. */
+  picks: {
+    title: 'Bắt đầu từ mẫu',
+    hint: 'Chọn một mẫu rồi đổi tùy thích',
+    back: 'Lấy lại bánh bạn đang thiết kế',
+  },
   hints: {
     size: 'Giá gốc đã gồm nến, chữ, dao và đĩa',
     frosting: 'Kem tươi phô mai, màu tự nhiên',

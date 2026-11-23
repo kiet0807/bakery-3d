@@ -20,7 +20,7 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
   show the sponge and filling, the glaze pours over the edge and the toppings land. Under the story: why the
   shop, the six house cakes (pictures taken from the 3D scene itself) and how ordering works in three steps. The welcome screen lets you in at once;
   the scene finishes loading behind it, and the opening act waits until the cake is on screen.
-- **Cake builder** (`/design`): size in centimetres (10 cm bento to two tiers), sponge, filling, frosting,
+- **Cake builder** (`/design`): start from one of the six house cakes or from scratch: size in centimetres (10 cm bento to two tiers), sponge, filling, frosting,
   drip, up to four toppings, sweetness, candles and a message of up to 22 characters with full Vietnamese
   diacritics. Every choice redraws the cake and the price in đồng, and shows how far ahead it must be ordered.
   On phones a bar under the stage jumps between the groups of choices. Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the

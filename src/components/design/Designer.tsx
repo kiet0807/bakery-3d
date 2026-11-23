@@ -30,11 +30,13 @@ import { money } from '@/lib/money'
 import { PRESETS, presetById } from '@/lib/presets'
 import { EDIT_PARAM, SHARE_PARAM, decodeCake, designPath } from '@/lib/share'
 import { useCart, useDesign } from '@/lib/store'
+import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
 import { TickingMoney } from '../TickingMoney'
 import type { Capture } from '../three/Capture'
 import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
 import { DragHint } from './DragHint'
+import { PresetPicks } from './PresetPicks'
 import { SectionNav } from './SectionNav'
 
 function DesignLoading() {
@@ -109,6 +111,7 @@ export function Designer() {
   const toggleTopping = useDesign((state) => state.toggleTopping)
   const setSliced = useDesign((state) => state.setSliced)
   const reset = useDesign((state) => state.reset)
+  const load = useDesign((state) => state.load)
   const add = useCart((state) => state.add)
   const replace = useCart((state) => state.replace)
   // A line edited here that is still in the cart (it may have been removed in another tab).
@@ -322,6 +325,8 @@ export function Designer() {
           <p className="max-w-prose text-lg leading-relaxed text-muted">{d.intro}</p>
         </header>
 
+        <PresetPicks config={config} matching={matchingPreset} onPick={load} />
+
         <SectionNav
           stageRef={stage}
           sections={SECTIONS.map((kind) => ({ id: `choose-${kind}`, title: c.kinds[kind] }))}
@@ -458,7 +463,7 @@ export function Designer() {
           </h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="chip rotate-[-2deg] border border-ink/70 text-sm" data-testid="lead-time">
-              <span aria-hidden>⏰</span> {d.summary.lead(LEAD_HOURS[lead])}
+              <Icon name="clock" bold className="h-4 w-4" /> {d.summary.lead(LEAD_HOURS[lead])}
             </span>
             <span className="text-sm text-muted">{d.summary.leadWhy[lead]}</span>
           </div>
@@ -470,7 +475,7 @@ export function Designer() {
           </div>
           <div className="space-y-2">
             <button type="button" onClick={shareDesign} className="btn btn-ghost">
-              <span aria-hidden>💌</span> {d.summary.share}
+              <Icon name="letter" className="h-5 w-5" bold /> {d.summary.share}
             </button>
             <p className="text-sm text-muted">{d.summary.shareHint}</p>
             {share && !share.url && <p className="text-sm font-semibold text-leaf">{d.summary.copied}</p>}
@@ -517,13 +522,16 @@ export function Designer() {
         <div className="sticky bottom-0 z-30 -mx-3 border-t-2 border-ink bg-cream/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 lg:bottom-6 lg:mx-0 lg:rounded-full lg:border-2 lg:bg-surface lg:py-2.5 lg:pr-2.5 lg:pl-6 lg:shadow-sticker">
           <div className="mx-auto flex max-w-xl items-center gap-3 lg:max-w-none">
             <div className="mr-auto min-w-0 leading-tight">
-              <p className="truncate text-xs font-medium text-muted">{presetName}</p>
+              <p className="truncate text-xs font-medium text-muted" data-testid="cake-name">
+                {presetName}
+              </p>
               <p className="flex items-center gap-2 font-display text-3xl font-extrabold tabular-nums max-[359px]:text-2xl">
                 <span data-testid="price">
                   <TickingMoney value={price} />
                 </span>
                 <span className="chip font-sans whitespace-nowrap max-[379px]:hidden">
-                  <span aria-hidden>⏰ {d.bar.lead(LEAD_HOURS[lead])}</span>
+                  <Icon name="clock" bold className="h-3.5 w-3.5" />
+                  <span aria-hidden>{d.bar.lead(LEAD_HOURS[lead])}</span>
                   <span className="sr-only">{d.summary.lead(LEAD_HOURS[lead])}</span>
                 </span>
               </p>

@@ -1,3 +1,5 @@
+import type { IconName } from '@/lib/icons'
+
 /** Home page: the welcome screen, the scroll story and the sections under it. Owned by the copy agent. */
 
 export interface StoryChapterWords {
@@ -13,8 +15,8 @@ export interface StoryChapterWords {
 }
 
 interface Card {
-  /** A small decorative emoji, read by nobody (aria-hidden). */
-  icon: string
+  /** A small decorative drawing, read by nobody (aria-hidden). */
+  icon: IconName
   title: string
   body: string
 }
@@ -96,32 +98,32 @@ export const home = {
     accent: 'ngọt vừa đủ.',
     items: [
       {
-        icon: '🍰',
+        icon: 'cake',
         title: 'Ít ngọt là mặc định',
         body: 'Ngọt vừa đủ để ăn miếng thứ hai vẫn thấy ngon. Hội hảo ngọt thì chọn "ngọt vừa", không tính thêm đồng nào.',
       },
       {
-        icon: '🥛',
+        icon: 'cream',
         title: 'Kem tươi phô mai',
         body: 'Whipping cream đánh cùng cream cheese: thơm sữa, đứng kem giữa trời Sài Gòn. Không dùng kem thực vật.',
       },
       {
-        icon: '✍️',
+        icon: 'pen',
         title: 'Viết chữ miễn phí',
         body: 'Tối đa 22 ký tự, tiếng Việt có dấu đầy đủ. Nến, dao, đĩa cũng tặng kèm luôn.',
       },
       {
-        icon: '🧁',
+        icon: 'turn',
         title: 'Thấy trước bánh 3D',
         body: 'Chọn gì bánh đổi nấy, cắt ra xem từng lớp, giá hiện liền tay. Khỏi đoán mò, khỏi nhắn qua nhắn lại.',
       },
       {
-        icon: '⏰',
+        icon: 'clock',
         title: 'Đặt trước từ 4 giờ',
         body: 'Mẫu trong menu: 4 giờ. Bánh tự thiết kế: 24 giờ. Bánh 2 tầng và đơn ngày lễ: 48 giờ.',
       },
       {
-        icon: '🛵',
+        icon: 'scooter',
         title: 'Nhận tại tiệm hoặc ship',
         body: 'Ghé tiệm 6:30–22:45, hoặc tiệm gọi Grab, Be, Ahamove giao khắp nội thành TP.HCM cũ. Phí ship theo app, bạn trả.',
       },

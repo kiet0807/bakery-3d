@@ -14,6 +14,7 @@ import {
   shopToday,
   slotsFor,
 } from '@/lib/order'
+import { Icon } from '../Icon'
 import type { CheckoutKit } from './checkoutKit'
 import { DateChips } from './DateChips'
 import { Field } from './FormParts'
@@ -88,7 +89,7 @@ export function StepWhen({
       <div className="space-y-2">
         <p className="flex flex-wrap gap-2">
           <span className="inline-flex -rotate-1 items-center gap-1.5 rounded-full border-2 border-ink bg-butter px-3 py-1 text-sm font-semibold">
-            <span aria-hidden>⏱</span> {lead.holiday ? t.holidayLead : t.lead[lead.kind]}
+            <Icon name="clock" bold className="h-4 w-4" /> {lead.holiday ? t.holidayLead : t.lead[lead.kind]}
           </span>
         </p>
         {lead.kind === 'menu' && !lead.holiday && <p className="text-xs text-muted">{t.sameDay}</p>}

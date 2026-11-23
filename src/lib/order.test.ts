@@ -123,6 +123,12 @@ describe('slots', () => {
     expect(earliestDate({ now: evening, method: 'pickup', items: MENU })).toBe('2026-11-21')
   })
 
+  it('counts the busy cake days of the year as holidays', () => {
+    for (const day of ['01-01', '02-14', '03-08', '06-01', '10-20', '11-20', '12-24', '12-25'])
+      expect(isHoliday(`2027-${day}`)).toBe(true)
+    for (const day of ['01-02', '05-31', '06-02', '12-26']) expect(isHoliday(`2027-${day}`)).toBe(false)
+  })
+
   it('treats the week before Tết and its first three days as holidays', () => {
     expect(isHoliday('2027-01-29')).toBe(false)
     expect(isHoliday('2027-01-30')).toBe(true)

@@ -16,7 +16,7 @@ export const cart: CartDict = {
     eyebrow: 'Your cart',
     title: 'Your cart is',
     titleMark: 'giving empty',
-    body: 'Go find a cake that slaps: design one layer by layer, or grab one of our six house favourites.',
+    body: 'Go find a cake that slaps: design one layer by layer, or grab one of our six house favorites.',
     design: 'Design a cake',
     menu: 'See the menu',
   },

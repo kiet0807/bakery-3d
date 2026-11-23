@@ -59,8 +59,27 @@ export function FitCamera({
     toDistance: 1,
   }))
 
+  // What the camera was last framed for. Next.js keeps a page left behind (hidden) and runs its effects again when
+  // the visitor comes back: with nothing changed, the camera stays where the visitor turned and zoomed it. (The
+  // orbit is not part of it: it lets go of the scene while the page is hidden, and comes back after this runs.)
+  const framedFor = useRef('')
+
   useLayoutEffect(() => {
     if (!(camera instanceof THREE.PerspectiveCamera) || size.height === 0) return
+    const framing = [
+      camera.uuid,
+      size.width,
+      size.height,
+      radius,
+      height,
+      cx,
+      cy,
+      cz,
+      elevation,
+      margin,
+    ].join()
+    if (framing === framedFor.current) return
+    framedFor.current = framing
     const aspect = size.width / size.height
     const vertical = THREE.MathUtils.degToRad(camera.fov)
     const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * aspect)

@@ -40,14 +40,24 @@ export function Arrival({
   const still = useReducedMotionScene()
   const settler = useSettler()
   const [timeline] = useState(() => new Timeline())
+  // The arrival played last. Next.js keeps a page left behind (hidden) and runs its effects again when the visitor
+  // comes back to it: that is not a new arrival, or every topping fell again.
+  const played = useRef('')
 
   useLayoutEffect(() => {
     const g = group.current
+    const arrival = `${sig}|${delay}|${height}`
+    const again = played.current === arrival
+    played.current = arrival
     if (!g || !shown.current || still) return
-    timeline.play(ARRIVE_MS, delay)
-    // Hidden until its turn, then it falls; set before the next frame, so it never shows in place first.
-    g.visible = delay <= 0
-    g.position.y = height
+    // Shown again, nothing new falls; a fall still under way carries on, and a picture taken meanwhile lands it.
+    if (again && !timeline.active) return
+    if (!again) {
+      timeline.play(ARRIVE_MS, delay)
+      // Hidden until its turn, then it falls; set before the next frame, so it never shows in place first.
+      g.visible = delay <= 0
+      g.position.y = height
+    }
     return settler.add(() => {
       timeline.finish()
       g.visible = true
@@ -87,10 +97,15 @@ export function Glide({ x, z, children }: { x: number; z: number; children: Reac
     const before = at.current
     at.current = { x, z }
     if (!g || !before || still) return
-    // From where it is on screen now: its old place, or partway there if it was still sliding.
-    from.current = { x: before.x + g.position.x - x, z: before.z + g.position.z - z }
-    g.position.set(from.current.x, 0, from.current.z)
-    timeline.play(ARRIVE_MS)
+    // Not moved: its effect running again on a page shown again (see Arrival). A slide under way carries on.
+    const moved = before.x !== x || before.z !== z
+    if (!moved && !timeline.active) return
+    if (moved) {
+      // From where it is on screen now: its old place, or partway there if it was still sliding.
+      from.current = { x: before.x + g.position.x - x, z: before.z + g.position.z - z }
+      g.position.set(from.current.x, 0, from.current.z)
+      timeline.play(ARRIVE_MS)
+    }
     return settler.add(() => {
       timeline.finish()
       g.position.set(0, 0, 0)

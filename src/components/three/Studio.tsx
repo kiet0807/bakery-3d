@@ -203,13 +203,17 @@ function CafeLight({ light, horizon }: { light: Scene['light']; horizon: number 
     }
   }, [get, cube, cafe])
 
-  // The download has landed: fade in, or be there at once.
+  // The download has landed: fade in, or be there at once. The fade plays once: a page Next.js kept hidden runs
+  // this again when the visitor comes back to it, and the cube (given back while hidden) is drawn in full again.
+  const faded = useRef(false)
   useLayoutEffect(() => {
-    if (still) {
+    if (still || faded.current) {
+      cube.fade.finish()
       draw(1)
       get().invalidate()
       return
     }
+    faded.current = true
     cube.fade.play(LIGHT_FADE_MS)
     draw(0)
     const done = settler.add(() => {

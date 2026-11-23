@@ -126,6 +126,9 @@ const newId = () =>
     ? crypto.randomUUID()
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 
+/** Where the cart is kept in localStorage (CartView's inline script reads it before the first paint). */
+export const CART_STORAGE_KEY = 'kais-bakery-cart'
+
 export const useCart = create<CartState>()(
   persist(
     (set) => ({
@@ -139,7 +142,7 @@ export const useCart = create<CartState>()(
       clear: () => set({ items: [] }),
     }),
     {
-      name: 'kais-bakery-cart',
+      name: CART_STORAGE_KEY,
       version: 2,
       storage: forgivingStorage(),
       partialize: (state) => ({ items: state.items }),

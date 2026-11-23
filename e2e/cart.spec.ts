@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 import { CART_KEY, RAINBOW_BIRTHDAY, STRAWBERRY_CLOUD, cartCount, expect, seedCart, test } from './fixtures'
 
 // 2 × 350.000đ + 455.000đ = 1.155.000đ: over 1.000.000đ, so the order takes a 50% deposit (578.000đ).
@@ -190,6 +190,98 @@ test.describe('cart and test checkout', () => {
     expect(JSON.parse(saved ?? '{}').state.items).toEqual([])
 
     await page.getByRole('link', { name: 'Quay lại menu' }).click()
+    await expect(page).toHaveURL(/\/menu$/)
+  })
+
+  test('before the scripts run, the page already shows the empty cart, or a skeleton for a saved one', async ({
+    page,
+  }) => {
+    // Hold the script chunks: what is on screen meanwhile is the server's HTML plus the inline script, before
+    // React. Only the scripts: the stylesheets live next to them and must load, or nothing is painted at all. (Not
+    // even DOMContentLoaded comes while deferred scripts wait, so navigations only wait for the response.)
+    let holding = true
+    const held: Route[] = []
+    await page.route(
+      (url) => url.pathname.startsWith('/_next/static/chunks/') && url.pathname.endsWith('.js'),
+      (route) => (holding ? void held.push(route) : route.continue()),
+    )
+    const release = async () => {
+      holding = false
+      await Promise.all(held.splice(0).map((route) => route.continue()))
+    }
+    const empty = page.getByRole('heading', { level: 1, name: 'Giỏ còn trống trơn nè' })
+
+    await page.goto('/cart', { waitUntil: 'commit' })
+    await expect(empty).toBeVisible()
+    // React keeps those very elements: once it has taken over, the heading is still the one the server sent
+    // (marked with a plain property, which React neither sees nor removes).
+    await page.evaluate(() => Object.assign(document.querySelector('h1')!, { fromServer: true }))
+    await release()
+    await expect(cartCount(page)).toHaveText('0')
+    expect(await page.evaluate(() => 'fromServer' in document.querySelector('h1')!)).toBe(true)
+
+    await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [
+      CART_KEY,
+      JSON.stringify({ state: { items: TWO_LINES }, version: 2 }),
+    ] as const)
+    holding = true
+    await page.reload({ waitUntil: 'commit' })
+    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    await expect(empty).toBeHidden()
+    await release()
+    await expect(page.getByRole('heading', { level: 1, name: /3 chiếc bánh/ })).toBeVisible()
+  })
+
+  test("the browser's Back goes from step 2 to step 1 with everything kept, and Forward returns", async ({
+    page,
+  }) => {
+    await page.goto('/menu')
+    await page.goto('/cart')
+    await seedCart(page, TWO_LINES)
+    const name = page.getByRole('textbox', { name: 'Tên người nhận' })
+    await name.fill('Linh')
+    await page.getByRole('textbox', { name: 'Số điện thoại' }).fill('0347 551 122')
+    await page.getByRole('button', { name: /Tiếp tục: chọn ngày nhận/ }).click()
+    const second = page.getByRole('heading', { level: 3, name: /Bước 2\/2/ })
+    const first = page.getByRole('heading', { level: 3, name: /Bước 1\/2/ })
+    await expect(second).toBeFocused()
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\/cart$/)
+    await expect(first).toBeFocused()
+    await expect(name).toHaveValue('Linh')
+    await page.goForward()
+    await expect(second).toBeFocused()
+
+    // The page's own way back goes through the history too, so the next Back leaves the cart.
+    await page.getByRole('button', { name: /Quay lại bước 1/ }).click()
+    await expect(first).toBeFocused()
+    await expect(name).toHaveValue('Linh')
+    await page.goBack()
+    await expect(page).toHaveURL(/\/menu$/)
+  })
+
+  test('after a test order, Back leaves the cart page and the receipt stays at the top', async ({ page }) => {
+    await page.goto('/menu')
+    await page.goto('/cart')
+    await seedCart(page, TWO_LINES)
+    await page.getByRole('textbox', { name: 'Tên người nhận' }).fill('Linh')
+    await page.getByRole('textbox', { name: 'Số điện thoại' }).fill('0347 551 122')
+    await page.getByRole('button', { name: /Tiếp tục: chọn ngày nhận/ }).click()
+    await pickSafeDay(page)
+    await page.getByLabel('Giờ nhận', { exact: true }).selectOption('15:00')
+    await page.getByText('Chuyển khoản', { exact: true }).click()
+    await page.getByRole('button', { name: /Chốt đơn thử/ }).click()
+
+    const heading = page.getByRole('heading', { level: 1, name: 'Đóng hộp xong, chờ bạn tới lấy!' })
+    await expect(heading).toBeFocused()
+    // The quiet step back has landed (same address), and nothing scrolled the receipt away from the top.
+    await expect.poll(() => page.evaluate(() => window.history.state?.kaisCheckoutStep ?? null)).toBeNull()
+    await page.waitForTimeout(300)
+    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(5)
+    await expect(heading).toBeVisible()
+
+    await page.goBack()
     await expect(page).toHaveURL(/\/menu$/)
   })
 

@@ -42,6 +42,33 @@ const STEP_FIELDS: Record<Step, (keyof OrderForm)[]> = {
 }
 const stepOf = (field: keyof OrderForm): Step => (STEP_FIELDS[1].includes(field) ? 1 : 2)
 
+/**
+ * Step 2 is a history entry of its own (same address, this key in its state), so the browser's Back button or a
+ * phone's back gesture returns to step 1 with everything typed, and Forward comes back. Next.js keeps its own
+ * state in the entry (node_modules/next/dist/docs/01-app/01-getting-started/04-linking-and-navigating.md,
+ * "window.history.pushState") and leaves this key alone when the visitor goes back and forth.
+ */
+const STEP_KEY = 'kaisCheckoutStep'
+
+const historyStep = (): Step => (window.history.state?.[STEP_KEY] === 2 ? 2 : 1)
+
+/**
+ * Once the order is placed from step 2, the receipt takes the step 1 entry's place (one quiet step back), so Back
+ * from the receipt leaves the cart page instead of doing nothing. The receipt stays at the top: the browser
+ * restores the scroll position step 1 had right after the popstate, so the page goes back to the top in the next
+ * frame, before it is painted.
+ */
+function leaveStepEntry() {
+  if (historyStep() !== 2) return
+  const top = () => {
+    const lenis = getSmoothScroll()
+    if (lenis) lenis.scrollTo(0, { immediate: true, force: true })
+    else window.scrollTo({ top: 0 })
+  }
+  window.addEventListener('popstate', () => requestAnimationFrame(top), { once: true })
+  window.history.back()
+}
+
 /** Room left above a step when it is scrolled to: the fixed header is 64 px (80 from 640 px) high. */
 const HEADER_ROOM = 96
 
@@ -71,6 +98,11 @@ export function Checkout({
   >
   const [form, setForm] = useState<OrderForm>(EMPTY_FORM)
   const [step, setStep] = useState<Step>(1)
+  // The step on screen, for the popstate handler (which is set up once).
+  const stepRef = useRef<Step>(1)
+  useEffect(() => {
+    stepRef.current = step
+  }, [step])
   // The steps whose errors show: a step's errors appear once the visitor has tried to leave it, then follow
   // every change.
   const [tried, setTried] = useState<Step[]>([])
@@ -155,6 +187,32 @@ export function Checkout({
     setStep(next)
   }
 
+  // Into step 2: a new history entry. Back to step 1 from the page's own buttons goes back through history too,
+  // so the entries always match what is on screen; the popstate handler below then shows step 1.
+  const forward = () => {
+    window.history.pushState({ [STEP_KEY]: 2 }, '')
+    goTo(2)
+  }
+  const backToWho = (focus: keyof OrderForm | 'heading' = 'heading') => {
+    if (historyStep() !== 2) return goTo(1, focus)
+    focusNext.current = focus
+    window.history.back()
+  }
+
+  useEffect(() => {
+    // A reload on step 2 starts again on step 1 (nothing typed is kept): the entry no longer means step 2.
+    if (historyStep() === 2)
+      window.history.replaceState({ ...window.history.state, [STEP_KEY]: undefined }, '')
+    const onPopState = () => {
+      const next = historyStep()
+      if (next === stepRef.current) return
+      focusNext.current ??= 'heading'
+      setStep(next)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   const markTried = (...steps: Step[]) =>
     setTried((current) => [...new Set([...current, ...steps])].sort() as Step[])
 
@@ -171,7 +229,7 @@ export function Checkout({
         refs.current[first]?.focus()
         return
       }
-      goTo(2)
+      forward()
       return
     }
 
@@ -179,13 +237,14 @@ export function Checkout({
     if (first) {
       markTried(1, 2)
       // Step 1 was fine when it was left, so this is rare; send the visitor back to the field if it happens.
-      if (stepOf(first) === 1) goTo(1, first)
+      if (stepOf(first) === 1) backToWho(first)
       else refs.current[first]?.focus()
       return
     }
     const clean = cleanForm(form)
     const order: Order = { number: orderNumber(), form: clean, total, deposit: depositFor(items, clean.date) }
     if (!ORDERING_OPEN) {
+      leaveStepEntry()
       onPlaced(order)
       return
     }
@@ -193,7 +252,10 @@ export function Checkout({
     // promise would be blocked as a pop-up by Safari, and would take the focus the clipboard needs.
     const text = orderText({ order, items, dict, lang, origin: window.location.origin })
     navigator.clipboard.writeText(text).then(
-      () => onPlaced(order),
+      () => {
+        leaveStepEntry()
+        onPlaced(order)
+      },
       () => setManualText(text),
     )
   }
@@ -226,7 +288,7 @@ export function Checkout({
         {step === 1 ? (
           <StepWho kit={kit} onMethod={setMethod} />
         ) : (
-          <StepWhen kit={kit} items={items} now={now} onDate={setDate} onEdit={() => goTo(1)} />
+          <StepWhen kit={kit} items={items} now={now} onDate={setDate} onEdit={() => backToWho()} />
         )}
 
         {/*
@@ -267,7 +329,7 @@ export function Checkout({
             </button>
             <button
               type="button"
-              onClick={() => goTo(1)}
+              onClick={() => backToWho()}
               className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-leaf underline-offset-4 hover:underline"
             >
               <span aria-hidden>←</span> {t.steps.back}

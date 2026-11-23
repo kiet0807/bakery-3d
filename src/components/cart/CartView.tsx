@@ -4,17 +4,67 @@ import { useState } from 'react'
 import { useDict, LocalLink } from '@/i18n/LangProvider'
 import { countItems, subtotal } from '@/lib/cart'
 import type { Order } from '@/lib/order'
-import { useCart } from '@/lib/store'
+import { CART_STORAGE_KEY, useCart } from '@/lib/store'
 import { useCartHydrated } from '@/lib/useHydrated'
 import { TickingMoney } from '../TickingMoney'
 import { CartLine } from './CartLine'
 import { Checkout } from './Checkout'
 import { OrderDone, type PlacedOrder } from './OrderDone'
 
-const layout =
-  'mx-auto grid max-w-7xl gap-8 px-4 pt-24 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,1fr)] lg:gap-12 lg:pt-32'
+/**
+ * Every state of the page is at least a screen tall, so the footer starts below the fold whatever the saved cart
+ * turns out to hold: it never jumps in view when the skeleton gives way (a layout shift of 0.13 on a phone with an
+ * empty cart, 0.12 on a desktop with a full one, before).
+ */
+const fullHeight = 'min-h-[100svh]'
 
-/** Shown for the moment it takes to read the saved cart, in the same shape as the cart. */
+const layout = `mx-auto grid max-w-7xl gap-8 px-4 pt-24 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,1fr)] lg:gap-12 lg:pt-32 ${fullHeight}`
+
+/**
+ * Reads the saved cart while the HTML is parsed, before the first paint, and marks the pending page "full" when
+ * it holds cakes. It only reads: the store still loads the cart itself after hydration. Built from constants.
+ */
+const PENDING_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(CART_STORAGE_KEY)})||"null"),i=s&&s.state&&s.state.items;if(Array.isArray(i)&&i.length)document.currentScript.parentElement.setAttribute("data-cart","full")}catch(e){}})()`
+
+/**
+ * An inline script that runs on a full page load only: on the server it is JavaScript, in the browser plain text, so
+ * React neither runs it again nor warns about it (node_modules/next/dist/docs/01-app/02-guides/
+ * preventing-flash-before-hydration.md, "Extracting a reusable component").
+ */
+function InlineScript({ html }: { html: string }) {
+  return (
+    <script
+      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
+}
+
+/**
+ * The empty page, and before the saved cart is read (the server's HTML, the first render in the browser) also the
+ * skeleton. Most visitors who open the cart page directly have nothing in it, so the empty page is what the server
+ * sends: on screen at the first paint, no wait for the scripts. The inline script swaps it for the skeleton before
+ * that paint when the saved cart holds cakes. Once the cart is read, an empty cart keeps these very elements (same
+ * place in the tree, so React keeps the DOM: nothing is painted anew or moves); a full one replaces them.
+ */
+function EmptyOrPending({ pending }: { pending: boolean }) {
+  return (
+    <div data-cart="empty" suppressHydrationWarning className="group/pending">
+      {pending && <InlineScript html={PENDING_SCRIPT} />}
+      <div className={pending ? 'group-data-[cart=full]/pending:hidden' : undefined}>
+        <EmptyCart />
+      </div>
+      {pending && (
+        <div className="hidden group-data-[cart=full]/pending:block">
+          <CartSkeleton />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Shown for the moment it takes to read a saved cart with cakes in it, in the same shape as the cart. */
 function CartSkeleton() {
   const { cart } = useDict()
   return (
@@ -36,7 +86,7 @@ function EmptyCart() {
   const { cart } = useDict()
   const t = cart.empty
   return (
-    <section className="mx-auto max-w-3xl px-4 pt-36 text-center sm:px-8 sm:pt-44">
+    <section className={`mx-auto max-w-3xl px-4 pt-36 text-center sm:px-8 sm:pt-44 ${fullHeight}`}>
       <p className="eyebrow mb-4">{t.eyebrow}</p>
       <h1 className="font-display text-[clamp(2.6rem,6.5vw,4.6rem)] leading-[1.02] font-extrabold">
         {t.title} <span className="mark">{t.titleMark}</span>
@@ -61,8 +111,7 @@ export function CartView() {
   const [order, setOrder] = useState<PlacedOrder | null>(null)
 
   if (order) return <OrderDone order={order} />
-  if (!hydrated) return <CartSkeleton />
-  if (!items.length) return <EmptyCart />
+  if (!hydrated || !items.length) return <EmptyOrPending pending={!hydrated} />
 
   const count = countItems(items)
   const total = subtotal(items)

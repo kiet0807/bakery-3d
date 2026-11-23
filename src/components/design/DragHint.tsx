@@ -89,20 +89,28 @@ export function DragHint({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            {/* A little two-tier cake with a candle, an orbit round its foot, and a dot going round the orbit. */}
-            <path d="M7 15.5v-3a1.2 1.2 0 0 1 1.2-1.2h7.6a1.2 1.2 0 0 1 1.2 1.2v3M9.5 11.3V9a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2.3M12 8V5.6" />
-            <ellipse cx="12" cy="15.5" rx="9.5" ry="3.6" />
-            {reduced ? (
-              <circle cx="12" cy="19.1" r="1.9" fill="currentColor" stroke="none" />
-            ) : (
-              <circle r="1.9" fill="currentColor" stroke="none">
-                <animateMotion
-                  dur="2.2s"
+            {/*
+              A small cake with a cherry inside a turning arrow: "it turns", readable at this size (the earlier cake on
+              an orbit read like a flying saucer). The arrow rocks a little to and fro, like a hand turning the cake
+              (not a full spin, which would read as "loading"); with reduced motion it stays still.
+            */}
+            <path d="M9 15v-2.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V15M8 15h8" />
+            <circle cx="12" cy="9.3" r="1.1" fill="currentColor" stroke="none" />
+            <g>
+              <path d="M20 12a8 8 0 1 1-2.4-5.7M20.2 3.6l-.2 3.3-3.3-.2" />
+              {!reduced && (
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  values="-14 12 12;14 12 12;-14 12 12"
+                  keyTimes="0;0.5;1"
+                  calcMode="spline"
+                  keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+                  dur="2.4s"
                   repeatCount="indefinite"
-                  path="M12 19.1a9.5 3.6 0 0 0 9.5-3.6a9.5 3.6 0 0 0-19 0a9.5 3.6 0 0 0 9.5 3.6"
                 />
-              </circle>
-            )}
+              )}
+            </g>
           </svg>
         </span>
         <span className="pointer-coarse:hidden">{t.mouse}</span>

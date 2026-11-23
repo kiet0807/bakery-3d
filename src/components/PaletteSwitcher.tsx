@@ -243,11 +243,32 @@ const NUDGE_FOR_MS = 8000
 const EDGE = 12
 /** Below this width the switch is a bare colour dot (its words show from `lg`). */
 const DOT_ONLY = '(max-width: 1023.98px)'
+/** Room the bubble takes under the dot (two lines of text and the tail), and its widest, in pixels. */
+const BUBBLE_HEIGHT = 76
+const BUBBLE_WIDTH = 240
+
+/**
+ * True while the page's main title is readable where the bubble would appear: the bubble waits rather than cover
+ * it. On a phone the home page's big title sits right under the header until the story fades it out; other pages'
+ * titles sit lower and do not wait.
+ */
+function wouldCoverTitle(anchor: HTMLElement) {
+  const title = document.querySelector('main h1')
+  if (!title?.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false
+  const dot = anchor.getBoundingClientRect()
+  const room = document.documentElement.clientWidth
+  const width = Math.min(BUBBLE_WIDTH, room - 2 * EDGE)
+  const left = Math.min(Math.max(dot.left + dot.width / 2 - width / 2, EDGE), room - EDGE - width)
+  const top = dot.bottom
+  const box = title.getBoundingClientRect()
+  return box.left < left + width && box.right > left && box.top < top + BUBBLE_HEIGHT && box.bottom > top
+}
 
 /**
  * Once per browser, on screens where the switch is only a colour dot: a speech bubble under it saying what it
  * does. It waits while the page is inert (the home page's welcome screen is a modal and makes the header inert)
- * and appears a moment after. A tap on it opens the switch. It is hidden from screen readers, which hear the
+ * or while it would sit on the page's title (the home page's, until the visitor scrolls into the story), and
+ * appears a moment after. A tap on it opens the switch. It is hidden from screen readers, which hear the
  * switch's own name, and it is not focusable: the switch itself is the control.
  */
 function Nudge({
@@ -265,23 +286,38 @@ function Nudge({
   const { due, start, done } = useOnce('palette')
   const [phase, setPhase] = useState<'waiting' | 'in' | 'out' | 'gone'>('waiting')
 
-  // Waits for a screen where the switch has no words and for the page to be usable (not inert), then a beat.
+  // Waits for a screen where the switch has no words, for the page to be usable (not inert) and for the title to
+  // be out of the way, then a beat; still clear after the beat, it shows.
   useEffect(() => {
     if (!due || phase !== 'waiting' || off) return
     const element = anchor.current
     if (!element || !window.matchMedia(DOT_ONLY).matches) return
+    const clear = () => !element.closest('[inert]') && !wouldCoverTitle(element)
     let timer = 0
+    let frame = 0
     const check = () => {
-      window.clearTimeout(timer)
-      if (!element.closest('[inert]'))
-        timer = window.setTimeout(() => start() && setPhase('in'), NUDGE_AFTER_MS)
+      frame = 0
+      if (!clear()) {
+        window.clearTimeout(timer)
+        timer = 0
+      } else if (!timer)
+        timer = window.setTimeout(() => {
+          timer = 0
+          if (clear() && start()) setPhase('in')
+        }, NUDGE_AFTER_MS)
     }
-    const observer = new MutationObserver(check)
+    const schedule = () => (frame ||= requestAnimationFrame(check))
+    const observer = new MutationObserver(schedule)
     observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['inert'] })
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
     check()
     return () => {
       observer.disconnect()
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
       window.clearTimeout(timer)
+      cancelAnimationFrame(frame)
     }
   }, [due, phase, off, anchor, start])
 

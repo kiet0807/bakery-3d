@@ -233,7 +233,7 @@ test.describe('palette bubble', () => {
     await expect(bubble(page)).toHaveCount(0)
   })
 
-  test('never over the welcome screen, and not on desktop', async ({ page, isMobile }) => {
+  test('never over the welcome screen or the title, and not on desktop', async ({ page, isMobile }) => {
     await freshHints(page)
     await page.goto('/')
     await expect(page.getByRole('dialog')).toBeVisible()
@@ -241,8 +241,17 @@ test.describe('palette bubble', () => {
     await page.waitForTimeout(4_000)
     await expect(bubble(page)).toHaveCount(0)
     await page.getByRole('button', { name: 'Vào tiệm thôi' }).click({ timeout: 60_000 })
-    if (isMobile) await expect(bubble(page)).toBeVisible()
-    else {
+    // On a phone the title sits right under the header, where the bubble would go: it waits for the story to
+    // fade the title out.
+    await page.waitForTimeout(4_000)
+    await expect(bubble(page)).toHaveCount(0)
+    const title = page.getByRole('main').getByRole('heading', { level: 1 })
+    // One screen down (a wheel step scrolls less on a phone's pixel ratio): the first chapter, title gone.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight))
+    if (isMobile) {
+      await expect(bubble(page)).toBeVisible()
+      await expect(title).toHaveCSS('opacity', '0')
+    } else {
       await page.waitForTimeout(4_000)
       await expect(bubble(page)).toHaveCount(0)
     }

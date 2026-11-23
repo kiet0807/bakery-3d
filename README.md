@@ -124,6 +124,13 @@ unless the visitor asked for reduced motion.
   calls every 3 s on a desktop). Every frame comes back only while candles burn or a studio photo develops. A
   scene on demand draws continuously for its first 3 s so the frame-rate monitor can judge the device, and the
   monitor is off while frames are sparse (they would read as a slow machine).
+- The vitrine renders on demand too: its slow idle turn draws 30 frames a second, anything the visitor moves gets
+  every frame, toppings stay out of the floor reflection, and closed cakes skip their cut faces (about a third of
+  the old cost). The café light fades in when it arrives instead of brightening the scene in one jump.
+- The cart page sends its empty state from the server and swaps in the skeleton before the first paint when the
+  saved cart holds cakes, so nothing shifts as it loads.
+- `node scripts/vitals.mjs <url> 3 / /design /menu /cart` measures loading on an emulated mid-range phone
+  (Lighthouse's mobile throttling: 4x CPU, 150 ms, 1.6 Mbps) with Playwright: FCP, LCP, CLS, long tasks, bytes.
 - Scenes load with `next/dynamic` and `ssr: false`; every page is prerendered as static HTML.
 
 ### Four palettes without a flash

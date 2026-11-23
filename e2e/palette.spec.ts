@@ -233,6 +233,26 @@ test.describe('palette bubble', () => {
     await expect(bubble(page)).toHaveCount(0)
   })
 
+  test('on a phone, scrolling on sends the bubble away', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'From 1024 px the switch shows its words: no bubble.')
+    await freshHints(page)
+    await page.goto('/faq')
+    await expect(bubble(page)).toBeVisible()
+    await page.evaluate(() => window.scrollBy({ top: 200, behavior: 'instant' }))
+    await expect(bubble(page)).toHaveCount(0, { timeout: 2_000 })
+  })
+
+  test("on a phone, the bubble never covers the note on the builder's stage", async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'From 1024 px the switch shows its words: no bubble.')
+    await freshHints(page)
+    // The other hint of this page is out of the way, so the bubble's turn has come.
+    await page.addInitScript(() => window.localStorage.setItem('kais-bakery-hint-drag', '1'))
+    await page.goto('/design')
+    await expect(page.getByText('Hình minh họa 3D')).toBeVisible()
+    await page.waitForTimeout(4_000)
+    await expect(bubble(page)).toHaveCount(0)
+  })
+
   test('never over the welcome screen or the title, and not on desktop', async ({ page, isMobile }) => {
     await freshHints(page)
     await page.goto('/')

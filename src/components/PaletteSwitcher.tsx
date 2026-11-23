@@ -247,28 +247,33 @@ const DOT_ONLY = '(max-width: 1023.98px)'
 const BUBBLE_HEIGHT = 76
 const BUBBLE_WIDTH = 240
 
+/** How far the page may move under the bubble before it bows out, in pixels: it belongs to the view it opened on. */
+const NUDGE_SCROLL = 80
+
 /**
- * True while the page's main title is readable where the bubble would appear: the bubble waits rather than cover
- * it. On a phone the home page's big title sits right under the header until the story fades it out; other pages'
- * titles sit lower and do not wait.
+ * True while something that has to stay readable sits where the bubble would appear: the page's main title, or
+ * anything marked `data-keep-clear` (the note on the builder's stage). The bubble waits rather than cover it. On a
+ * phone the home page's big title sits right under the header until the story fades it out; other pages' titles
+ * sit lower and do not wait.
  */
-function wouldCoverTitle(anchor: HTMLElement) {
-  const title = document.querySelector('main h1')
-  if (!title?.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false
+function wouldCover(anchor: HTMLElement) {
   const dot = anchor.getBoundingClientRect()
   const room = document.documentElement.clientWidth
   const width = Math.min(BUBBLE_WIDTH, room - 2 * EDGE)
   const left = Math.min(Math.max(dot.left + dot.width / 2 - width / 2, EDGE), room - EDGE - width)
   const top = dot.bottom
-  const box = title.getBoundingClientRect()
-  return box.left < left + width && box.right > left && box.top < top + BUBBLE_HEIGHT && box.bottom > top
+  return Array.from(document.querySelectorAll('main h1, main [data-keep-clear]')).some((element) => {
+    if (!element.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false
+    const box = element.getBoundingClientRect()
+    return box.left < left + width && box.right > left && box.top < top + BUBBLE_HEIGHT && box.bottom > top
+  })
 }
 
 /**
  * Once per browser, on screens where the switch is only a colour dot: a speech bubble under it saying what it
  * does. It waits while the page is inert (the home page's welcome screen is a modal and makes the header inert)
- * or while it would sit on the page's title (the home page's, until the visitor scrolls into the story), and
- * appears a moment after. A tap on it opens the switch. It is hidden from screen readers, which hear the
+ * or while it would sit on something to read (`wouldCover`), and appears a moment after. Scrolling on sends it
+ * away. A tap on it opens the switch. It is hidden from screen readers, which hear the
  * switch's own name, and it is not focusable: the switch itself is the control.
  */
 function Nudge({
@@ -292,7 +297,7 @@ function Nudge({
     if (!due || phase !== 'waiting' || off) return
     const element = anchor.current
     if (!element || !window.matchMedia(DOT_ONLY).matches) return
-    const clear = () => !element.closest('[inert]') && !wouldCoverTitle(element)
+    const clear = () => !element.closest('[inert]') && !wouldCover(element)
     let timer = 0
     let frame = 0
     const check = () => {
@@ -306,7 +311,11 @@ function Nudge({
           if (clear() && start()) setPhase('in')
         }, NUDGE_AFTER_MS)
     }
-    const schedule = () => (frame ||= requestAnimationFrame(check))
+    // The frame after the next: the page answers a scroll in the next one (the home page fades its title then).
+    const schedule = () =>
+      (frame ||= requestAnimationFrame(() => {
+        frame = requestAnimationFrame(check)
+      }))
     const observer = new MutationObserver(schedule)
     observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['inert'] })
     window.addEventListener('scroll', schedule, { passive: true })
@@ -328,7 +337,15 @@ function Nudge({
       return () => window.clearTimeout(now)
     }
     const timer = window.setTimeout(() => setPhase('out'), NUDGE_FOR_MS)
-    return () => window.clearTimeout(timer)
+    const from = window.scrollY
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - from) > NUDGE_SCROLL) setPhase('out')
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('scroll', onScroll)
+    }
   }, [phase, off])
 
   useEffect(() => {

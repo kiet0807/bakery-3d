@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { HomeExperience } from '@/components/home/HomeExperience'
 import { NoticeCard } from '@/components/info/NoticeCard'
 import { SectionHeading } from '@/components/info/SectionHeading'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LocalLink } from '@/i18n/LangProvider'
 import { langFrom, pageMetadata } from '@/i18n/metadata'
-import { frostingOf, sizeOf, spongeOf } from '@/lib/cake'
+import { sizeOf } from '@/lib/cake'
 import { leadHours } from '@/lib/leadTime'
 import { money } from '@/lib/money'
-import { PRESETS, presetPrice } from '@/lib/presets'
+import { PRESETS, presetPicture, presetPrice } from '@/lib/presets'
 import { PageTransition } from '@/components/PageTransition'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]'>): Promise<Metadata> {
@@ -66,7 +67,7 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               {home.cakes.all}
             </LocalLink>
           </div>
-          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
             {PRESETS.map((preset) => {
               const words = dict.cake.presets[preset.id]
               const size = sizeOf(preset.config)
@@ -77,34 +78,40 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
                     slip off the moving card and make it flicker.
                   */}
                   <LocalLink href={`/design?preset=${preset.id}`} className="group block h-full rounded-3xl">
-                    <span className="card flex h-full flex-col gap-4 p-6 transition-[translate,box-shadow] duration-300 group-hover:-translate-y-1 group-hover:shadow-sticker">
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="flex items-center" aria-hidden>
-                          {[frostingOf(preset.config).color, spongeOf(preset.config).color].map(
-                            (color, i) => (
-                              <span
-                                key={color}
-                                className={`h-9 w-9 rounded-full border-2 border-ink ${i ? '-ml-2.5' : ''}`}
-                                style={{ background: color }}
-                              />
-                            ),
-                          )}
+                    <span className="card relative flex h-full flex-col overflow-hidden transition-[translate,box-shadow] duration-300 group-hover:-translate-y-1 group-hover:shadow-sticker">
+                      <span className="block overflow-hidden bg-linear-to-b from-sky-top to-sky-bottom">
+                        {/* Already a small WebP at its final size; the name right below is its text. */}
+                        <Image
+                          src={presetPicture(preset.id)}
+                          alt=""
+                          width={640}
+                          height={560}
+                          unoptimized
+                          className="w-full transition-[scale] duration-500 ease-out motion-safe:group-hover:scale-[1.04]"
+                        />
+                      </span>
+                      <span className="flex flex-1 flex-col gap-1.5 p-3.5 sm:gap-2.5 sm:p-6">
+                        <span className="font-display text-lg leading-tight font-extrabold sm:text-2xl">
+                          {words.name}
                         </span>
-                        <span className="chip rotate-2">
+                        <span className="text-xs font-semibold text-leaf sm:text-sm">
+                          {dict.cake.sizes[size.id].name} · {dict.common.units.serves(size.serves)}
+                        </span>
+                        {/* On the picture's corner, except on phones, where it would hide the cake. */}
+                        <span className="chip rotate-[-2deg] self-start sm:absolute sm:top-4 sm:left-4">
                           {home.cakes.lead(leadHours(preset.config, preset.id))}
                         </span>
-                      </span>
-                      <span className="font-display text-2xl leading-tight font-extrabold">{words.name}</span>
-                      <span className="text-sm font-semibold text-leaf">
-                        {dict.cake.sizes[size.id].name} · {dict.common.units.serves(size.serves)}
-                      </span>
-                      <span className="flex-1 leading-relaxed text-muted">{words.tagline}</span>
-                      <span className="flex items-center justify-between gap-3 border-t border-line pt-4">
-                        <span className="font-display text-2xl font-extrabold tabular-nums">
-                          {money(presetPrice(preset), lang)}
+                        <span className="flex-1 text-sm leading-snug text-muted sm:text-base sm:leading-relaxed">
+                          {words.tagline}
                         </span>
-                        <span className="font-display font-bold text-leaf transition-transform duration-300 group-hover:translate-x-1">
-                          {home.cakes.cta} <span aria-hidden>→</span>
+                        <span className="mt-1 flex items-center justify-between gap-3 border-t border-line pt-3 sm:pt-4">
+                          <span className="font-display text-lg font-extrabold tabular-nums sm:text-2xl">
+                            {money(presetPrice(preset), lang)}
+                          </span>
+                          <span className="font-display font-bold text-leaf transition-[translate] duration-300 group-hover:translate-x-1">
+                            <span className="max-sm:sr-only">{home.cakes.cta} </span>
+                            <span aria-hidden>→</span>
+                          </span>
                         </span>
                       </span>
                     </span>

@@ -1,22 +1,30 @@
 import { frostingOf, spongeOf, type CakeConfig } from '@/lib/cake'
+import { presetById, presetPicture } from '@/lib/presets'
 
-/** The picture taken when the cake was added, or a little drawn cake in its colours when there is none. */
+/**
+ * The picture taken when the cake was added, else the house cake's own picture, else (a custom cake added where
+ * there was no 3D) a little drawn cake in its colours.
+ */
 export function CakeThumb({
   config,
+  presetId,
   snapshot,
   className = 'h-24 w-24',
 }: {
   config: CakeConfig
+  presetId?: string
   snapshot?: string
   className?: string
 }) {
-  if (snapshot) {
+  const preset = presetById(presetId)
+  const picture = snapshot ?? (preset && presetPicture(preset.id))
+  if (picture) {
     return (
-      // A data URL made in this browser: next/image would only add work here. The cake's name is printed
+      // A data URL made in this browser, or a small WebP: next/image would only add work here. The cake's name is printed
       // right beside the picture, so the image itself stays silent for screen readers.
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={snapshot}
+        src={picture}
         alt=""
         width={256}
         height={256}

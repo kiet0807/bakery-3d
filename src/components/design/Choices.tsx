@@ -54,9 +54,19 @@ function Tick({ square = false }: { square?: boolean }) {
 const CARD =
   'flex h-full items-center gap-3 rounded-2xl border-2 border-line bg-surface p-3 [transition:border-color_200ms_var(--ease-out),background-color_200ms_var(--ease-out),box-shadow_320ms_var(--ease-spring),translate_320ms_var(--ease-spring)] group-hover:border-edge peer-checked:border-ink peer-checked:bg-butter-soft peer-checked:shadow-sticker peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-leaf motion-safe:peer-checked:-translate-y-0.5'
 
-export function Section({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
+export function Section({
+  id,
+  title,
+  hint,
+  children,
+}: {
+  id: string
+  title: string
+  hint?: ReactNode
+  children: ReactNode
+}) {
   return (
-    <fieldset className="space-y-3">
+    <fieldset id={id} className="space-y-3">
       <legend className="mb-3 flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className="font-display text-2xl font-bold">{title}</span>
         {hint && <span className="text-sm font-medium text-muted">{hint}</span>}

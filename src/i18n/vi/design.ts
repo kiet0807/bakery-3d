@@ -7,6 +7,7 @@ export const design = {
   },
   loading: 'Đang làm nóng lò…',
   eyebrow: 'Xưởng bánh của bạn',
+  sectionsLabel: 'Nhảy tới phần',
   titleLead: 'Tự thiết kế',
   titleMark: 'bánh của bạn',
   intro:

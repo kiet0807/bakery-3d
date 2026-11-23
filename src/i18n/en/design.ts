@@ -8,6 +8,7 @@ export const design: DesignDict = {
   },
   loading: 'Preheating the oven…',
   eyebrow: 'Your cake studio',
+  sectionsLabel: 'Jump to a section',
   titleLead: 'Design',
   titleMark: 'your own cake',
   intro:

@@ -182,6 +182,33 @@ test.describe('cake builder', () => {
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeVisible()
   })
 
+  test('on a phone a bar under the stage jumps between the groups of choices', async ({ page, isMobile }) => {
+    const bar = page.getByRole('navigation', { name: 'Nhảy tới phần' })
+    await page.goto('/design')
+    if (!isMobile) {
+      await expect(bar).toBeHidden()
+      return
+    }
+    await expect(bar.getByRole('button')).toHaveCount(9)
+    await expect(bar.getByRole('button', { name: 'Cỡ bánh' })).toHaveAttribute('aria-current', 'true')
+    await bar.getByRole('button', { name: 'Nhân', exact: true }).click()
+    await expect(bar.getByRole('button', { name: 'Nhân', exact: true })).toHaveAttribute(
+      'aria-current',
+      'true',
+    )
+    // The group starts right under the bar, which has stuck under the stage.
+    const gap = async () => {
+      const [group, strip] = [await page.locator('#choose-filling').boundingBox(), await bar.boundingBox()]
+      return group && strip ? group.y - (strip.y + strip.height) : NaN
+    }
+    await expect.poll(gap, { timeout: 10_000 }).toBeGreaterThan(0)
+    await expect.poll(gap).toBeLessThan(60)
+    // Nothing is pushed out of the screen sideways by the nine names.
+    expect((await page.getByRole('main').locator('h1').boundingBox())!.width).toBeLessThan(
+      page.viewportSize()!.width,
+    )
+  })
+
   test('a first visit is told once that the cake turns', async ({ page, isMobile }) => {
     await freshHints(page)
     await page.goto('/design')

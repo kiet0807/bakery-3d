@@ -85,3 +85,6 @@ export const PRESETS: Preset[] = [
 export const presetById = (id: string | null | undefined) => PRESETS.find((preset) => preset.id === id)
 
 export const presetPrice = (preset: Preset) => priceOf(preset.config)
+
+/** The cake's picture on a see-through background, taken from the 3D scene by `scripts/preset-shots.mjs`. */
+export const presetPicture = (id: PresetId) => `/cakes/${id}.webp`

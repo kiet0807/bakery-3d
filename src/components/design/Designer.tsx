@@ -35,6 +35,7 @@ import { TickingMoney } from '../TickingMoney'
 import type { Capture } from '../three/Capture'
 import { ChoiceGroup, MultiChoiceGroup, Section, type ChoiceView } from './Choices'
 import { DragHint } from './DragHint'
+import { SectionNav } from './SectionNav'
 
 function DesignLoading() {
   return <ScenePoster label={useDict().design.loading} />
@@ -76,6 +77,19 @@ function useDesignFromUrl() {
     }
   }, [load])
 }
+
+/** The groups of choices, in page order: names in the dictionary's `cake.kinds`, anchors `choose-<kind>`. */
+const SECTIONS = [
+  'size',
+  'sponge',
+  'filling',
+  'frosting',
+  'drip',
+  'topping',
+  'sweetness',
+  'candles',
+  'message',
+] as const
 
 /** Buttons that sit on the 3D stage. */
 const STAGE_BUTTON = 'btn btn-ghost px-4 py-2 text-sm'
@@ -201,12 +215,14 @@ export function Designer() {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-3 pt-20 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
+    // `--stage`: the stage's height below `lg`, shared with the bar that sticks under it. It shrinks while the words
+    // on the cake are typed, when a phone's keyboard takes the lower half of the screen.
+    <div className="group/builder mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-6 px-3 pt-20 [--stage:max(38svh,13rem)] max-lg:has-[[data-typing]:focus]:[--stage:max(24svh,9rem)] sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
       {/* The wheel zooms the cake here (OrbitControls), so the smooth page scroll keeps out of the stage. */}
       <div
         ref={stage}
         data-lenis-prevent-wheel
-        className="sticky top-16 z-10 -mx-3 h-[44svh] overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
+        className="sticky top-16 z-10 -mx-3 h-(--stage) overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
       >
         <DesignScene
           config={config}
@@ -218,7 +234,10 @@ export function Designer() {
           onFallback={showFlat}
           onReady={markReady}
         />
-        <span className="chip pointer-events-none absolute top-3 left-3 rotate-[-3deg] border border-ink/70">
+        <span
+          data-keep-clear
+          className="chip pointer-events-none absolute top-3 left-3 rotate-[-3deg] border border-ink/70 transition-opacity max-lg:group-has-[[data-typing]:focus]/builder:opacity-0"
+        >
           <span aria-hidden>✦</span> {dict.common.illustration}
         </span>
         {!photo && !flat && <DragHint ready={sceneReady} stageRef={stage} />}
@@ -290,13 +309,18 @@ export function Designer() {
       <div className="space-y-10 pb-32 lg:pb-10">
         <header className="space-y-3">
           <p className="eyebrow">{d.eyebrow}</p>
-          <h1 className="font-display text-5xl leading-[1.02] font-extrabold sm:text-6xl">
+          <h1 className="font-display text-[2.5rem] leading-[1.02] font-extrabold sm:text-6xl">
             {d.titleLead} <span className="mark">{d.titleMark}</span>
           </h1>
           <p className="max-w-prose text-lg leading-relaxed text-muted">{d.intro}</p>
         </header>
 
-        <Section title={c.kinds.size} hint={d.hints.size}>
+        <SectionNav
+          stageRef={stage}
+          sections={SECTIONS.map((kind) => ({ id: `choose-${kind}`, title: c.kinds[kind] }))}
+        />
+
+        <Section id="choose-size" title={c.kinds.size} hint={d.hints.size}>
           <ChoiceGroup
             name="size"
             choices={sizes}
@@ -310,7 +334,7 @@ export function Designer() {
             priceText={(choice) => money(choice.price, lang)}
           />
         </Section>
-        <Section title={c.kinds.sponge}>
+        <Section id="choose-sponge" title={c.kinds.sponge}>
           <ChoiceGroup
             name="sponge"
             choices={view(SPONGES, c.sponges)}
@@ -318,7 +342,7 @@ export function Designer() {
             onChange={(sponge) => update({ sponge })}
           />
         </Section>
-        <Section title={c.kinds.filling}>
+        <Section id="choose-filling" title={c.kinds.filling}>
           <ChoiceGroup
             name="filling"
             choices={view(FILLINGS, c.fillings)}
@@ -326,7 +350,7 @@ export function Designer() {
             onChange={(filling) => update({ filling })}
           />
         </Section>
-        <Section title={c.kinds.frosting} hint={d.hints.frosting}>
+        <Section id="choose-frosting" title={c.kinds.frosting} hint={d.hints.frosting}>
           <ChoiceGroup
             name="frosting"
             choices={view(FROSTINGS, c.frostings)}
@@ -334,7 +358,7 @@ export function Designer() {
             onChange={(frosting) => update({ frosting })}
           />
         </Section>
-        <Section title={c.kinds.drip}>
+        <Section id="choose-drip" title={c.kinds.drip}>
           <ChoiceGroup
             name="drip"
             choices={view(DRIPS, c.drips)}
@@ -343,6 +367,7 @@ export function Designer() {
           />
         </Section>
         <Section
+          id="choose-topping"
           title={c.kinds.topping}
           hint={
             <span className="chip rotate-[2deg] text-sm">
@@ -360,7 +385,7 @@ export function Designer() {
             <p className="text-sm text-muted">{d.hints.toppingsFull}</p>
           )}
         </Section>
-        <Section title={c.kinds.sweetness} hint={d.hints.sweetness}>
+        <Section id="choose-sweetness" title={c.kinds.sweetness} hint={d.hints.sweetness}>
           <ChoiceGroup
             name="sweetness"
             choices={sweetness}
@@ -370,7 +395,7 @@ export function Designer() {
             priceText={null}
           />
         </Section>
-        <Section title={c.kinds.candles} hint={dict.common.free}>
+        <Section id="choose-candles" title={c.kinds.candles} hint={dict.common.free}>
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -398,11 +423,12 @@ export function Designer() {
             </button>
           </div>
         </Section>
-        <Section title={c.kinds.message} hint={dict.common.free}>
+        <Section id="choose-message" title={c.kinds.message} hint={dict.common.free}>
           <label className="block space-y-2">
             <span className="sr-only">{c.kinds.message}</span>
             <input
               type="text"
+              data-typing
               value={config.message}
               maxLength={MAX_MESSAGE_LENGTH}
               placeholder={d.message.placeholder}
@@ -484,16 +510,26 @@ export function Designer() {
           <div className="mx-auto flex max-w-xl items-center gap-3 lg:max-w-none">
             <div className="mr-auto min-w-0 leading-tight">
               <p className="truncate text-xs font-medium text-muted">{presetName}</p>
-              <p className="font-display text-3xl font-extrabold tabular-nums" data-testid="price">
+              <p
+                className="font-display text-3xl font-extrabold tabular-nums max-[359px]:text-2xl"
+                data-testid="price"
+              >
                 <TickingMoney value={price} />
               </p>
             </div>
             {justAdded ? (
-              <LocalLink href="/cart" className="btn btn-ghost animate-pop">
+              <LocalLink
+                href="/cart"
+                className="btn btn-ghost animate-pop whitespace-nowrap max-[359px]:px-4"
+              >
                 {d.bar.viewCart}
               </LocalLink>
             ) : (
-              <button type="button" onClick={addToCart} className="btn btn-buy">
+              <button
+                type="button"
+                onClick={addToCart}
+                className="btn btn-buy whitespace-nowrap max-[359px]:px-4"
+              >
                 {d.bar.add}
               </button>
             )}

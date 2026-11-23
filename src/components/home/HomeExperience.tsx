@@ -72,16 +72,16 @@ export function HomeExperience() {
     window.setTimeout(() => setGate('closed'), 750)
   }
 
-  // One loop reads the scroll position and turns it into the chapter number.
+  // The scroll position, turned into the chapter number. The sections are measured when they (or the screen)
+  // change size, so a page standing still costs nothing here and scrolling never forces a layout.
   useEffect(() => {
     let frame = 0
+    let centres: number[] = []
     let last = -1
     let lastIn = true
-    const tick = () => {
+    const update = () => {
+      frame = 0
       const middle = window.scrollY + window.innerHeight / 2
-      const centres = sections.current.map((element) =>
-        element ? element.offsetTop + element.offsetHeight / 2 : 0,
-      )
       let chapter = 0
       if (middle >= centres[centres.length - 1]) chapter = centres.length - 1
       else
@@ -118,10 +118,25 @@ export function HomeExperience() {
         const inside = Math.max(0, 1 - Math.abs(chapter - 1.6) / 1.1)
         tint.current.style.opacity = String(Math.min(1, inside * 1.2))
       }
-      frame = requestAnimationFrame(tick)
     }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
+    const schedule = () => (frame ||= requestAnimationFrame(update))
+    const measure = () => {
+      centres = sections.current.map((element) =>
+        element ? element.offsetTop + element.offsetHeight / 2 : 0,
+      )
+      schedule()
+    }
+    // Calls back once for each section as soon as it watches it, which is also the first measurement.
+    const observer = new ResizeObserver(measure)
+    for (const element of sections.current) if (element) observer.observe(element)
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', measure)
+      cancelAnimationFrame(frame)
+    }
   }, [])
 
   // The side index glides with the same smooth scroll as the wheel (SmoothScroll in the root layout).
@@ -204,29 +219,35 @@ export function HomeExperience() {
                 className="flex h-[100svh] flex-col items-center justify-end gap-5 px-6 pb-[5svh] text-center"
               >
                 <p
-                  className={`max-w-md font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-tight font-bold ${halo}`}
+                  className={`max-w-2xl font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-tight font-bold text-balance ${halo}`}
                 >
                   {story.introLine}
                   <br />
                   <span className="text-[0.8em] font-semibold text-muted">{story.introHint}</span>
                 </p>
-                <button
-                  type="button"
-                  onClick={() => goTo(1)}
-                  aria-label={story.scrollDown}
-                  className="btn btn-buy h-12 w-12 p-0 motion-safe:animate-nudge"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    aria-hidden
+                <div className="flex items-center gap-3">
+                  {/* On phones the header has no room for the builder, and the story's own button is screens away. */}
+                  <LocalLink href="/design" className="btn btn-buy sm:hidden">
+                    {story.build.design}
+                  </LocalLink>
+                  <button
+                    type="button"
+                    onClick={() => goTo(1)}
+                    aria-label={story.scrollDown}
+                    className="btn h-12 w-12 p-0 motion-safe:animate-nudge max-sm:btn-ghost sm:btn-buy"
                   >
-                    <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      aria-hidden
+                    >
+                      <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
               </section>
             )
           if (id === 'build')

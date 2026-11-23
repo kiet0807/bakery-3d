@@ -100,12 +100,31 @@ test.describe('home', () => {
     await expect(cards.first()).toHaveAttribute('href', /^\/design\?preset=[a-z-]+$/)
     await expect(cards.first()).toContainText('350.000')
 
-    const build = story.getByRole('link', { name: 'Tự thiết kế bánh' })
+    // Every card has its cake's picture.
+    const pictures = cards.locator('img')
+    await expect(pictures).toHaveCount(6)
+    await pictures.last().scrollIntoViewIfNeeded()
+    await expect
+      .poll(() => pictures.last().evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
+      .toBe(640)
+
+    // The story's last button (phones also have one on the first screen).
+    const build = story.getByRole('link', { name: 'Tự thiết kế bánh' }).last()
     await expect(build).toHaveAttribute('href', '/design')
     await build.scrollIntoViewIfNeeded()
     await build.click()
     await expect(page).toHaveURL(/\/design$/)
     await expect(page.getByRole('heading', { level: 1, name: /Tự thiết kế/ })).toBeVisible()
+  })
+
+  test('on a phone the builder is one tap away on the first screen', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Wide screens have the builder in the header.')
+    await skipIntro(page)
+    await page.goto('/')
+    const build = page.getByRole('region', { name: 'Mở đầu' }).getByRole('link', { name: 'Tự thiết kế bánh' })
+    await expect(build).toBeInViewport({ ratio: 1 })
+    await build.click()
+    await expect(page).toHaveURL(/\/design$/)
   })
 
   test('the sections under the story say what the shop is, and that it is not real', async ({ page }) => {
@@ -161,6 +180,9 @@ test.describe('home', () => {
     await expect(cards).toHaveCount(6)
     await expect(cards.first()).toHaveAttribute('href', /^\/en\/design\?preset=[a-z-]+$/)
     const story = page.getByRole('region', { name: 'The story of a cake' })
-    await expect(story.getByRole('link', { name: 'Design your cake' })).toHaveAttribute('href', '/en/design')
+    await expect(story.getByRole('link', { name: 'Design your cake' }).last()).toHaveAttribute(
+      'href',
+      '/en/design',
+    )
   })
 })

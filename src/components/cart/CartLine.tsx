@@ -65,6 +65,7 @@ export function CartLine({ item }: { item: CartItem }) {
     >
       <CakeThumb
         config={item.config}
+        presetId={item.presetId}
         snapshot={item.snapshot}
         className="h-16 w-16 sm:row-span-3 sm:h-24 sm:w-24"
       />

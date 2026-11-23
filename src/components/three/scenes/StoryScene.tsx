@@ -145,11 +145,11 @@ function Director({
     view.setViewOffset(size.width, size.height, -shift * size.width, 0, size.width, size.height)
 
     const c = controls.current
-    // The slice comes out for the two chapters inside the cake.
-    c.slice = smooth(range(ch, 0.35, 1)) * (1 - smooth(range(ch, 2.25, 2.9)))
+    // The slice comes out for the two chapters inside the cake, and is home before the glaze pours over the cut.
+    c.slice = smooth(range(ch, 0.35, 1)) * (1 - smooth(range(ch, 2.15, 2.6)))
     // Glaze and toppings step aside while we are inside, then return in their own chapters:
     // the glaze pours again in "The finish" (3), the toppings land again in "The crown" (4).
-    const dripsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 2.35, 3))
+    const dripsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 2.55, 3))
     const toppingsByScroll = Math.max(1 - range(ch, 0.3, 0.75), range(ch, 3.3, 4))
     const now = performance.now() / 1000
     if (!ready.current) {

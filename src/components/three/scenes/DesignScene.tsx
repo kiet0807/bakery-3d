@@ -13,8 +13,8 @@ import { CaptureBridge, type Capture } from '../Capture'
 import { Effects } from '../Effects'
 import { FitCamera } from '../FitCamera'
 import { ShadowBlob } from '../ShadowBlob'
+import { IdlePace } from '../IdlePace'
 import { Studio } from '../Studio'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { usePalette } from '@/lib/usePalette'
@@ -117,9 +117,8 @@ export default function DesignScene({
   // The orbit's first target only: after that FitCamera moves it, gliding with the camera when the cake changes.
   const [target] = useState<[number, number, number]>(() => [0, frame.center, 0])
   // Still, the scene draws only when something changes (it used to draw 60 times a second, cake standing still).
-  // Lit candles flicker, and the studio photo develops frame by frame: those need every frame.
-  const reduced = useReducedMotion()
-  const mode = photo || (config.candles > 0 && !reduced) ? 'always' : 'demand'
+  // The studio photo develops frame by frame; lit candles flicker at the idle pace.
+  const mode = photo ? 'always' : 'demand'
 
   return (
     <CanvasShell
@@ -133,6 +132,7 @@ export default function DesignScene({
     >
       <RedrawOnChange config={config} sliced={sliced} />
       <OrbitTail />
+      {config.candles > 0 && <IdlePace />}
       <FitCamera
         radius={frame.radius}
         height={frame.height}

@@ -4,7 +4,6 @@ import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useMemo, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { FROSTING } from '../cake/geometry'
@@ -12,6 +11,7 @@ import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
 import { CanvasShell } from '../CanvasShell'
 import { Effects } from '../Effects'
+import { IdlePace } from '../IdlePace'
 import { useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
 import { Studio } from '../Studio'
@@ -192,6 +192,7 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
     const now = performance.now() / 1000
     startedAt.current ??= now
     const t = still ? END : now - startedAt.current
+    if (t < END) state.invalidate()
 
     if (cake.current) cake.current.position.y = (1 - settle(range(t, 0, 0.9))) * (H + 0.5)
     folds.current.forEach((pivot, i) => {
@@ -320,12 +321,10 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
 export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
   const { scenes, cart } = useDict()
   const startedAt = useRef<number | null>(null)
-  // Asked for less motion, the box is there tied up and still: nothing to draw again.
-  const reduced = useReducedMotion()
   return (
     <CanvasShell
       className="h-full w-full"
-      mode={reduced ? 'demand' : 'always'}
+      mode="demand"
       label={scenes.box}
       poster={cart.done.boxLoading}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}
@@ -333,6 +332,8 @@ export default function BoxScene({ config, children }: { config: CakeConfig; chi
       <Studio floor={-T} shadows={false} />
       <ShadowBlob radius={boxSize(config).width * 1.05} y={-T} />
       <FoldingBox config={config} startedAt={startedAt} />
+      {/* The box on show turns at the idle pace; while it folds, FoldingBox asks for every frame itself. */}
+      <IdlePace />
       {children}
       <Effects />
     </CanvasShell>

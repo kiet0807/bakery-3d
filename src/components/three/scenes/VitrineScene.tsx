@@ -17,6 +17,7 @@ import { CaptureBridge, type Capture } from '../Capture'
 import { Effects } from '../Effects'
 import { useQuality, useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
+import { IdlePace } from '../IdlePace'
 import { Studio } from '../Studio'
 import { useScene } from '../theme'
 
@@ -32,13 +33,6 @@ const CAKE_HEIGHT = 2.5
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
 
-/**
- * The vitrine renders on demand. Its idle motion (the chosen cake's slow turn, about 13° a second, and candle
- * flames) is drawn at this rate, which reads as smooth as 60 for something that slow and halves the cost of the
- * page's longest state (a quarter of it on a 120 Hz screen, which drew 120 frames a second). The table turning,
- * the camera following the pointer and the cloche lifting ask for every frame while they move.
- */
-const IDLE_FPS = 30
 /** Below this a damped value counts as arrived: it is set to its goal and stops asking for frames. */
 const SETTLED = 1e-4
 
@@ -299,27 +293,6 @@ function Rig({ index, count, children }: { index: number; count: number; childre
       <group ref={table}>{children}</group>
     </group>
   )
-}
-
-/** Draws the idle motion at IDLE_FPS, in step with the screen's refresh. Off under reduced motion: nothing idles. */
-function IdlePace() {
-  const invalidate = useThree((state) => state.invalidate)
-  const still = useReducedMotionScene()
-  useEffect(() => {
-    if (still) return
-    const interval = 1000 / IDLE_FPS
-    let last = 0
-    let frame = requestAnimationFrame(function tick(now) {
-      // A few milliseconds of slack, so a 60 Hz screen draws every second refresh rather than every third.
-      if (now - last >= interval - 4) {
-        last = now
-        invalidate()
-      }
-      frame = requestAnimationFrame(tick)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [still, invalidate])
-  return null
 }
 
 /**

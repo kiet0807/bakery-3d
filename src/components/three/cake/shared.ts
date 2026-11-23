@@ -45,16 +45,16 @@ let cache: SharedGeometry | null = null
 export function shared(): SharedGeometry {
   if (cache) return cache
   // A drip of glaze, from its bulb (y = -1, scaled by its length per instance) up to the edge (y = 0): wide
-  // where it leaves the edge, thinning as it runs, swelling a little into the bulb. Listed bottom to top, so
-  // the lathe's faces point outwards.
+  // where it leaves the edge, thinning as it runs, swelling a little into the bulb. It ends inside the glaze on the
+  // rim: a lip above it stood out of the rim as a row of thorns. Listed bottom to top, so the lathe's faces point
+  // outwards.
   const dripProfile = [
     [0.037, -1],
     [0.036, -0.92],
     [0.033, -0.75],
     [0.035, -0.4],
     [0.038, -0.1],
-    [0.044, 0],
-    [0.05, 0.02],
+    [0.04, 0],
   ].map(([r, y]) => new THREE.Vector2(r, y))
   const dripColumn = new THREE.LatheGeometry(dripProfile, 12)
   const macaronShell = new THREE.SphereGeometry(0.085, 22, 12)

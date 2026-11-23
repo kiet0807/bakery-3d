@@ -34,7 +34,10 @@ function supportsWebGL(): boolean {
   if (webglSupport !== null) return webglSupport
   try {
     const canvas = document.createElement('canvas')
-    webglSupport = Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+    const context = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    webglSupport = Boolean(context)
+    // Given back at once: browsers keep a small number of contexts alive, and the oldest one dies first.
+    context?.getExtension('WEBGL_lose_context')?.loseContext()
   } catch {
     webglSupport = false
   }
@@ -143,6 +146,42 @@ function KeepFresh() {
   return null
 }
 
+/** How long a lost GPU context gets to come back before the 2D drawing takes over. */
+const CONTEXT_GRACE_MS = 3000
+
+/**
+ * The GPU can take the context away (a driver reset, a phone short of memory). three.js redraws everything if the
+ * browser gives it back; if it does not, the page would keep an empty stage, so the 2D drawing takes its place.
+ * Lives inside the canvas: unmounting it loses the context on purpose, and by then this no longer listens.
+ */
+function ContextGuard({ onGone }: { onGone: () => void }) {
+  const gl = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
+  const gone = useRef(onGone)
+  useEffect(() => {
+    gone.current = onGone
+  })
+  useEffect(() => {
+    const canvas = gl.domElement
+    let timer = 0
+    const onLost = () => {
+      timer = window.setTimeout(() => gone.current(), CONTEXT_GRACE_MS)
+    }
+    const onRestored = () => {
+      window.clearTimeout(timer)
+      invalidate()
+    }
+    canvas.addEventListener('webglcontextlost', onLost)
+    canvas.addEventListener('webglcontextrestored', onRestored)
+    return () => {
+      window.clearTimeout(timer)
+      canvas.removeEventListener('webglcontextlost', onLost)
+      canvas.removeEventListener('webglcontextrestored', onRestored)
+    }
+  }, [gl, invalidate])
+  return null
+}
+
 /** The picture of the old canvas, shown over the new one while it gets ready; fades as the new one comes in. */
 function HeldPicture({
   picture,
@@ -213,7 +252,9 @@ export function CanvasShell({
 }: CanvasShellProps) {
   const wrapper = useRef<HTMLDivElement>(null)
   // Device facts are read after hydration (the server renders no canvas at all).
-  const webgl = useSyncExternalStore<boolean | null>(noSubscription, supportsWebGL, () => null)
+  const supported = useSyncExternalStore<boolean | null>(noSubscription, supportsWebGL, () => null)
+  const [lost, setLost] = useState(false)
+  const webgl = lost ? false : supported
   const deviceQuality = useSyncExternalStore<Quality>(noSubscription, startingQuality, () => 'high')
   const [downgraded, setDowngraded] = useState(false)
   const quality: Quality = downgraded ? 'low' : deviceQuality
@@ -351,6 +392,7 @@ export function CanvasShell({
                 )}
                 <SettleContext.Provider value={settler}>
                   <KeepFresh />
+                  <ContextGuard onGone={() => setLost(true)} />
                   <PerformanceHoldContext.Provider value={performanceHold}>
                     {children}
                   </PerformanceHoldContext.Provider>

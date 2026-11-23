@@ -8,7 +8,7 @@ export const scenes = {
     'Một chiếc bánh kem dâu hồng nằm chill trên đám mây trắng giữa trời sáng. Cuộn trang thì camera bay quanh bánh, rồi một miếng bánh trượt ra khoe từng lớp bên trong.',
   vitrine: (count: number, name: string) =>
     `Tủ kính xoay với ${count} chiếc bánh trên đế sứ trắng. ${name} đang ở phía trước, chuông kính đã nhấc lên cho bạn ngắm.`,
-  box: "Bánh của bạn được hạ vào hộp trắng in chữ Kai's Bakery. Bốn cạnh gập lên, nắp đóng lại, rồi ruy băng cam đào thắt nơ xinh xỉu.",
+  box: "Bánh của bạn được hạ vào hộp trắng in chữ Kai's Bakery. Bốn cạnh gập lên, nắp đóng lại, rồi ruy băng thắt nơ xinh xỉu.",
   /** Printed on the lid of the box, in the script face. */
   boxName: "Kai's",
   boxLine: 'Bakery',

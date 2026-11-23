@@ -90,7 +90,15 @@ test.describe('accessibility and resilience', () => {
     await page.goto('/design')
     const canvas = page.locator('main canvas').first()
     await expect(canvas).toBeAttached({ timeout: 90_000 })
-    // Let the scene draw first, then lose its context as a driver reset would.
+    // The scene has drawn and faded in (losing a context three.js is still setting up is another matter).
+    const shown = () =>
+      canvas.evaluate((element) => {
+        let opacity = 1
+        for (let node: Element | null = element; node; node = node.parentElement)
+          opacity *= Number(getComputedStyle(node).opacity)
+        return opacity
+      })
+    await expect.poll(shown, { timeout: 90_000 }).toBe(1)
     await expect(page.getByText(NO_3D)).toHaveCount(0)
     await canvas.evaluate((element: HTMLCanvasElement) => {
       const gl = element.getContext('webgl2') ?? element.getContext('webgl')

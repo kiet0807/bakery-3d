@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useRef, useState } from 'react'
-import type { Dictionary } from '@/i18n/dictionaries'
+import type { ClientDictionary } from '@/i18n/dictionaries'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { allergensOf, sizeOf, type CakeConfig } from '@/lib/cake'
 import { LEAD_HOURS, leadKind } from '@/lib/leadTime'
@@ -23,7 +23,7 @@ const VitrineScene = dynamic(() => import('../three/scenes/VitrineScene'), {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-function specs(config: CakeConfig, dict: Dictionary): { label: string; value: string }[] {
+function specs(config: CakeConfig, dict: ClientDictionary): { label: string; value: string }[] {
   const c = dict.cake
   const rows = [
     { label: c.kinds.sponge, value: c.sponges[config.sponge].name },
@@ -45,7 +45,7 @@ function specs(config: CakeConfig, dict: Dictionary): { label: string; value: st
 }
 
 /** "16 cm · 4–6 người" for a house cake. */
-function sizeLine(preset: Preset, dict: Dictionary) {
+function sizeLine(preset: Preset, dict: ClientDictionary) {
   const size = sizeOf(preset.config)
   return `${dict.cake.sizes[size.id].name} · ${dict.common.units.serves(size.serves)}`
 }

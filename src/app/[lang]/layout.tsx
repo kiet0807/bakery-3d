@@ -8,8 +8,8 @@ import { SmoothScroll } from '@/components/SmoothScroll'
 import { StoreHydrator } from '@/components/StoreHydrator'
 import { LOCALES, OG_LOCALE, hasLocale } from '@/i18n/config'
 import { dictionaries } from '@/i18n/dictionaries'
-import { LangProvider } from '@/i18n/LangProvider'
 import { langFrom, ogImage } from '@/i18n/metadata'
+import { Words } from '@/i18n/Words'
 import { DEFAULT_PALETTE, PALETTES } from '@/lib/palettes'
 import { SHOP, SITE_URL } from '@/lib/shop'
 import '../globals.css'
@@ -83,7 +83,7 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
         >
           {common.skip}
         </a>
-        <LangProvider lang={lang}>
+        <Words lang={lang}>
           <StoreHydrator />
           <SmoothScroll />
           <SiteHeader />
@@ -92,7 +92,7 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
             {children}
           </main>
           <SiteFooter lang={lang} />
-        </LangProvider>
+        </Words>
       </body>
     </html>
   )

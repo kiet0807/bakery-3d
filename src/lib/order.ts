@@ -1,6 +1,6 @@
 import { describeCake } from '@/i18n/cake-text'
 import { localeHref, type Locale } from '@/i18n/config'
-import type { Dictionary } from '@/i18n/dictionaries'
+import type { ClientDictionary } from '@/i18n/dictionaries'
 import { formatMoney } from '@/i18n/format'
 import { priceOf, sizeOf, type CakeConfig } from './cake'
 import { LEAD_HOURS, SAME_DAY_CUTOFF, leadKind, type LeadKind } from './leadTime'
@@ -397,7 +397,7 @@ export function orderText({
 }: {
   order: Order
   items: OrderItem[]
-  dict: Dictionary
+  dict: ClientDictionary
   lang: Locale
   origin: string
 }): string {

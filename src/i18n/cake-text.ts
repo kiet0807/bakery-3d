@@ -1,9 +1,9 @@
 import { allergensOf, priceLines, type CakeConfig, type PriceLine } from '@/lib/cake'
 import { presetById } from '@/lib/presets'
-import type { Dictionary } from './dictionaries'
+import type { ClientDictionary } from './dictionaries'
 
 /** The name of a choice on a receipt line, e.g. "16 cm" or "Mứt dâu". */
-export function lineName(line: PriceLine, dict: Dictionary): string {
+export function lineName(line: PriceLine, dict: ClientDictionary): string {
   const c = dict.cake
   switch (line.kind) {
     case 'size':
@@ -22,11 +22,11 @@ export function lineName(line: PriceLine, dict: Dictionary): string {
 }
 
 /** "Cốt bánh: Vani", for a receipt. */
-export const lineLabel = (line: PriceLine, dict: Dictionary) =>
+export const lineLabel = (line: PriceLine, dict: ClientDictionary) =>
   `${dict.cake.kinds[line.kind]}: ${lineName(line, dict)}`
 
 /** One line describing a cake, e.g. for the cart: "16 cm · Vani · Mứt dâu · Hồng dâu · Dâu tây Đà Lạt · Ít ngọt". */
-export function describeCake(config: CakeConfig, dict: Dictionary): string {
+export function describeCake(config: CakeConfig, dict: ClientDictionary): string {
   const parts = priceLines(config).map((line) => lineName(line, dict))
   parts.push(dict.cake.sweetness[config.sweetness].name)
   if (config.candles) parts.push(dict.cake.candles(config.candles))
@@ -35,13 +35,13 @@ export function describeCake(config: CakeConfig, dict: Dictionary): string {
 }
 
 /** The name to show for a cake: the house cake's name, or "your own design". */
-export function cakeName(presetId: string | undefined, dict: Dictionary): string {
+export function cakeName(presetId: string | undefined, dict: ClientDictionary): string {
   const preset = presetById(presetId)
   return preset ? dict.cake.presets[preset.id].name : dict.cake.yourDesign
 }
 
 /** "Có chứa: trứng, sữa, bột mì (gluten)". */
-export function allergenText(config: CakeConfig, dict: Dictionary): string {
+export function allergenText(config: CakeConfig, dict: ClientDictionary): string {
   return `${dict.common.contains}: ${allergensOf(config)
     .map((allergen) => dict.common.allergens[allergen])
     .join(', ')}`

@@ -10,3 +10,6 @@ AGENTS.md
 
 # Design-lint tool state
 .impeccable/
+
+# Notes for outside reviewers, kept on one machine
+REVIEW-PROMPT*.md

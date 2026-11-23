@@ -7,6 +7,7 @@ import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { countItems } from '@/lib/cart'
 import { useCart } from '@/lib/store'
 import { Logo, Wordmark } from './Logo'
+import { MobileNav } from './MobileNav'
 import { PaletteSwitcher } from './PaletteSwitcher'
 
 function subscribeScroll(onChange: () => void) {
@@ -51,10 +52,9 @@ export function SiteHeader() {
   useCountBump(badge, count)
   const other = LOCALES.find((l) => l !== lang) ?? 'en'
   const links = [
-    // On phones the builder is one tap away on the home page, the menu cards and the footer.
-    { href: '/design', label: common.nav.design, hideOnSmall: true },
+    { href: '/design', label: common.nav.design },
     { href: '/menu', label: common.nav.menu },
-    { href: '/about', label: common.nav.about, hideOnSmall: true },
+    { href: '/about', label: common.nav.about },
   ]
   return (
     <header
@@ -64,8 +64,8 @@ export function SiteHeader() {
     >
       {/*
         Widths, measured 2026-11-20 with the colour switch in (320, 360, 390, 412, 430, 640, 700, 768, 1024, both
-        languages): below 640 the cart is a bag icon with its count, and "Design" and "About" wait for the page and
-        the footer. The name is always there: "Kai's Bakery" below 768 (at least 26 px to spare), the full line with
+        languages): below 640 the cart is a bag icon with its count, and the links move into one button (MobileNav,
+        2026-11-23: "Design" used to be missing there). The name is always there: "Kai's Bakery" below 768 (at least 26 px to spare), the full line with
         the tagline from 768 (176 px wide, it overflowed phones under about 430). Links never wrap.
       */}
       <nav
@@ -94,9 +94,9 @@ export function SiteHeader() {
               key={link.href}
               href={link.href}
               aria-current={active ? 'page' : undefined}
-              className={`rounded-full px-2 py-1.5 font-display text-[0.95rem] font-semibold whitespace-nowrap transition-colors hover:bg-butter-soft max-[359px]:px-1.5 sm:px-3 ${
+              className={`hidden rounded-full px-3 py-1.5 font-display text-[0.95rem] font-semibold whitespace-nowrap transition-colors hover:bg-butter-soft sm:inline-flex ${
                 active ? 'bg-soft text-leaf' : 'text-ink'
-              } ${link.hideOnSmall ? 'hidden sm:inline-flex' : ''}`}
+              }`}
             >
               {link.label}
             </LocalLink>
@@ -113,7 +113,7 @@ export function SiteHeader() {
           hrefLang={other}
           lang={other}
           aria-label={common.otherLang.label}
-          className="flex h-8 items-center rounded-full border-2 border-ink/15 px-2 font-display text-sm font-bold text-muted transition-colors hover:border-ink hover:text-ink sm:px-2.5"
+          className="tap relative flex h-8 items-center rounded-full border-2 border-ink/15 px-2 font-display text-sm font-bold text-muted transition-colors hover:border-ink hover:text-ink sm:px-2.5"
         >
           {common.otherLang.short}
         </a>
@@ -137,14 +137,16 @@ export function SiteHeader() {
             <path d="M9 10.5V7a3 3 0 0 1 6 0v3.5" />
           </svg>
           <span className="max-sm:sr-only">{common.nav.cart}</span>
+          <span className="sr-only">{common.nav.cartCount(count)}</span>
           <span
             ref={badge}
-            aria-label={common.nav.cartCount(count)}
+            aria-hidden
             className="grid h-5 min-w-5 place-items-center rounded-full bg-buy px-1.5 text-xs font-bold text-white max-sm:absolute max-sm:-top-2 max-sm:-right-2 max-sm:border-2 max-sm:border-cream"
           >
             {count}
           </span>
         </LocalLink>
+        <MobileNav />
       </nav>
     </header>
   )

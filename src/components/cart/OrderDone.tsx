@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef } from 'react'
-import { cakeName } from '@/i18n/cake-text'
+import { cakeName, describeCake } from '@/i18n/cake-text'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { priceOf } from '@/lib/cake'
 import type { CartItem } from '@/lib/cart'
@@ -67,9 +67,12 @@ export function OrderDone({ order }: { order: PlacedOrder }) {
           <ul className="space-y-2">
             {order.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-4">
-                <span>
+                <span className="min-w-0">
                   {cakeName(item.presetId, dict)}{' '}
                   <span className="text-muted tabular-nums">× {item.quantity}</span>
+                  <span className="block text-sm leading-snug text-muted">
+                    {describeCake(item.config, dict)}
+                  </span>
                 </span>
                 <span className="tabular-nums">{money(priceOf(item.config) * item.quantity, lang)}</span>
               </li>

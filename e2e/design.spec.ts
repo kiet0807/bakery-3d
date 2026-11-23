@@ -156,7 +156,7 @@ test.describe('cake builder', () => {
     await expect(cartCount(page)).toHaveText('0')
     await page.getByRole('button', { name: 'Thêm vào giỏ' }).click()
     await expect(cartCount(page)).toHaveText('1')
-    await expect(cartCount(page)).toHaveAttribute('aria-label', '1 bánh trong giỏ')
+    await expect(page.getByRole('banner').getByRole('link', { name: /1 bánh trong giỏ/ })).toBeVisible()
     await expect(page.getByRole('status').filter({ hasText: 'đã vào giỏ' })).toBeAttached()
 
     await page.getByRole('link', { name: 'Xem giỏ →' }).click()

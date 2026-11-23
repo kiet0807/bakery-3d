@@ -123,11 +123,12 @@ describe('slots', () => {
     expect(earliestDate({ now: evening, method: 'pickup', items: MENU })).toBe('2026-11-21')
   })
 
-  it('treats the week before Tết as a holiday', () => {
+  it('treats the week before Tết and its first three days as holidays', () => {
     expect(isHoliday('2027-01-29')).toBe(false)
     expect(isHoliday('2027-01-30')).toBe(true)
     expect(isHoliday('2027-02-05')).toBe(true)
-    expect(isHoliday('2027-02-06')).toBe(false)
+    for (const day of ['2027-02-06', '2027-02-07', '2027-02-08']) expect(isHoliday(day)).toBe(true)
+    expect(isHoliday('2027-02-09')).toBe(false)
     expect(leadFor(MENU, '2027-02-01')).toEqual({ kind: 'menu', hours: 48, holiday: true })
     expect(depositFor(MENU, '2027-02-01').reasons).toEqual(['holiday'])
     // Listed in order, so a mistyped year stands out.
@@ -138,7 +139,8 @@ describe('slots', () => {
     // 2030: the new moon falls just before midnight at UTC+7, so Tết is a day before the Chinese New Year.
     expect(TET_DAYS).toContain('2030-02-02')
     expect(isHoliday('2030-02-01')).toBe(true)
-    expect(isHoliday('2030-02-02')).toBe(false)
+    expect(isHoliday('2030-02-04')).toBe(true)
+    expect(isHoliday('2030-02-05')).toBe(false)
     expect(isHoliday('2031-01-22')).toBe(true)
     expect(isHoliday('2032-02-10')).toBe(true)
   })

@@ -30,7 +30,7 @@ export const MAX_DAYS_AHEAD = 30
 /** Orders from this total (in đồng) pay half up front. */
 export const DEPOSIT_FROM = 1_000_000
 export const DEPOSIT_SHARE = 0.5
-/** Holidays (MM-DD) when every order needs two days' notice and a deposit; the week before Tết is added below. */
+/** Holidays (MM-DD) when every order needs two days' notice and a deposit; the days around Tết are added below. */
 export const HOLIDAYS = ['02-14', '03-08', '10-20', '11-20', '12-24'] as const
 const HOLIDAY_HOURS = 48
 const SLOT_MINUTES = 30
@@ -163,9 +163,11 @@ export const TET_DAYS = [
 ] as const
 /** "Cận Tết": the week before Tết counts as a holiday, from the 23rd of the last lunar month or so. */
 export const TET_RUSH_DAYS = 7
+/** So do the first days of the year (mùng 1 to mùng 3): they used to be ordinary days, right after a week of holidays. */
+export const TET_DAYS_OFF = 3
 
 const nearTet = (date: string) =>
-  TET_DAYS.some((tet) => date < tet && date >= addShopDays(tet, -TET_RUSH_DAYS))
+  TET_DAYS.some((tet) => date >= addShopDays(tet, -TET_RUSH_DAYS) && date < addShopDays(tet, TET_DAYS_OFF))
 
 export const isHoliday = (date: string) =>
   (HOLIDAYS as readonly string[]).includes(date.slice(5)) || nearTet(date)

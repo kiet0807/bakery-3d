@@ -16,6 +16,9 @@ export const common = {
     menu: 'Menu',
     about: 'Về tiệm',
     cart: 'Giỏ',
+    /** The button that opens every page's link on phones. */
+    all: 'Mở danh sách trang',
+    closeAll: 'Đóng danh sách trang',
     cartCount: (n: number) => `${n} bánh trong giỏ`,
   },
   /** The colour switch in the header. Names and notes follow `PALETTE_IDS`. */

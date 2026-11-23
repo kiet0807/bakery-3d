@@ -6,6 +6,7 @@ import {
   addItem,
   countItems,
   removeItem,
+  replaceItem,
   restoreItems,
   setQuantity,
   subtotal,
@@ -33,6 +34,22 @@ describe('cart', () => {
     expect(setQuantity(items, 'a', 0)[0].quantity).toBe(1)
     expect(setQuantity(items, 'a', 500)[0].quantity).toBe(MAX_QUANTITY)
     expect(removeItem(items, 'a')).toEqual([])
+  })
+
+  it('replaces a line in place, and merges it into a line with the same design', () => {
+    let items: CartItem[] = []
+    items = addItem(items, DEFAULT_CAKE, { id: 'a' })
+    items = addItem(items, chocolate, { id: 'b', presetId: 'choco-crush' })
+    items = setQuantity(items, 'b', 2)
+    const taro = normalizeConfig({ sponge: 'taro' })
+    const changed = replaceItem(items, 'b', taro, {})
+    expect(changed.map((i) => [i.id, i.quantity, i.presetId, i.config.sponge])).toEqual([
+      ['a', 1, undefined, DEFAULT_CAKE.sponge],
+      ['b', 2, undefined, 'taro'],
+    ])
+    const merged = replaceItem(items, 'b', DEFAULT_CAKE, {})
+    expect(merged.map((i) => [i.id, i.quantity])).toEqual([['b', 3]])
+    expect(replaceItem(items, 'gone', taro, {})).toBe(items)
   })
 
   it('keeps pictures only for the newest lines', () => {

@@ -9,14 +9,14 @@ import './globals.css'
 
 const baloo = Baloo_2({
   weight: ['700', '800'],
-  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-baloo',
   display: 'swap',
 })
 
 const beVietnam = Be_Vietnam_Pro({
   weight: ['400', '600'],
-  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-be-vietnam',
   display: 'swap',
 })
@@ -63,6 +63,10 @@ export default function GlobalNotFound() {
               {en.body}{' '}
               <Link href="/en" className="font-semibold text-leaf underline underline-offset-4">
                 {en.home}
+              </Link>{' '}
+              <span aria-hidden>·</span>{' '}
+              <Link href="/en/menu" className="font-semibold text-leaf underline underline-offset-4">
+                {en.menu}
               </Link>
             </p>
           </div>

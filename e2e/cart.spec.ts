@@ -150,6 +150,37 @@ test.describe('cart and test checkout', () => {
     await expect(page.getByLabel(/thẻ|card|cvc|expiry|email/i)).toHaveCount(0)
   })
 
+  test('a cake in the cart is edited in the builder and takes its own place back', async ({ page }) => {
+    await page.goto('/cart')
+    await seedCart(page, TWO_LINES)
+    await page.getByRole('link', { name: 'Sửa bánh Dâu Tây Mây Hồng' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: /Tự thiết kế/ })).toBeVisible()
+    await expect(page).toHaveURL(/\/design$/)
+    const message = page.getByRole('textbox', { name: 'Chữ trên bánh' })
+    await message.fill('Mẹ yêu')
+    await page.getByRole('button', { name: 'Cập nhật giỏ' }).click()
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /Xem giỏ/ })
+      .click()
+    // Still two lines and three cakes: the line changed, none was added.
+    await expect(page.getByRole('heading', { level: 1, name: /3 chiếc bánh/ })).toBeVisible()
+    const lines = page.getByRole('list', { name: 'Bánh bạn đã chọn' }).getByRole('listitem')
+    await expect(lines).toHaveCount(2)
+    await expect(lines.first()).toContainText('Mẹ yêu')
+    await expect(lines.first().getByText('2', { exact: true })).toBeVisible()
+  })
+
+  test('removing a cake moves the focus to the next one', async ({ page }) => {
+    await page.goto('/cart')
+    await seedCart(page, TWO_LINES)
+    await page.getByRole('button', { name: 'Xóa Dâu Tây Mây Hồng' }).click()
+    await expect(page.getByRole('button', { name: 'Xóa Sinh Nhật Cầu Vồng' })).toBeFocused()
+    await page.getByRole('button', { name: 'Xóa Sinh Nhật Cầu Vồng' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Giỏ còn trống trơn nè' })).toBeVisible()
+    await expect(page.locator('#main')).toBeFocused()
+  })
+
   test('the delivery line follows the choice, and a deposit that comes later unticks cash', async ({
     page,
   }) => {

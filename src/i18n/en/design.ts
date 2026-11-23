@@ -64,10 +64,13 @@ export const design: DesignDict = {
   },
   bar: {
     add: 'Add to cart',
+    update: 'Update cart',
     viewCart: 'View cart →',
+    lead: (hours: number) => `${hours} hours`,
   },
   status: {
     added: (name: string) => `${name} is in your cart!`,
+    updated: (name: string) => `${name} in your cart now has the new design.`,
     pictureFailed: "This device couldn't take the picture, sorry.",
     pictureSaved: 'Picture saved.',
     studioSaved: 'Studio photo saved. Go flex it!',

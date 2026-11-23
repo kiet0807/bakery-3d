@@ -28,7 +28,7 @@ import {
 import { LEAD_HOURS, leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
 import { PRESETS, presetById } from '@/lib/presets'
-import { SHARE_PARAM, decodeCake, designPath } from '@/lib/share'
+import { EDIT_PARAM, SHARE_PARAM, decodeCake, designPath } from '@/lib/share'
 import { useCart, useDesign } from '@/lib/store'
 import { ScenePoster } from '../ScenePoster'
 import { TickingMoney } from '../TickingMoney'
@@ -50,9 +50,10 @@ const DesignScene = dynamic(() => import('../three/scenes/DesignScene'), {
  * Opens a design from the address, then tidies it: `#cake=…` is a design someone shared (`?cake=…` in links made
  * before 2026-11-20), `?preset=…` a vitrine cake. A shared design wins if both are there; a broken token is simply
  * dropped. A shared link opened while the builder is already open only changes the fragment, with no new page
- * load, hence the `hashchange` listener.
+ * load, hence the `hashchange` listener. `?edit=<line>` comes with a design from the cart: the builder then changes
+ * that line instead of adding a new one, until the visitor leaves the page.
  */
-function useDesignFromUrl() {
+function useDesignFromUrl(onEdit: (id: string | null) => void) {
   const load = useDesign((state) => state.load)
   useEffect(() => {
     let stopWaiting = () => {}
@@ -64,6 +65,7 @@ function useDesignFromUrl() {
       const config = decodeCake(token) ?? presetById(params.get('preset'))?.config
       const apply = () => {
         if (config) load(config)
+        onEdit(config ? params.get(EDIT_PARAM) : null)
         window.history.replaceState(null, '', window.location.pathname)
       }
       if (useDesign.persist.hasHydrated()) apply()
@@ -75,7 +77,7 @@ function useDesignFromUrl() {
       window.removeEventListener('hashchange', read)
       stopWaiting()
     }
-  }, [load])
+  }, [load, onEdit])
 }
 
 /** The groups of choices, in page order: names in the dictionary's `cake.kinds`, anchors `choose-<kind>`. */
@@ -95,7 +97,8 @@ const SECTIONS = [
 const STAGE_BUTTON = 'btn btn-ghost px-4 py-2 text-sm'
 
 export function Designer() {
-  useDesignFromUrl()
+  const [editing, setEditing] = useState<string | null>(null)
+  useDesignFromUrl(setEditing)
   const dict = useDict()
   const lang = useLang()
   const d = dict.design
@@ -107,6 +110,11 @@ export function Designer() {
   const setSliced = useDesign((state) => state.setSliced)
   const reset = useDesign((state) => state.reset)
   const add = useCart((state) => state.add)
+  const replace = useCart((state) => state.replace)
+  // A line edited here that is still in the cart (it may have been removed in another tab).
+  const line = useCart((state) =>
+    editing && state.items.some((item) => item.id === editing) ? editing : null,
+  )
   const captureRef = useRef<Capture | null>(null)
   const shareField = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState('')
@@ -164,9 +172,11 @@ export function Designer() {
 
   const addToCart = () => {
     const snapshot = captureRef.current?.(256) ?? undefined
-    add(config, { presetId: matchingPreset?.id, snapshot })
+    const options = { presetId: matchingPreset?.id, snapshot }
+    if (line) replace(line, config, options)
+    else add(config, options)
     setAddedKey(key)
-    setStatus(d.status.added(presetName))
+    setStatus(line ? d.status.updated(presetName) : d.status.added(presetName))
   }
 
   const shareDesign = () => {
@@ -190,6 +200,7 @@ export function Designer() {
   const saveImage = () => {
     const url = captureRef.current?.(1200, 'image/png')
     if (!url) {
+      setPhotoNote(d.status.pictureFailed)
       setStatus(d.status.pictureFailed)
       return
     }
@@ -279,34 +290,29 @@ export function Designer() {
               </button>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            // The 2D drawing can be neither cut nor photographed.
+            <div className={`flex-wrap items-center justify-center gap-2 ${flat ? 'hidden' : 'flex'}`}>
               <button
                 type="button"
                 aria-pressed={sliced}
                 onClick={() => setSliced(!sliced)}
-                className={`${STAGE_BUTTON} aria-pressed:bg-butter`}
+                className={STAGE_BUTTON}
               >
                 {sliced ? d.stage.unslice : d.stage.slice}
               </button>
               <button type="button" onClick={saveImage} className={STAGE_BUTTON}>
                 {d.stage.save}
               </button>
-              {/* Path tracing is a desktop-GPU job; phones and the 2D drawing keep the instant picture. */}
-              {!flat && (
-                <button
-                  type="button"
-                  onClick={startPhoto}
-                  className={`${STAGE_BUTTON} hidden md:inline-flex`}
-                >
-                  {d.stage.studio}
-                </button>
-              )}
+              {/* Path tracing is a desktop-GPU job; phones keep the instant picture. */}
+              <button type="button" onClick={startPhoto} className={`${STAGE_BUTTON} hidden md:inline-flex`}>
+                {d.stage.studio}
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="space-y-10 pb-32 lg:pb-10">
+      <div className="space-y-10 lg:pb-10">
         <header className="space-y-3">
           <p className="eyebrow">{d.eyebrow}</p>
           <h1 className="font-display text-[2.5rem] leading-[1.02] font-extrabold sm:text-6xl">
@@ -506,15 +512,19 @@ export function Designer() {
           </button>
         </section>
 
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-ink bg-cream/95 px-4 py-3 backdrop-blur-xl lg:sticky lg:bottom-6 lg:rounded-full lg:border-2 lg:bg-surface lg:py-2.5 lg:pr-2.5 lg:pl-6 lg:shadow-sticker">
+        {/* Sticky, not fixed: it stays with the choices and never lies over the footer. */}
+        <div className="sticky bottom-0 z-30 -mx-3 border-t-2 border-ink bg-cream/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 lg:bottom-6 lg:mx-0 lg:rounded-full lg:border-2 lg:bg-surface lg:py-2.5 lg:pr-2.5 lg:pl-6 lg:shadow-sticker">
           <div className="mx-auto flex max-w-xl items-center gap-3 lg:max-w-none">
             <div className="mr-auto min-w-0 leading-tight">
               <p className="truncate text-xs font-medium text-muted">{presetName}</p>
-              <p
-                className="font-display text-3xl font-extrabold tabular-nums max-[359px]:text-2xl"
-                data-testid="price"
-              >
-                <TickingMoney value={price} />
+              <p className="flex items-center gap-2 font-display text-3xl font-extrabold tabular-nums max-[359px]:text-2xl">
+                <span data-testid="price">
+                  <TickingMoney value={price} />
+                </span>
+                <span className="chip font-sans whitespace-nowrap max-[379px]:hidden">
+                  <span aria-hidden>⏰ {d.bar.lead(LEAD_HOURS[lead])}</span>
+                  <span className="sr-only">{d.summary.lead(LEAD_HOURS[lead])}</span>
+                </span>
               </p>
             </div>
             {justAdded ? (
@@ -530,7 +540,7 @@ export function Designer() {
                 onClick={addToCart}
                 className="btn btn-buy whitespace-nowrap max-[359px]:px-4"
               >
-                {d.bar.add}
+                {line ? d.bar.update : d.bar.add}
               </button>
             )}
           </div>

@@ -27,6 +27,7 @@ export const cart = {
     fewer: (name: string) => `Bớt một ${name}`,
     more: (name: string) => `Thêm một ${name}`,
     each: (price: string) => `${price} một bánh`,
+    edit: 'Sửa bánh',
     remove: 'Xóa',
     lead: {
       menu: 'Đặt trước 4 giờ',

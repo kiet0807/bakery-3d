@@ -8,7 +8,7 @@ import {
   type CakeConfig,
   type ToppingId,
 } from './cake'
-import { addItem, removeItem, restoreItems, setQuantity, type CartItem } from './cart'
+import { addItem, removeItem, replaceItem, restoreItems, setQuantity, type CartItem } from './cart'
 import type { PresetId } from './presets'
 
 /**
@@ -116,6 +116,8 @@ export const useDesign = create<DesignState>()(
 interface CartState {
   items: CartItem[]
   add: (config: CakeConfig, options?: { presetId?: PresetId; snapshot?: string }) => void
+  /** A cake already in the cart, designed anew. */
+  replace: (id: string, config: CakeConfig, options?: { presetId?: PresetId; snapshot?: string }) => void
   setQuantity: (id: string, quantity: number) => void
   remove: (id: string) => void
   clear: () => void
@@ -137,6 +139,8 @@ export const useCart = create<CartState>()(
         set((state) => ({
           items: addItem(state.items, normalizeConfig(config), { id: newId(), ...options }),
         })),
+      replace: (id, config, options) =>
+        set((state) => ({ items: replaceItem(state.items, id, normalizeConfig(config), { ...options }) })),
       setQuantity: (id, quantity) => set((state) => ({ items: setQuantity(state.items, id, quantity) })),
       remove: (id) => set((state) => ({ items: removeItem(state.items, id) })),
       clear: () => set({ items: [] }),

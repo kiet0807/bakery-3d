@@ -3,11 +3,12 @@
 import { useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { allergenText, cakeName, describeCake } from '@/i18n/cake-text'
-import { useDict, useLang } from '@/i18n/LangProvider'
+import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { priceOf } from '@/lib/cake'
 import { MAX_QUANTITY, type CartItem } from '@/lib/cart'
 import { leadKind } from '@/lib/leadTime'
 import { money } from '@/lib/money'
+import { editPath } from '@/lib/share'
 import { useCart } from '@/lib/store'
 import { CakeThumb } from './CakeThumb'
 
@@ -15,8 +16,16 @@ import { CakeThumb } from './CakeThumb'
  * Removes a line so the cart closes the gap smoothly: each line is named for one view transition, the removed one
  * fades and shrinks a little, the lines below slide up into place, and the totals run to the new amount (CSS in
  * globals.css, `.cart-line`). Instant where view transitions are missing or the visitor asked for less motion.
+ * The button that was pressed goes with the line, so the focus moves to the next line's (or, with the cart empty, to
+ * the page), instead of falling back to the top of the document.
  */
-function removeSmoothly(line: HTMLElement | null, remove: () => void) {
+function removeSmoothly(line: HTMLElement | null, removeNow: () => void) {
+  const next = line?.nextElementSibling ?? line?.previousElementSibling
+  const remove = () => {
+    flushSync(removeNow)
+    const target = next?.querySelector<HTMLElement>('[data-remove]') ?? document.getElementById('main')
+    target?.focus({ preventScroll: true })
+  }
   const lines = Array.from(line?.parentElement?.children ?? []).filter(
     (element): element is HTMLElement => element instanceof HTMLElement && Boolean(element.dataset.line),
   )
@@ -32,7 +41,7 @@ function removeSmoothly(line: HTMLElement | null, remove: () => void) {
     element.style.setProperty('view-transition-name', `cart-line-${element.dataset.line}`)
     element.style.setProperty('view-transition-class', 'cart-line')
   }
-  const transition = document.startViewTransition(() => flushSync(remove))
+  const transition = document.startViewTransition(remove)
   const clear = () => {
     for (const element of lines) {
       element.style.removeProperty('view-transition-name')
@@ -116,14 +125,24 @@ export function CartLine({ item }: { item: CartItem }) {
           </button>
         </div>
         {item.quantity > 1 && <p className="text-xs text-muted tabular-nums">{t.each(money(each, lang))}</p>}
-        <button
-          type="button"
-          onClick={() => removeSmoothly(line.current, () => remove(item.id))}
-          className="ml-auto min-h-11 rounded-full px-3 text-sm font-semibold text-muted underline-offset-4 hover:text-error hover:underline"
-        >
-          {t.remove}
-          <span className="sr-only"> {name}</span>
-        </button>
+        <div className="ml-auto flex items-center">
+          <LocalLink
+            href={editPath(item.id, item.config)}
+            className="flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-leaf underline-offset-4 hover:underline"
+          >
+            {t.edit}
+            <span className="sr-only"> {name}</span>
+          </LocalLink>
+          <button
+            type="button"
+            data-remove
+            onClick={() => removeSmoothly(line.current, () => remove(item.id))}
+            className="min-h-11 rounded-full px-3 text-sm font-semibold text-muted underline-offset-4 hover:text-error hover:underline"
+          >
+            {t.remove}
+            <span className="sr-only"> {name}</span>
+          </button>
+        </div>
       </div>
     </li>
   )

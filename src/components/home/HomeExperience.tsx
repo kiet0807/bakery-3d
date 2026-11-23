@@ -72,6 +72,12 @@ export function HomeExperience() {
     window.setTimeout(() => setGate('closed'), 750)
   }
 
+  // The start button leaves with the welcome screen: the focus goes to the page it opened, not to the document.
+  useEffect(() => {
+    if (startedState && gateState === 'closed')
+      document.getElementById('main')?.focus({ preventScroll: true })
+  }, [startedState, gateState])
+
   // The scroll position, turned into the chapter number. The sections are measured when they (or the screen)
   // change size, so a page standing still costs nothing here and scrolling never forces a layout.
   useEffect(() => {

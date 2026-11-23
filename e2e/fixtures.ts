@@ -99,7 +99,8 @@ export async function clickInBand(target: Locator) {
 }
 
 /** The number in the header's cart button. */
-export const cartCount = (page: Page) => page.getByLabel(/(in the cart|trong giỏ)$/)
+export const cartCount = (page: Page) =>
+  page.getByRole('banner').locator('a[href$="/cart"] span[aria-hidden]')
 
 interface SeedItem {
   id: string

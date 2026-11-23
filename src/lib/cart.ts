@@ -46,6 +46,38 @@ export function addItem(items: CartItem[], config: CakeConfig, options: AddOptio
   return trimSnapshots([...items, added])
 }
 
+/**
+ * Puts a changed design in place of a line, keeping its quantity and its place. If another line already holds that
+ * design, the two become one.
+ */
+export function replaceItem(
+  items: CartItem[],
+  id: string,
+  config: CakeConfig,
+  options: Omit<AddOptions, 'id'>,
+): CartItem[] {
+  const edited = items.find((item) => item.id === id)
+  if (!edited) return items
+  const key = configKey(config)
+  const twin = items.find((item) => item !== edited && configKey(item.config) === key)
+  const quantity = Math.min(MAX_QUANTITY, edited.quantity + (twin?.quantity ?? 0))
+  return trimSnapshots(
+    items
+      .filter((item) => item !== twin)
+      .map((item) =>
+        item === edited
+          ? {
+              id,
+              ...(options.presetId ? { presetId: options.presetId } : {}),
+              config,
+              quantity,
+              snapshot: options.snapshot,
+            }
+          : item,
+      ),
+  )
+}
+
 export function setQuantity(items: CartItem[], id: string, quantity: number): CartItem[] {
   const clamped = Math.min(MAX_QUANTITY, Math.max(1, Math.round(quantity)))
   return items.map((item) => (item.id === id ? { ...item, quantity: clamped } : item))

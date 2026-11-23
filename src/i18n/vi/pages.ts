@@ -56,7 +56,7 @@ const policySections: Record<PolicyId, PolicySection> = {
             ['Bánh tự thiết kế trên web', '24 giờ'],
             ['Bánh theo ảnh mẫu bạn gửi, tạo hình phức tạp', '48 giờ, nhắn Zalo kèm ảnh'],
             ['Bánh 2 tầng', '48 giờ'],
-            ['Ngày lễ (14/2, 8/3, 20/10, 20/11, 24/12, 7 ngày cận Tết)', '48 giờ cho mọi đơn'],
+            ['Ngày lễ (14/2, 8/3, 20/10, 20/11, 24/12, 7 ngày cận Tết, mùng 1–3)', '48 giờ cho mọi đơn'],
           ],
         },
         text: 'Giờ tính theo giờ Việt Nam, kể cả khi bạn đặt từ nước ngoài cho người nhà.',

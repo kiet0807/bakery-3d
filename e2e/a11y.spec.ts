@@ -83,6 +83,24 @@ test.describe('accessibility and resilience', () => {
     })
   })
 
+  test('a GPU that takes its context away for good leaves the drawing and a working shop', async ({
+    page,
+  }) => {
+    test.slow()
+    await page.goto('/design')
+    const canvas = page.locator('main canvas').first()
+    await expect(canvas).toBeAttached({ timeout: 90_000 })
+    // Let the scene draw first, then lose its context as a driver reset would.
+    await expect(page.getByText(NO_3D)).toHaveCount(0)
+    await canvas.evaluate((element: HTMLCanvasElement) => {
+      const gl = element.getContext('webgl2') ?? element.getContext('webgl')
+      gl?.getExtension('WEBGL_lose_context')?.loseContext()
+    })
+    await expect(page.getByText(NO_3D)).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Thêm vào giỏ' }).click()
+    await expect(cartCount(page)).toHaveText('1')
+  })
+
   test.describe('without WebGL', () => {
     test.beforeEach(async ({ page }) => disableWebGL(page))
 
@@ -90,7 +108,8 @@ test.describe('accessibility and resilience', () => {
       await page.goto('/design')
       await expect(page.getByText(NO_3D)).toBeVisible()
       // Nothing to photograph: the studio photo would wait at 0% forever.
-      await expect(page.getByRole('button', { name: 'Chụp ảnh studio' })).toHaveCount(0)
+      for (const name of ['Chụp ảnh studio', 'Lưu ảnh', 'Cắt bánh xem ruột'])
+        await expect(page.getByRole('button', { name })).toHaveCount(0)
       await page.getByRole('button', { name: 'Thêm vào giỏ' }).click()
       await expect(cartCount(page)).toHaveText('1')
     })

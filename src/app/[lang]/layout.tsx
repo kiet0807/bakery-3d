@@ -87,7 +87,10 @@ export default async function RootLayout({ children, params }: LayoutProps<'/[la
           <StoreHydrator />
           <SmoothScroll />
           <SiteHeader />
-          <main id="main">{children}</main>
+          {/* Focusable by script: where the focus goes when what held it is gone (the welcome screen, the last cart line). */}
+          <main id="main" tabIndex={-1} className="outline-none">
+            {children}
+          </main>
           <SiteFooter lang={lang} />
         </LangProvider>
       </body>

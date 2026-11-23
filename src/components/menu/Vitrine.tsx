@@ -119,7 +119,7 @@ export function Vitrine() {
         {/* Wide screens: the cakes at the sides fade into the cream page, so the title and the card stay clear. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,color-mix(in_srgb,var(--color-cream)_94%,transparent)_0%,color-mix(in_srgb,var(--color-cream)_55%,transparent)_24%,transparent_40%,transparent_62%,color-mix(in_srgb,var(--color-cream)_55%,transparent)_76%,color-mix(in_srgb,var(--color-cream)_94%,transparent)_100%)] xl:block"
+          className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,color-mix(in_srgb,var(--color-cream)_94%,transparent)_0%,color-mix(in_srgb,var(--color-cream)_88%,transparent)_25%,transparent_42%,transparent_62%,color-mix(in_srgb,var(--color-cream)_55%,transparent)_76%,color-mix(in_srgb,var(--color-cream)_94%,transparent)_100%)] xl:block"
         />
         <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3 xl:bottom-10">
           <button
@@ -134,7 +134,7 @@ export function Vitrine() {
             type="button"
             aria-pressed={sliced}
             onClick={() => setSliced(!sliced)}
-            className="btn btn-ghost h-12 px-5 text-sm aria-pressed:bg-butter"
+            className="btn btn-ghost h-12 px-5 text-sm"
           >
             {sliced ? m.close : m.peek}
           </button>

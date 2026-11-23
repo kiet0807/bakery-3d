@@ -63,10 +63,13 @@ export const design = {
   },
   bar: {
     add: 'Thêm vào giỏ',
+    update: 'Cập nhật giỏ',
     viewCart: 'Xem giỏ →',
+    lead: (hours: number) => `${hours} giờ`,
   },
   status: {
     added: (name: string) => `${name} đã vào giỏ rồi nè!`,
+    updated: (name: string) => `${name} trong giỏ đã đổi theo thiết kế mới rồi nha.`,
     pictureFailed: 'Máy này chưa chụp được ảnh bánh, tiếc ghê.',
     pictureSaved: 'Lưu ảnh xong rồi nha.',
     studioSaved: 'Ảnh studio đã về máy, đem flex liền!',

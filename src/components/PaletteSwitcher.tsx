@@ -120,7 +120,7 @@ export function PaletteSwitcher() {
         onKeyDown={(event) => {
           if (event.key === 'Escape' && open) close(true)
         }}
-        className={`group flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-full border-2 bg-surface/70 font-display text-sm font-bold text-muted transition-colors hover:border-ink hover:text-ink lg:px-1 lg:pr-2.5 ${
+        className={`group tap relative flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-full border-2 bg-surface/70 font-display text-sm font-bold text-muted transition-colors hover:border-ink hover:text-ink lg:px-1 lg:pr-2.5 ${
           open ? 'border-ink text-ink' : 'border-ink/15'
         }`}
       >

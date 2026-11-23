@@ -25,6 +25,7 @@ export const cart: CartDict = {
     fewer: (name: string) => `One fewer ${name}`,
     more: (name: string) => `One more ${name}`,
     each: (price: string) => `${price} each`,
+    edit: 'Edit',
     remove: 'Remove',
     lead: {
       menu: 'Order 4 hours ahead',

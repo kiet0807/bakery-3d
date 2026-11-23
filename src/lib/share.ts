@@ -19,6 +19,9 @@ const fromBase64Url = (value: string) => {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0))
 }
 
+/** Opens a design in the builder to change the cart line it came from (read by the builder, then tidied away). */
+export const EDIT_PARAM = 'edit'
+
 /**
  * A design as a short, URL-safe token: the choices in a fixed order, JSON, UTF-8 (so Vietnamese messages
  * survive), base64url. About 120 characters, fine for a Zalo message.
@@ -63,3 +66,7 @@ export function decodeCake(token: string | null | undefined): CakeConfig | null 
 
 /** The path (without language prefix) that opens this design in the builder. */
 export const designPath = (config: CakeConfig) => `/design#${SHARE_PARAM}=${encodeCake(config)}`
+
+/** The builder, opened on a cake that is already in the cart, to change it there. */
+export const editPath = (id: string, config: CakeConfig) =>
+  `/design?${EDIT_PARAM}=${encodeURIComponent(id)}#${SHARE_PARAM}=${encodeCake(config)}`

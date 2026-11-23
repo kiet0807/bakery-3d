@@ -81,7 +81,7 @@ export function DateChips({
   return (
     <fieldset className="space-y-2" aria-describedby={describedBy}>
       <legend className="mb-2 font-display text-[0.95rem] font-bold">{t.label}</legend>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 min-[360px]:grid-cols-4">
         {choices.map((date, index) => {
           const holiday = isHoliday(date)
           const relative = date === today ? t.today : date === tomorrow ? t.tomorrow : null

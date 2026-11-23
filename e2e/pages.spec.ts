@@ -141,3 +141,30 @@ test.describe('info pages', () => {
       if (/status of 404/.test(consoleErrors[i])) consoleErrors.splice(i, 1)
   })
 })
+
+test.describe('every page from a phone', () => {
+  test('one button in the header lists the pages, and closes by itself', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Wide screens show the links in the header.')
+    await page.goto('/faq')
+    const button = page.getByRole('button', { name: 'Mở danh sách trang' })
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Tự thiết kế bánh' })).toBeHidden()
+    await button.click()
+    const pages = page.getByRole('banner').getByRole('link')
+    for (const name of ['Tự thiết kế bánh', 'Menu bánh', 'Về tiệm', 'Chính sách', 'Hỏi đáp'])
+      await expect(pages.filter({ hasText: name })).toBeVisible()
+    await expect(pages.filter({ hasText: 'Hỏi đáp' })).toHaveAttribute('aria-current', 'page')
+    // Whole on screen.
+    const box = (await pages.filter({ hasText: 'Hỏi đáp' }).boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+
+    // Esc closes it and gives the focus back.
+    await page.keyboard.press('Escape')
+    await expect(button).toBeFocused()
+    await expect(pages.filter({ hasText: 'Tự thiết kế bánh' })).toBeHidden()
+
+    await button.click()
+    await pages.filter({ hasText: 'Tự thiết kế bánh' }).click()
+    await expect(page).toHaveURL(/\/design$/)
+    await expect(pages.filter({ hasText: 'Chính sách' })).toBeHidden()
+  })
+})

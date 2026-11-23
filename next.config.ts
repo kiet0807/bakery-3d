@@ -8,7 +8,20 @@ import type { NextConfig } from 'next'
 const SECURITY_HEADERS = [
   {
     key: 'Content-Security-Policy',
-    value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+    value: [
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+      "frame-src 'none'",
+      // Pictures and fonts from here, data: URLs (palette sprinkles, cart snapshots) and blobs (3D textures). The
+      // 3D text's worker is a blob; nothing is ever fetched from, or sent to, another site.
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "media-src 'none'",
+      "worker-src 'self' blob:",
+      ...(process.env.NODE_ENV === 'development' ? [] : ["connect-src 'self' data: blob:"]),
+    ].join('; '),
   },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

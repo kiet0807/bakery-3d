@@ -12,6 +12,8 @@ export const common: CommonDict = {
     menu: 'Menu',
     about: 'About',
     cart: 'Cart',
+    all: 'Open the list of pages',
+    closeAll: 'Close the list of pages',
     cartCount: (n: number) => `${n} ${n === 1 ? 'cake' : 'cakes'} in the cart`,
   },
   palette: {

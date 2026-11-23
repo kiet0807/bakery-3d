@@ -38,7 +38,7 @@ const policySections: Record<PolicyId, PolicySection> = {
             ],
             ['Two-tier cakes', '48 hours ahead'],
             [
-              'Holidays (14/2, 8/3, 20/10, 20/11, 24/12, the 7 days before Tết)',
+              'Holidays (14/2, 8/3, 20/10, 20/11, 24/12, the 7 days before Tết and its first 3 days)',
               '48 hours ahead for every order',
             ],
           ],

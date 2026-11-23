@@ -21,13 +21,6 @@ export function SiteFooter({ lang }: { lang: Locale }) {
               <span className="sr-only">{SHOP.name}</span>
             </p>
             <p className="max-w-sm leading-relaxed text-muted">{f.blurb}</p>
-            <p id="demo-notice" className="max-w-sm rounded-2xl bg-butter-soft p-4 text-sm leading-relaxed">
-              <span className="chip mb-2 -rotate-1">
-                <span aria-hidden>✦</span> {common.notice.badge}
-              </span>
-              <br />
-              {common.notice.text}
-            </p>
           </div>
 
           <nav aria-label={f.explore} className="space-y-3">
@@ -112,9 +105,6 @@ export function SiteFooter({ lang }: { lang: Locale }) {
           <p className="flex flex-wrap gap-x-4 gap-y-1">
             <a className="hover:text-leaf hover:underline" href={SHOP.maker.url} rel="author">
               {f.madeBy}
-            </a>
-            <a className="hover:text-leaf hover:underline" href={SHOP.source}>
-              {f.source}
             </a>
           </p>
           <p className="w-full text-xs">{f.credits}</p>

@@ -29,9 +29,7 @@ export const common: CommonDict = {
   },
   notice: {
     badge: 'Not a real shop',
-    text: "Kai's Bakery is a web project by Kai, and the shop isn't real. Cakes, prices and orders are all for show: no order is sent anywhere and nobody gets charged.",
     short: "This shop isn't real, it's one of Kai's web projects.",
-    more: 'Read more',
   },
   footer: {
     label: 'Footer',
@@ -53,7 +51,6 @@ export const common: CommonDict = {
     hotline: 'Hotline & Zalo',
     contactNote: "The shop isn't open for real, but Kai still reads every message.",
     madeBy: 'Website by Kai',
-    source: 'Source code on GitHub',
     credits:
       'Fonts: Baloo 2, Be Vietnam Pro, Pacifico (SIL OFL). 3D lighting: “Comfy Café” by Sergej Majboroda, Poly Haven (CC0).',
     rights: (year: number) => `© ${year} Kai's Bakery · a showcase project, not a real shop`,

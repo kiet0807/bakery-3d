@@ -181,7 +181,7 @@ const policySections: Record<PolicyId, PolicySection> = {
 const faqItems: FaqItem[] = [
   {
     q: 'Tiệm có thật không?',
-    a: "Hông nha. Kai's Bakery là dự án web của Kai, làm ra để khoe đồ họa 3D và cách làm một trang bán bánh cho chuẩn. Bánh, giá và đơn đều để minh họa, không ai bị trừ tiền.",
+    a: "Hông nha. Kai's Bakery là dự án web của Kai, Bánh, giá và đơn đều để minh họa, không ai bị trừ tiền.",
     link: { href: '/about#project', label: 'Đọc về dự án' },
   },
   {
@@ -267,29 +267,6 @@ export const pages = {
       title: 'Nói thật nè: ',
       accent: 'tiệm không có thật đâu.',
       body: "Kai's Bakery là một dự án web của Kai. Không có tiệm, không có bếp, không ai nhận đơn. Bánh, giá và chính sách đều viết như một tiệm thật để trang web được thử thách đúng nghĩa, nhưng không đơn nào được gửi đi và không ai bị trừ tiền.",
-      showsTitle: 'Dự án này khoe gì',
-      shows: [
-        'Bánh 3D dựng hoàn toàn bằng code, đổi theo từng lựa chọn, cắt ra xem từng lớp.',
-        'Ảnh studio (nút "Chụp ảnh studio") dựng bằng path tracing ngay trong trình duyệt.',
-        'Song ngữ Việt – Anh, tiếng Việt là mặc định, mỗi ngôn ngữ có địa chỉ trang riêng.',
-        'Dùng được bằng bàn phím và trình đọc màn hình, có chế độ giảm chuyển động và hình 2D khi máy không có WebGL.',
-        'Chạy mượt cả trên máy yếu: chất lượng tự hạ khi khung hình tụt.',
-        'Chuyển động mượt: bánh đổi dần theo từng lựa chọn, topping rơi xuống, chuyển trang và đổi bộ màu mờ dần.',
-      ],
-      stackLabel: 'Công nghệ',
-      stack: [
-        'Next.js 16',
-        'React 19',
-        'TypeScript',
-        'three.js',
-        'React Three Fiber',
-        'drei',
-        'postprocessing',
-        'three-gpu-pathtracer',
-        'Tailwind CSS 4',
-        'zustand',
-        'Lenis',
-      ],
       maker: 'Xem các dự án khác của Kai',
       source: 'Xem mã nguồn trên GitHub',
     },
@@ -322,8 +299,6 @@ export const pages = {
     title: 'Mấy điều ',
     accent: 'nên biết trước khi đặt.',
     lead: 'Viết ngắn, nói thẳng: giờ giấc, tiền nong, hủy đơn, bánh hỏng thì sao. Đọc xong là yên tâm chốt đơn.',
-    demoNote:
-      'Đây là chính sách mẫu của một tiệm không có thật, viết y như tiệm thật sẽ viết. Bạn không đặt được bánh thật ở đây đâu nha.',
     tocLabel: 'Trong trang này',
     allergenHint: 'Trang thiết kế và giỏ hàng luôn ghi "Có chứa: …" cho từng chiếc bánh.',
     sections: policySections,

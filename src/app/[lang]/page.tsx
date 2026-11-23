@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { HomeExperience } from '@/components/home/HomeExperience'
-import { NoticeCard } from '@/components/info/NoticeCard'
 import { SectionHeading } from '@/components/info/SectionHeading'
 import { dictionaries } from '@/i18n/dictionaries'
 import { LocalLink } from '@/i18n/LangProvider'
@@ -147,15 +146,6 @@ export default async function Home({ params }: PageProps<'/[lang]'>) {
               </li>
             ))}
           </ol>
-        </section>
-
-        <section aria-labelledby="notice-title" className="mx-auto max-w-4xl px-4 pt-28 sm:px-8">
-          <NoticeCard
-            lang={lang}
-            title={home.notice.title}
-            titleId="notice-title"
-            linkLabel={home.notice.more}
-          />
         </section>
 
         <section aria-labelledby="final-title" className="mx-auto max-w-5xl px-4 pt-28 sm:px-8">

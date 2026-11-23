@@ -31,10 +31,8 @@ test.describe('info pages', () => {
         await expect(link('hreflang="vi"')).toHaveAttribute('href', at(path))
         await expect(link('hreflang="en"')).toHaveAttribute('href', at(`/en${path}`))
         await expect(link('hreflang="x-default"')).toHaveAttribute('href', at(path))
-        // Every page repeats that the shop is not real, in the footer.
-        await expect(page.getByRole('contentinfo')).toContainText(
-          lang === 'vi' ? /không có thật/ : /not a real/i,
-        )
+        // Every page says that the shop is not real, in the header's chip.
+        await expect(page.getByRole('banner')).toContainText(lang === 'vi' ? 'Tiệm "ảo"' : 'Not a real shop')
       })
     }
   }

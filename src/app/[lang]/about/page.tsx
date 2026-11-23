@@ -98,28 +98,6 @@ export default async function AboutPage({ params }: PageProps<'/[lang]/about'>) 
               <span className="mark">{t.project.accent}</span>
             </h2>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed">{t.project.body}</p>
-            <h3 className="mt-8 font-display text-xl font-bold">{t.project.showsTitle}</h3>
-            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-              {t.project.shows.map((item) => (
-                <li key={item} className="flex gap-3 rounded-2xl bg-surface p-4 leading-relaxed">
-                  <span aria-hidden className="font-display font-extrabold text-leaf">
-                    ✓
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <h3 className="mt-8 font-display text-xl font-bold">{t.project.stackLabel}</h3>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {t.project.stack.map((item) => (
-                <li
-                  key={item}
-                  className="rounded-full border border-ink/15 bg-surface px-3 py-1 text-sm font-semibold"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
             <p className="mt-8 flex flex-wrap gap-3">
               <a href={SHOP.maker.url} rel="author" className="btn btn-buy">
                 {t.project.maker}

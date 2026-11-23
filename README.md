@@ -6,7 +6,8 @@ slice it to see the layers, and watch it get boxed up. Vietnamese by default, wi
 **Live: [bakery.kaidev.io.vn](https://bakery.kaidev.io.vn)** (English at [/en](https://bakery.kaidev.io.vn/en))
 
 **Kai's Bakery is not a real shop.** It is a web project by Kai. The cakes, prices and policies are
-realistic on purpose, but no order is ever sent and nobody is charged; every page says so.
+realistic on purpose, but no order is ever sent and nobody is charged. Every page says so in a chip in its header
+(in the menu on phones), and checkout says it again where the name, phone and address are typed.
 
 > Tiếng Việt: Kai's Bakery là dự án web minh họa của Kai, tiệm không có thật. Trang mặc định bằng tiếng
 > Việt, có bản tiếng Anh ở `/en`. Bạn có thể tự thiết kế bánh 3D, cắt bánh xem ruột, đặt thử một đơn (không đơn

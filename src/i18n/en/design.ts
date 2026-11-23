@@ -79,7 +79,7 @@ export const design: DesignDict = {
     pictureFailed: "This device couldn't take the picture, sorry.",
     pictureSaved: 'Picture saved.',
     studioSaved: 'Studio photo saved. Go flex it!',
-    studioStart: 'Developing a path-traced studio photo. Give it a few seconds.',
+    studioStart: 'Developing your studio photo. Give it a few seconds.',
     studioUnavailable: "Studio photos don't work on this device. Try Save picture instead.",
   },
   files: {

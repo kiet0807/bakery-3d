@@ -12,7 +12,6 @@ export const home: HomeDict = {
     loading: 'Baking the 3D scene',
     ready: 'The 3D scene is fresh out of the oven',
     start: 'Come on in',
-    notice: "Psst: this shop isn't real, it's a web project by Kai.",
   },
   stage: {
     script: "Kai's",
@@ -134,10 +133,6 @@ export const home: HomeDict = {
         body: 'Cash on delivery, bank transfer or MoMo. Two tiers, holiday orders or orders from 1,000,000 VND need a 50% deposit.',
       },
     ],
-  },
-  notice: {
-    title: 'Hold up, read this first',
-    more: 'Read about the project',
   },
   final: {
     title: 'Deadline stress? ',

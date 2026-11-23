@@ -165,7 +165,7 @@ const policySections: Record<PolicyId, PolicySection> = {
 const faqItems: FaqItem[] = [
   {
     q: 'Is the shop real?',
-    a: "Nope. Kai's Bakery is a web project by Kai, built to show off 3D graphics and what a proper cake shop site looks like. Cakes, prices and orders are all for show, and nobody gets charged.",
+    a: "Nope. Kai's Bakery is a web project by Kai. Cakes, prices and orders are all for show, and nobody gets charged.",
     link: { href: '/about#project', label: 'Read about the project' },
   },
   {
@@ -251,29 +251,6 @@ export const pages: PagesDict = {
       title: 'Real talk: ',
       accent: "this shop isn't real.",
       body: "Kai's Bakery is a web project by Kai. There is no shop, no kitchen, and nobody takes orders. The cakes, prices and policies are written the way a real shop would write them, so the site gets a proper workout, but no order is ever sent and nobody gets charged.",
-      showsTitle: 'What the project shows',
-      shows: [
-        'Real-time 3D cakes built entirely from code, changing with every choice, sliceable to see each layer.',
-        '"Studio photo" pictures path-traced right in the browser.',
-        'Vietnamese and English, Vietnamese by default, with a separate address for each language.',
-        'Works with a keyboard and a screen reader, has a reduced-motion mode and 2D drawings when WebGL is missing.',
-        'Smooth on low-end devices too: quality steps down when the frame rate drops.',
-        'Smooth motion: the cake eases into every choice, toppings drop on, pages and color sets cross-fade.',
-      ],
-      stackLabel: 'Built with',
-      stack: [
-        'Next.js 16',
-        'React 19',
-        'TypeScript',
-        'three.js',
-        'React Three Fiber',
-        'drei',
-        'postprocessing',
-        'three-gpu-pathtracer',
-        'Tailwind CSS 4',
-        'zustand',
-        'Lenis',
-      ],
       maker: "See Kai's other projects",
       source: 'See the source code on GitHub',
     },
@@ -306,8 +283,6 @@ export const pages: PagesDict = {
     title: 'The stuff to know ',
     accent: 'before you order.',
     lead: 'Short and straight: timing, money, cancellations, and what happens if a cake gets damaged. Read it, then order with zero stress.',
-    demoNote:
-      "These are sample policies for a shop that doesn't exist, written exactly as a real shop would. You can't order a real cake here.",
     tocLabel: 'On this page',
     allergenHint: 'The design page and the cart always list "Contains: …" for every cake.',
     sections: policySections,

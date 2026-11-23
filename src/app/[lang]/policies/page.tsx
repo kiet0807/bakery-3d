@@ -60,7 +60,7 @@ function Block({ block }: { block: PolicyBlock }) {
 
 export default async function PoliciesPage({ params }: PageProps<'/[lang]/policies'>) {
   const lang = await langFrom(params)
-  const { common, pages } = dictionaries[lang]
+  const { pages } = dictionaries[lang]
   const t = pages.policies
   return (
     <PageTransition>
@@ -69,12 +69,6 @@ export default async function PoliciesPage({ params }: PageProps<'/[lang]/polici
           <SectionHeading id="policies-title" level={1} eyebrow={t.eyebrow} title={t.title} accent={t.accent}>
             <p className="text-xl leading-relaxed text-muted">{t.lead}</p>
           </SectionHeading>
-          <p className="rounded-2xl bg-butter-soft p-4 leading-relaxed">
-            <span className="chip mr-2 -rotate-2 border border-ink/80">
-              <span aria-hidden>✦</span> {common.notice.badge}
-            </span>
-            {t.demoNote}
-          </p>
         </header>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-[16rem_minmax(0,1fr)]">

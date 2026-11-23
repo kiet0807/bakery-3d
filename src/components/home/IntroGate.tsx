@@ -23,7 +23,7 @@ export function IntroGate({
   onStart: () => void
   leaving: boolean
 }) {
-  const { home, common } = useDict()
+  const { home } = useDict()
   const t = home.intro
   const dialog = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
@@ -139,12 +139,6 @@ export function IntroGate({
           )}
         </p>
       </div>
-      <p className="max-w-sm animate-rise text-sm text-pretty text-muted [animation-delay:360ms]">
-        <span className="chip mr-1.5 -rotate-2 border border-ink/80">
-          <span aria-hidden>✦</span> {common.notice.badge}
-        </span>
-        {t.notice}
-      </p>
     </div>
   )
 }

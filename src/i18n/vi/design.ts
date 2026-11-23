@@ -79,7 +79,7 @@ export const design = {
     pictureFailed: 'Máy này chưa chụp được ảnh bánh, tiếc ghê.',
     pictureSaved: 'Lưu ảnh xong rồi nha.',
     studioSaved: 'Ảnh studio đã về máy, đem flex liền!',
-    studioStart: 'Đang rửa ảnh studio bằng path tracing, chờ vài giây nha.',
+    studioStart: 'Đang rửa ảnh studio, chờ vài giây nha.',
     studioUnavailable: 'Máy này chưa chụp ảnh studio được, dùng nút Lưu ảnh nha.',
   },
   files: {

@@ -33,7 +33,6 @@ export const home = {
     loading: 'Đang nướng cảnh 3D',
     ready: 'Cảnh 3D ra lò rồi nè',
     start: 'Vào tiệm thôi',
-    notice: 'Psst: tiệm không có thật đâu, đây là dự án web của Kai.',
   },
   stage: {
     script: "Kai's",
@@ -155,10 +154,6 @@ export const home = {
         body: 'COD, chuyển khoản hoặc MoMo. Bánh 2 tầng, đơn ngày lễ hay đơn từ 1.000.000đ thì cọc trước 50%.',
       },
     ],
-  },
-  notice: {
-    title: 'Khoan, đọc cái này đã',
-    more: 'Đọc về dự án',
   },
   final: {
     title: 'Deadline dí? ',

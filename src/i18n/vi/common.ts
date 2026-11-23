@@ -1,7 +1,7 @@
 import type { Allergen } from '@/lib/cake'
 import type { PaletteId } from '@/lib/palettes'
 
-/** Words shared by every page: header, footer, the "not a real shop" notice, units, allergens. */
+/** Words shared by every page: header, footer, the "not a real shop" chip, units, allergens. */
 export const common = {
   langName: 'Tiếng Việt',
   /** The switch is labelled in the language it switches to (the link carries that `lang`). */
@@ -37,9 +37,7 @@ export const common = {
   },
   notice: {
     badge: 'Tiệm "ảo"',
-    text: "Kai's Bakery là một dự án web của Kai, tiệm không có thật đâu nha. Bánh, giá và đơn hàng đều để minh họa: không đơn nào được gửi đi, không ai bị trừ tiền.",
     short: 'Tiệm không có thật, chỉ là dự án web của Kai thôi nha.',
-    more: 'Tìm hiểu thêm',
   },
   footer: {
     label: 'Chân trang',
@@ -61,7 +59,6 @@ export const common = {
     hotline: 'Hotline & Zalo',
     contactNote: 'Tiệm chưa mở thật, nhưng Kai vẫn đọc tin nhắn nha.',
     madeBy: 'Web làm bởi Kai',
-    source: 'Mã nguồn trên GitHub',
     credits:
       'Phông chữ: Baloo 2, Be Vietnam Pro, Pacifico (SIL OFL). Ánh sáng 3D: “Comfy Café” của Sergej Majboroda, Poly Haven (CC0).',
     rights: (year: number) => `© ${year} Kai's Bakery · dự án minh họa, không phải cửa hàng thật`,

@@ -36,12 +36,12 @@ test.describe('accessibility and resilience', () => {
     await expect(page).toHaveURL(/#main$/)
   })
 
-  test('every page says the shop is not real', async ({ page }) => {
+  test('every page says in its header that the shop is not real', async ({ page }) => {
     await skipIntro(page)
     for (const path of ['/', '/en']) {
       await page.goto(path)
-      const footer = page.getByRole('contentinfo')
-      await expect(footer).toContainText(path === '/' ? /không có thật/ : /not a real/i)
+      // The chip shows from 1024 px; on a phone the menu says it (MobileNav), and checkout always does.
+      await expect(page.getByRole('banner')).toContainText(path === '/' ? 'Tiệm "ảo"' : 'Not a real shop')
     }
   })
 

@@ -21,7 +21,6 @@ test.describe('home', () => {
     await page.goto('/')
     const gate = page.getByRole('dialog', { name: /Chào mừng tới/ })
     await expect(gate).toBeVisible()
-    await expect(gate).toContainText(/tiệm không có thật/)
     // While the gate is up, the page behind it is inert: Tab cannot reach links hidden under it.
     await expect(page.locator('header').first()).toHaveAttribute('inert')
 
@@ -127,16 +126,12 @@ test.describe('home', () => {
     await expect(page).toHaveURL(/\/design$/)
   })
 
-  test('the sections under the story say what the shop is, and that it is not real', async ({ page }) => {
+  test('the sections under the story say what the shop is', async ({ page }) => {
     await skipIntro(page)
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 2, name: 'Bánh xinh xỉu, ngọt vừa đủ.' })).toBeAttached()
     await expect(page.getByRole('heading', { level: 3, name: 'Ít ngọt là mặc định' })).toBeAttached()
     await expect(page.getByRole('heading', { level: 2, name: 'Dễ như ăn bánh.' })).toBeAttached()
-
-    const notice = page.getByRole('region', { name: 'Khoan, đọc cái này đã' })
-    await expect(notice).toContainText(/tiệm không có thật/)
-    await expect(notice.getByRole('link', { name: 'Đọc về dự án' })).toHaveAttribute('href', '/about#project')
   })
 
   test('the side index follows and drives the story', async ({ page, isMobile }) => {

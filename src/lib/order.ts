@@ -333,7 +333,8 @@ export function validateOrder(form: OrderForm, context: { now: Date; items: Orde
   else if (form.date > max) errors.date = 'tooFar'
   else if (form.date < min || !slotsFor(form.date, slotContext).length) errors.date = 'tooSoon'
 
-  if (!form.time) errors.time = 'required'
+  // Without a good day the time list is locked, so only the day is flagged.
+  if (!form.time && !errors.date) errors.time = 'required'
   else if (!errors.date && !slotsFor(form.date, slotContext).includes(form.time)) errors.time = 'unavailable'
 
   if (!form.payment || !PAYMENTS.includes(form.payment)) errors.payment = 'required'
@@ -376,10 +377,10 @@ export function orderNumber(): string {
   return `KAI-${String(n).padStart(4, '0')}`
 }
 
-/** "Thứ Năm, 24 tháng 12" or "Thursday 24 December" for a shop date. */
+/** "Thứ Năm, 24 tháng 12" or "Thursday, December 24" (American English, like the rest of the site) for a shop date. */
 export function formatDay(date: string, lang: Locale): string {
   if (!isDate(date)) return date
-  return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'vi-VN', {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'vi-VN', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

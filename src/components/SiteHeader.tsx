@@ -137,7 +137,8 @@ export function SiteHeader() {
             <path d="M9 10.5V7a3 3 0 0 1 6 0v3.5" />
           </svg>
           <span className="max-sm:sr-only">{common.nav.cart}</span>
-          <span className="sr-only">{common.nav.cartCount(count)}</span>
+          {/* The comma keeps the link's name from running together: "Cart, 2 cakes in the cart", not "Cart2 cakes". */}
+          <span className="sr-only">, {common.nav.cartCount(count)}</span>
           <span
             ref={badge}
             aria-hidden

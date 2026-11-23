@@ -72,7 +72,7 @@ describe("the shop's clock", () => {
   })
 
   it('writes the day in words in each language', () => {
-    expect(formatDay('2026-12-24', 'en')).toBe('Thursday 24 December')
+    expect(formatDay('2026-12-24', 'en')).toBe('Thursday, December 24')
     expect(formatDay('2026-12-24', 'vi')).toMatch(/Thứ Năm.*24/)
   })
 })
@@ -250,9 +250,11 @@ describe('validateOrder', () => {
       name: 'required',
       phone: 'required',
       date: 'required',
-      time: 'required',
       payment: 'required',
     })
+    // The time is asked for once there is a day to pick it on.
+    expect(check({ time: '' }).time).toBe('required')
+    expect(check({ date: '2020-01-01', time: '' }).time).toBeUndefined()
   })
 
   it('checks names, phones, addresses and notes', () => {

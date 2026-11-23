@@ -129,13 +129,22 @@ test.describe('info pages', () => {
     )
   })
 
-  test('an unknown address gets the bilingual 404 page', async ({ page, consoleErrors }) => {
+  test('an unknown address gets a 404 in its own language', async ({ page, consoleErrors }) => {
     const response = await page.goto('/khong-co-trang-nay')
     expect(response?.status()).toBe(404)
     await expect(page.locator('html')).toHaveAttribute('lang', 'vi')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/bay màu/)
     await expect(page.getByRole('link', { name: 'Về trang chủ' })).toHaveAttribute('href', '/')
-    await expect(page.locator('[lang="en"]').getByRole('heading', { level: 2 })).toBeVisible()
+    await expect(page.locator('[lang="en"]').getByRole('link')).toHaveAttribute('href', '/en')
+
+    // The same prerendered page, turned English before it paints for an address under /en.
+    const english = await page.goto('/en/no-such-page')
+    expect(english?.status()).toBe(404)
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/went poof/)
+    await expect(page.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/en')
+    await expect(page.getByRole('link', { name: 'See the menu' })).toHaveAttribute('href', '/en/menu')
+    await expect(page.getByRole('link', { name: 'Về trang chủ' })).toHaveCount(0)
     // The browser logs the 404 status of the page itself; that one is the point of this test.
     for (let i = consoleErrors.length - 1; i >= 0; i--)
       if (/status of 404/.test(consoleErrors[i])) consoleErrors.splice(i, 1)

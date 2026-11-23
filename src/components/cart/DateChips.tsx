@@ -7,11 +7,11 @@ import { addShopDays, formatDay, isHoliday } from '@/lib/order'
 import type { CheckoutKit } from './checkoutKit'
 import { FieldNotes } from './FormParts'
 
-/** "21/11" in Vietnamese, "21 Nov" in English, for a shop date (YYYY-MM-DD). */
+/** "21/11" in Vietnamese, "Nov 21" in English, for a shop date (YYYY-MM-DD). */
 function dayMonth(date: string, lang: Locale) {
   const [, month, day] = date.split('-').map(Number)
   if (lang === 'vi') return `${day}/${month}`
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
+  return new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
     new Date(`${date}T00:00:00Z`),
   )
 }

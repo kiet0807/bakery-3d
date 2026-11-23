@@ -45,8 +45,10 @@ and test, are Apache-2.0.
 
 ## Colour
 
-- Palette "Bơ Bạc Hà" (butter and mint), picked by the owner from three options on 2026-11-20. Every text pair
-  is measured against WCAG 2.2 AA by `src/lib/contrast.test.ts`.
+- Four colour sets, all Kai's own: "Bơ Bạc Hà" (butter and mint), picked by the owner from three options on
+  2026-11-20, and three greens from a later comparison page, "Matcha Dâu" (the default since 2026-11-20),
+  "Lá Dứa Dừa" and "Rừng Kem". Every text pair in every set is measured against WCAG 2.2 AA by
+  `src/lib/contrast.test.ts`.
 
 ## Market research
 

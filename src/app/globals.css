@@ -171,6 +171,34 @@ html {
   color-scheme: light;
 }
 
+/*
+ * The builder: below lg its 3D stage and section bar stick under the header (4rem, 5rem from sm) and the price bar
+ * sticks to the bottom. What the browser scrolls into view (a choice reached with Tab, a field taking the focus)
+ * then stops in the open band between them, not under them (WCAG 2.4.11). `--stage-band` repeats the stage's height,
+ * `--stage` in `Designer.tsx` (smaller while the words on the cake are typed); the section bar is 3.1rem high.
+ */
+@media (max-width: 63.99rem) {
+  html:has([data-builder]) {
+    --stage-band: max(38svh, 13rem);
+    scroll-padding-top: calc(4rem + var(--stage-band) + 3.25rem);
+    scroll-padding-bottom: 6rem;
+  }
+  html:has([data-builder] [data-typing]:focus) {
+    --stage-band: max(24svh, 9rem);
+  }
+}
+@media (min-width: 40rem) and (max-width: 63.99rem) {
+  html:has([data-builder]) {
+    scroll-padding-top: calc(5rem + var(--stage-band) + 3.25rem);
+  }
+}
+@media (min-width: 64rem) {
+  html:has([data-builder]) {
+    scroll-padding-top: 6.5rem;
+    scroll-padding-bottom: 7rem;
+  }
+}
+
 body {
   font-family: var(--font-sans);
   font-weight: 400;
@@ -202,7 +230,8 @@ body::before {
       color-mix(in srgb, var(--color-butter) 22%, transparent),
       transparent 70%
     );
-  filter: blur(10px);
+  /* No blur filter: the gradients already fade out, and a filter on a layer this big cost the GPU every frame
+     of the drift, on pages that are only read. */
   animation: var(--animate-drift);
 }
 
@@ -329,9 +358,13 @@ p {
     color 0.2s var(--ease-out),
     border-color 0.2s var(--ease-out),
     opacity 0.2s var(--ease-out);
-  &:hover:not(:disabled) {
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 var(--color-ink);
+  /* Hover only where there is a pointer that hovers: a finger leaves it stuck on after a tap (like Tailwind's
+     own hover: variant). */
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 var(--color-ink);
+    }
   }
   &:active:not(:disabled) {
     transform: translate(2px, 2px);
@@ -349,16 +382,20 @@ p {
 @utility btn-buy {
   background: var(--color-buy);
   color: #ffffff;
-  &:hover:not(:disabled) {
-    background: var(--color-buy-deep);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-buy-deep);
+    }
   }
 }
 
 @utility btn-ghost {
   background: var(--color-surface);
   color: var(--color-ink);
-  &:hover:not(:disabled) {
-    background: var(--color-butter-soft);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--color-butter-soft);
+    }
   }
   /* A toggle that is on keeps its colour under the pointer that just pressed it. */
   &[aria-pressed='true'] {

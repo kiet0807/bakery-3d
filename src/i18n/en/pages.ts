@@ -156,7 +156,7 @@ const policySections: Record<PolicyId, PolicySection> = {
         ],
       },
       {
-        text: "If the shop ever opens for real, this section will be rewritten under Vietnam's Personal Data Protection Law (in force since 1 January 2026) and its implementing rules.",
+        text: "If the shop ever opens for real, this section will be rewritten under Vietnam's Personal Data Protection Law (in force since January 1, 2026) and its implementing rules.",
       },
     ],
   },
@@ -234,7 +234,7 @@ export const pages: PagesDict = {
     story: {
       title: 'Our story',
       paragraphs: [
-        "Kai started baking back in uni, because friends' birthday cakes from the shops were way too sweet. That became the house rules: less sweet by default, cream-cheese whipped cream, and free lettering on every cake.",
+        "Kai started baking back in college, because friends' birthday cakes from the shops were way too sweet. That became the house rules: less sweet by default, cream-cheese whipped cream, and free lettering on every cake.",
         'The shop bakes for students around the University Village, office folks on the east side, and parents ordering for their kids. A bento for your bestie, the classic 16 cm for the whole office, two tiers for the days you need main character energy.',
         "What makes Kai's different: you see your cake in 3D before you order, every choice changes it, and the price updates instantly. No more DMing back and forth just to ask how much.",
       ],
@@ -288,7 +288,7 @@ export const pages: PagesDict = {
       title: 'Where we deliver',
       lead: "Across Ho Chi Minh City's old inner districts by Grab, Be or Ahamove. The delivery fee is whatever the app charges, and you pay it.",
       merger:
-        "Since 1 July 2025, Ho Chi Minh City has no districts and has merged with Bình Dương and Bà Rịa – Vũng Tàu. We still list the old district names because everyone knows them, and we don't deliver to the newly merged provinces yet.",
+        "Since July 1, 2025, Ho Chi Minh City has no districts and has merged with Bình Dương and Bà Rịa – Vũng Tàu. We still list the old district names because everyone knows them, and we don't deliver to the newly merged provinces yet.",
     },
     contact: {
       title: 'Text Kai',

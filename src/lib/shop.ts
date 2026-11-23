@@ -43,15 +43,20 @@ export const SHOP_LINKS = [
   { href: SHOP.social.tiktok, label: 'TikTok' },
 ] as const
 
-/** The old inner-city districts the shop delivers to (names people still use after the 2025 merger). */
+/**
+ * The old inner-city districts the shop delivers to (names people still use after the 2025 merger). Only names,
+ * shown as they are in both languages: Quận 2 and Quận 9 are listed next to Thủ Đức, which took them in.
+ */
 export const DELIVERY_AREAS = [
   'Quận 1',
+  'Quận 2',
   'Quận 3',
   'Quận 4',
   'Quận 5',
   'Quận 6',
   'Quận 7',
   'Quận 8',
+  'Quận 9',
   'Quận 10',
   'Quận 11',
   'Quận 12',
@@ -61,5 +66,5 @@ export const DELIVERY_AREAS = [
   'Tân Bình',
   'Tân Phú',
   'Bình Tân',
-  'Thủ Đức (gồm Quận 2, Quận 9 cũ)',
+  'Thủ Đức',
 ] as const

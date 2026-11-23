@@ -87,6 +87,8 @@ export const common = {
     body: 'Link có thể bị gõ sai, hoặc trang đã dời đi chỗ khác. Quay về tiệm kiếm bánh ăn cho đỡ buồn nha.',
     home: 'Về trang chủ',
     menu: 'Xem menu',
+    /** The 404's line in the other language, for a visitor on the wrong one. */
+    other: { lang: 'en', href: '/en', lead: 'Reading in English?', link: 'The shop in English' },
   },
   meta: {
     siteTitle: "Kai's Bakery – Tiệm Bánh Thủ Công",

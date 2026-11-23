@@ -105,7 +105,10 @@ export function IntroGate({
           Kai&apos;s Bakery
         </span>
       </h2>
-      <p id="intro-tagline" className="max-w-md animate-rise text-lg text-muted [animation-delay:200ms]">
+      <p
+        id="intro-tagline"
+        className="max-w-md animate-rise text-lg text-balance text-muted [animation-delay:200ms]"
+      >
         {t.tagline}
       </p>
       <div className="flex animate-rise flex-col items-center gap-3 [animation-delay:280ms]">
@@ -136,7 +139,7 @@ export function IntroGate({
           )}
         </p>
       </div>
-      <p className="max-w-sm animate-rise text-sm text-muted [animation-delay:360ms]">
+      <p className="max-w-sm animate-rise text-sm text-pretty text-muted [animation-delay:360ms]">
         <span className="chip mr-1.5 -rotate-2 border border-ink/80">
           <span aria-hidden>✦</span> {common.notice.badge}
         </span>

@@ -166,7 +166,7 @@ export const cart: CartDict = {
       },
       time: {
         required: 'Choose a time.',
-        unavailable: 'That time won’t work any more, pick one from the list.',
+        unavailable: 'That time won’t work anymore, pick one from the list.',
       },
       payment: {
         required: 'Choose how to pay.',

@@ -79,6 +79,7 @@ export const common: CommonDict = {
     body: 'The link might have a typo, or the page moved somewhere else. Head back to the shop and grab some cake instead.',
     home: 'Back to home',
     menu: 'See the menu',
+    other: { lang: 'vi', href: '/', lead: 'Đọc tiếng Việt?', link: 'Tiệm bản tiếng Việt' },
   },
   meta: {
     siteTitle: "Kai's Bakery – Handmade Cakes",

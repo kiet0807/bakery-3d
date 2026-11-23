@@ -114,7 +114,7 @@ export const home: HomeDict = {
     accent: 'remix any of them.',
     all: 'See the 3D vitrine',
     cta: 'Make it yours',
-    lead: (hours: number) => `Order ${hours} h ahead`,
+    lead: (hours: number) => `Order ${hours} hrs ahead`,
   },
   steps: {
     eyebrow: 'Order in 3 steps',

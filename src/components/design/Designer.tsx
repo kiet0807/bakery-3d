@@ -232,7 +232,10 @@ export function Designer() {
     // `--stage`: the stage's height below `lg`, shared with the bar that sticks under it. It shrinks while the words
     // on the cake are typed, when a phone's keyboard takes the lower half of the screen. It grows back a moment after
     // the field loses the focus, not at once: the tap that took the focus would otherwise land on what moved there.
-    <div className="group/builder mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-6 px-3 pt-20 [--stage:max(38svh,13rem)] max-lg:has-[[data-typing]:focus]:[--stage:max(24svh,9rem)] sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
+    <div
+      data-builder
+      className="group/builder mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-6 px-3 pt-20 [--stage:max(38svh,13rem)] max-lg:has-[[data-typing]:focus]:[--stage:max(24svh,9rem)] sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24"
+    >
       {/* The wheel zooms the cake here (OrbitControls), so the smooth page scroll keeps out of the stage. */}
       <div
         ref={stage}
@@ -265,7 +268,13 @@ export function Designer() {
           {photo && !developed ? (
             <div className="sticker flex w-full max-w-sm items-center gap-3 rounded-full py-2 pr-2 pl-4">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-muted">{d.stage.developing}</p>
+                {/* The number too: a bar alone, creeping for 15 to 25 seconds, looked stuck. */}
+                <p className="flex justify-between gap-2 text-xs font-medium text-muted">
+                  <span>{d.stage.developing}</span>
+                  <span aria-hidden className="tabular-nums">
+                    {Math.round(photoProgress * 100)}%
+                  </span>
+                </p>
                 <div
                   role="progressbar"
                   aria-label={d.stage.progress}

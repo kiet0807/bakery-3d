@@ -118,9 +118,11 @@ test.describe('cart and test checkout', () => {
 
     const submit = page.getByRole('button', { name: /Chốt đơn thử/ })
     await submit.click()
-    for (const text of ['Chọn ngày nhận bánh nha.', 'Chọn giờ nhận nha.', 'Chọn cách thanh toán nha.'])
+    for (const text of ['Chọn ngày nhận bánh nha.', 'Chọn cách thanh toán nha.'])
       await expect(page.getByText(text)).toBeVisible()
-    await expect(page.getByRole('status').filter({ hasText: 'Còn 3 ô cần sửa ở trên nha.' })).toBeVisible()
+    // The time list stays locked until there is a day, so it is not flagged as well.
+    await expect(page.getByText('Chọn giờ nhận nha.')).toHaveCount(0)
+    await expect(page.getByRole('status').filter({ hasText: 'Còn 2 ô cần sửa ở trên nha.' })).toBeVisible()
 
     // The days are one radio group: the focus lands on the first, arrow keys move along it.
     const days = dayChoices(page)

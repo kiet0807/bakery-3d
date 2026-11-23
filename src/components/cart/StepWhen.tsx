@@ -56,6 +56,8 @@ export function StepWhen({
   // The first quick pick is the earliest day (none when the whole 30-day window is full).
   const earliest = choices[0] ?? null
   const slots = context && form.date ? slotsFor(form.date, context) : []
+  // A day typed past the 30-day window has no times because orders stop there, not because it is full.
+  const tooFar = Boolean(range && form.date && form.date > range.max)
   const lead = leadFor(items, form.date || undefined)
   const deposit = depositFor(items, form.date || undefined)
 
@@ -88,8 +90,10 @@ export function StepWhen({
 
       <div className="space-y-2">
         <p className="flex flex-wrap gap-2">
-          <span className="inline-flex -rotate-1 items-center gap-1.5 rounded-full border-2 border-ink bg-butter px-3 py-1 text-sm font-semibold">
-            <Icon name="clock" bold className="h-4 w-4" /> {lead.holiday ? t.holidayLead : t.lead[lead.kind]}
+          {/* The holiday line runs to two lines on a phone: a rounded box, not a pill, and evenly split. */}
+          <span className="inline-flex -rotate-1 items-center gap-1.5 rounded-2xl border-2 border-ink bg-butter px-3 py-1 text-sm font-semibold text-balance">
+            <Icon name="clock" bold className="h-4 w-4 shrink-0" />{' '}
+            {lead.holiday ? t.holidayLead : t.lead[lead.kind]}
           </span>
         </p>
         {lead.kind === 'menu' && !lead.holiday && <p className="text-xs text-muted">{t.sameDay}</p>}
@@ -107,7 +111,7 @@ export function StepWhen({
       <Field
         id={ids.time}
         label={t.time.label}
-        hint={form.date && !slots.length ? t.time.none : undefined}
+        hint={form.date && !slots.length ? (tooFar ? t.errors.date.tooFar : t.time.none) : undefined}
         error={message('time')}
       >
         <select

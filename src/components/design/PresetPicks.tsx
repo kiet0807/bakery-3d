@@ -31,15 +31,18 @@ export function PresetPicks({
   }
   const canGoBack = own !== null && configKey(own) !== configKey(config)
   return (
-    <section aria-labelledby="picks-title" className="space-y-3">
+    <section aria-labelledby="picks-title" className="@container space-y-3">
       <h2 id="picks-title" className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className="font-display text-2xl font-bold">{t.title}</span>
         <span className="text-sm font-medium text-muted">{t.hint}</span>
       </h2>
-      {/* One row to swipe on phones, two rows of three where there is room. */}
+      {/*
+        One row to swipe on phones; on wider screens a grid, three across only where the panel itself is wide
+        enough for a price on one line ("1,290,000 VND"), two across in a narrow panel.
+      */}
       <ul
         data-lenis-prevent-wheel
-        className="-mx-3 flex snap-x scroll-px-3 gap-2 overflow-x-auto px-3 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0"
+        className="-mx-3 flex snap-x scroll-px-3 gap-2 overflow-x-auto px-3 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 @min-[33rem]:grid-cols-3"
       >
         {PRESETS.map((preset) => (
           <li key={preset.id} className="w-44 shrink-0 snap-start sm:w-auto">
@@ -61,7 +64,7 @@ export function PresetPicks({
                 <span className="block font-display text-sm leading-tight font-bold">
                   {cake.presets[preset.id].name}
                 </span>
-                <span className="block text-xs font-semibold text-muted tabular-nums">
+                <span className="block text-xs font-semibold whitespace-nowrap text-muted tabular-nums">
                   {money(presetPrice(preset), lang)}
                 </span>
               </span>

@@ -89,7 +89,7 @@ export function StepWho({ kit, onMethod }: { kit: CheckoutKit; onMethod: (method
           <div className="space-y-1.5 text-sm leading-relaxed">
             <p className="font-display font-bold">{t.delivery.title}</p>
             <p className="text-muted">
-              {t.delivery.areas}: {DELIVERY_AREAS.join(', ')}.
+              {t.delivery.areas}: <span lang="vi">{DELIVERY_AREAS.join(', ')}</span>.
             </p>
             <p>{t.delivery.fee}</p>
             <p className="text-muted">{t.delivery.car}</p>

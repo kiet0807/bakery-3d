@@ -167,8 +167,9 @@ fixed maze pattern on diffuse surfaces that more samples did not clear.
 - Time is always the shop's (Asia/Ho_Chi_Minh), not the visitor's device, so someone abroad ordering for
   family in Vietnam still sees the right slots.
 - Two tiers, orders from 1,000,000 đ and holiday orders take a 50% deposit by bank transfer or MoMo, rounded
-  up to the thousand (and the checkout says so). The week before Tết and its first three days count as
-  holidays.
+  up to the thousand (and the checkout says so). The holidays are New Year's Day, Valentine's Day (14/2),
+  Women's Day (8/3), Children's Day (1/6), Vietnamese Women's Day (20/10), Teachers' Day (20/11), Christmas Eve
+  and Christmas; the week before Tết and its first three days count too.
 - The cart and the current design live in `localStorage` (zustand `persist`) and are read after the first
   render, so server and browser HTML match. The checkout validates the form and stops there: one switch in
   `src/lib/shop.ts` (`ORDERING_OPEN`) keeps it a demo.

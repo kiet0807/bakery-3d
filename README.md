@@ -18,12 +18,12 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
 
 - **Home** (`/`): a scroll story in five chapters. The camera moves around the cake, a slice slides out to
   show the sponge and filling, the glaze pours over the edge and the toppings land. Under the story: why the
-  shop, the six house cakes and how ordering works in three steps. The welcome screen lets you in at once;
+  shop, the six house cakes (pictures taken from the 3D scene itself) and how ordering works in three steps. The welcome screen lets you in at once;
   the scene finishes loading behind it, and the opening act waits until the cake is on screen.
 - **Cake builder** (`/design`): size in centimetres (10 cm bento to two tiers), sponge, filling, frosting,
   drip, up to four toppings, sweetness, candles and a message of up to 22 characters with full Vietnamese
   diacritics. Every choice redraws the cake and the price in đồng, and shows how far ahead it must be ordered.
-  Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the
+  On phones a bar under the stage jumps between the groups of choices. Slice it, save a picture, develop a path-traced studio photo on a desktop, or copy a link that opens the
   exact same cake (`/design#cake=…`, in the fragment so it never reaches a server) to send to the shop on Zalo.
 - **Vitrine** (`/menu`): the six house cakes on a turning table under glass cloches. The chosen cake comes to
   the front and its cloche lifts. Add it as it is, or open it in the builder.
@@ -89,8 +89,8 @@ There is not a single 3D model file. Each cake is generated from the customer's 
 
 ### Scroll-driven story
 
-The scroll position becomes a continuous chapter number (2.5 is halfway between chapters 2 and 3). One frame
-loop damps the camera between per-chapter shots and drives the slice, glaze and toppings through a small
+The scroll position becomes a continuous chapter number (2.5 is halfway between chapters 2 and 3), worked out on
+scroll only, from section positions measured when they change size. The canvas's frame loop damps the camera between per-chapter shots and drives the slice, glaze and toppings through a small
 controls object instead of React state, so scrolling never re-renders the tree. Lenis smooths the scroll
 unless the visitor asked for reduced motion.
 
@@ -118,12 +118,15 @@ unless the visitor asked for reduced motion.
   paused while the canvas is off screen, and a capped device pixel ratio.
 - Two quality tiers. Phones and machines with four cores or fewer start on "low"; drei's `PerformanceMonitor`
   moves any device down if the frame rate drops.
+- Reflections get a bright horizon the colour of the page. Seen at a low angle, glaze mirrors what lies behind it,
+  and that was the black of an empty cube: white chocolate turned grey-brown and every drip wore a dark outline.
 - The "high" tier adds an HDRI from a real café for reflections, shadow maps and post-processing: N8AO
   ambient occlusion, a soft bloom and neutral tone mapping, which keeps the pastel colours true.
 - The builder renders on demand: with the cake standing still it draws nothing (it used to draw about 13,700
   calls every 3 s on a desktop). Every frame comes back only while candles burn or a studio photo develops. A
   scene on demand draws continuously for its first 3 s so the frame-rate monitor can judge the device, and the
   monitor is off while frames are sparse (they would read as a slow machine).
+- Asked for less motion, the story and the box draw on demand as well: nothing at all while the page stands still.
 - The vitrine renders on demand too: its slow idle turn draws 30 frames a second, anything the visitor moves gets
   every frame, toppings stay out of the floor reflection, and closed cakes skip their cut faces (about a third of
   the old cost). The café light fades in when it arrives instead of brightening the scene in one jump.
@@ -135,7 +138,7 @@ unless the visitor asked for reduced motion.
 
 ### Four palettes without a flash
 
-- `src/lib/palettes.ts` is the only place colours are defined: four sets of the same 21 roles (ink and muted
+- `src/lib/palettes.ts` is the only place colours are defined: four sets of the same 22 roles (ink and muted
   carry text, leaf is links and focus, buy is only for buying, brand is the "Kai's" script, the rest is
   decoration). `globals.css` holds the default set in `@theme` so Tailwind knows the tokens; a test keeps the
   two equal.
@@ -207,7 +210,7 @@ pnpm check                # typecheck, lint, format check, unit tests, productio
 pnpm build && pnpm e2e    # end-to-end tests against the production build
 ```
 
-Canonical links, the sitemap and the social preview image (`public/og/kais-bakery.jpg`) use
+Canonical links, the sitemap and the social preview image (`public/og/`, one per language) use
 `https://bakery.kaidev.io.vn`. To deploy a fork or a preview under another address, set `NEXT_PUBLIC_SITE_URL`.
 
 ## Project structure
@@ -222,7 +225,7 @@ src/components/three/scenes story, builder, vitrine and box scenes
 src/components/{home,design,menu,cart,info}/  page UI
 src/lib/                    cake model and prices, presets, lead times, cart, order rules, share links, shop details
 e2e/                        Playwright tests
-scripts/screenshot.mjs      screenshots with a real GPU
+scripts/                    screenshots with a real GPU, the house cakes' pictures, README pictures, loading metrics
 ```
 
 ## Credits

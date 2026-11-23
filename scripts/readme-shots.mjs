@@ -2,7 +2,7 @@
 //   pnpm build && pnpm start --port 3216
 //   node scripts/readme-shots.mjs http://localhost:3216 shots [home story design menu boxed photo phone palettes og]
 // Then convert to JPEG: `sips -s format jpeg -s formatOptions 82 shots/x.png --out docs/screenshots/x.jpg`
-// (the social preview goes to public/og/kais-bakery.jpg). The default palette (G1) is used unless a shot sets one.
+// (the social previews go to public/og/kais-bakery.jpg and, for the English pages, kais-bakery-en.jpg). The default palette (G1) is used unless a shot sets one.
 import { mkdir } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
 const [base = 'http://localhost:3216', out = './shots', ...wanted] = process.argv.slice(2)
@@ -181,14 +181,19 @@ if (want('palettes')) {
   await context.close()
 }
 
-if (want('og')) {
-  const s = await open('/', {
-    width: 1200,
-    height: 630,
-    css: 'header, [aria-label="Các chương"], section[aria-label="Mở đầu"] > * { visibility: hidden !important; }',
-  })
-  await s.page.waitForTimeout(9000)
-  await done('og', s, (path) => s.page.screenshot({ path }))
-}
+if (want('og'))
+  for (const [name, path] of [
+    ['og', '/'],
+    ['og-en', '/en'],
+  ]) {
+    const s = await open(path, {
+      width: 1200,
+      height: 630,
+      // Without the header there is room above: the title moves up, clear of the macarons.
+      css: 'header, #story > nav, #story section:first-of-type > * { visibility: hidden !important; } #story h1 { top: 1.75rem !important; }',
+    })
+    await s.page.waitForTimeout(9000)
+    await done(name, s, (file) => s.page.screenshot({ path: file }))
+  }
 
 await browser.close()

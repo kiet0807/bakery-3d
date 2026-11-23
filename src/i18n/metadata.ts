@@ -4,13 +4,14 @@ import { DEFAULT_LOCALE, LOCALES, OG_LOCALE, hasLocale, localeHref, type Locale 
 import { dictionaries } from './dictionaries'
 
 /**
- * The picture shown when a page is shared: the home scene at 1200×630, taken with `scripts/screenshot.mjs`.
+ * The picture shown when a page is shared: the home scene at 1200×630, taken with `scripts/readme-shots.mjs` in each
+ * language (the shop's line is part of the picture).
  * Set here rather than as an `opengraph-image` file: each page sets its own `openGraph`, which would replace a
  * file image inherited from the layout.
  */
 export function ogImage(lang: Locale) {
   return {
-    url: '/og/kais-bakery.jpg',
+    url: lang === 'en' ? '/og/kais-bakery-en.jpg' : '/og/kais-bakery.jpg',
     width: 1200,
     height: 630,
     alt: dictionaries[lang].common.meta.ogImageAlt,

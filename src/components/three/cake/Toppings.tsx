@@ -1,7 +1,7 @@
 'use client'
 
 import { useFrame } from '@react-three/fiber'
-import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import {
   BLUEBERRY,
@@ -18,7 +18,7 @@ import {
   STRAWBERRY,
 } from '../palette'
 import { useQuality, useReducedMotionScene } from '../motion'
-import { Arrival, placementSig } from './Arrival'
+import { Arrival, Glide, placementSig } from './Arrival'
 import { stripeTexture } from './geometry'
 import type { CakeLayout, Part, Placement } from './layout'
 import { glowTexture, shared } from './shared'
@@ -228,23 +228,62 @@ function Candle({ p, lit }: { p: Placement; lit: boolean }) {
 /** Gap between two pieces of a ring landing; long rings close up, so a whole ring lands within 0.3 s. */
 const gapFor = (count: number) => Math.min(45, 300 / Math.max(1, count))
 
-/** A list of pieces that land one after another, in ring order, whenever they appear or move. */
+/** The landing each piece of a list last made (its `sig` and `delay`), by key, and the list it was made for. */
+interface Landed {
+  sig: string
+  pieces: Map<number, { sig: string; delay: number }>
+}
+
+function landedFor(list: Placement[], sig: string, slide: boolean, before?: Landed): Landed {
+  const gap = gapFor(list.length)
+  const pieces = new Map<number, { sig: string; delay: number }>()
+  let fresh = 0
+  list.forEach((p, i) => {
+    const kept = slide ? before?.pieces.get(p.variant) : undefined
+    if (kept) pieces.set(p.variant, kept)
+    else pieces.set(slide ? p.variant : i, { sig, delay: (slide ? fresh++ : i) * gap })
+  })
+  return { sig, pieces }
+}
+
+/**
+ * A list of pieces that land one after another, in ring order, whenever they appear or move. With `slide` (pieces
+ * that are added one at a time, keyed by `variant`) the ones already there slide to their new places instead, and
+ * only the new ones land.
+ */
 function Landing({
   list,
   height,
+  slide = false,
   render,
 }: {
   list: Placement[]
   height?: number
+  slide?: boolean
   render: (p: Placement) => ReactNode
 }) {
   const sig = placementSig(list)
-  const gap = gapFor(list.length)
-  return list.map((p, i) => (
-    <Arrival key={i} sig={sig} delay={i * gap} height={height}>
-      {render(p)}
-    </Arrival>
-  ))
+  const [landed, setLanded] = useState(() => landedFor(list, sig, slide))
+  let now = landed
+  if (landed.sig !== sig) {
+    now = landedFor(list, sig, slide, landed)
+    setLanded(now)
+  }
+  return list.map((p, i) => {
+    const key = slide ? p.variant : i
+    const piece = now.pieces.get(key) ?? { sig, delay: 0 }
+    return (
+      <Arrival key={key} sig={piece.sig} delay={piece.delay} height={height}>
+        {slide ? (
+          <Glide x={p.x} z={p.z}>
+            {render(p)}
+          </Glide>
+        ) : (
+          render(p)
+        )}
+      </Arrival>
+    )
+  })
 }
 
 export function Toppings({
@@ -269,7 +308,12 @@ export function Toppings({
       <Landing list={only(layout.ring.cherries, part)} render={(p) => <Cherry p={p} />} />
       <Landing list={only(layout.ring['chocolate-shards'], part)} render={(p) => <Shard p={p} />} />
       <Landing list={only(layout.goldLeaf, part)} height={0.22} render={(p) => <GoldLeaf p={p} />} />
-      <Landing list={only(layout.candles, part)} height={0.4} render={(p) => <Candle p={p} lit={lit} />} />
+      <Landing
+        list={only(layout.candles, part)}
+        height={0.4}
+        slide
+        render={(p) => <Candle p={p} lit={lit} />}
+      />
       <Arrival sig={placementSig(kisses)} height={0.2}>
         <Kisses list={kisses} material={kissMaterial} />
       </Arrival>

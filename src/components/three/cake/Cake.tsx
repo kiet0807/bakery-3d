@@ -236,6 +236,11 @@ function Plaque({ layout, message }: { layout: CakeLayout; message: string }) {
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
 const settle = (t: number) => 1 - Math.pow(1 - t, 3)
+/**
+ * How far above the cake the toppings start when the story drops them on. The home page's title ends just above
+ * the cake's top and is drawn under the scene: from higher up (1.4 before) they fell across the words.
+ */
+const TOPPINGS_DROP = 0.5
 
 /** How long fresh glaze takes to run down the sides, in milliseconds. */
 const POUR_MS = 760
@@ -383,6 +388,30 @@ export function Cake({
   const invalidate = useThree((state) => state.invalidate)
   useEffect(() => invalidate(), [sliced, invalidate])
 
+  /** Puts the slice where `progress` says: out along `sliceAngle`, lifted and turned a little. */
+  const placeSlice = () => {
+    const slice = sliceGroup.current
+    if (!slice) return
+    const ease = smooth(Math.min(1, Math.max(0, progress.current)))
+    for (const face of faces.current) face.visible = ease > 0
+    const reach = ease * layout.maxRadius * sliceReach
+    slice.position.set(Math.sin(sliceAngle) * reach, ease * 0.12, Math.cos(sliceAngle) * reach)
+    slice.rotation.y = ease * sliceTurn
+  }
+  // Cutting or closing the cake: with reduced motion the slice is simply out or home; a picture taken while it
+  // moves shows it where it is going (the settler).
+  useLayoutEffect(() => {
+    if (controls) return
+    const target = sliced ? 1 : 0
+    if (still) progress.current = target
+    if (progress.current === target) return
+    return settler.add(() => {
+      progress.current = target
+      placeSlice()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the cake is cut or closed, reading the rest
+  }, [sliced, still])
+
   useFrame((_, delta) => {
     const now = performance.now()
     let moving = false
@@ -404,22 +433,19 @@ export function Cake({
     }
     if (moving) invalidate()
 
-    const slice = sliceGroup.current
-    if (!slice) return
+    if (!sliceGroup.current) return
     const driven = controls?.current
     if (driven) {
       progress.current = driven.slice
     } else {
       const target = sliced ? 1 : 0
-      progress.current = THREE.MathUtils.damp(progress.current, target, 4.5, Math.min(delta, 0.05))
+      progress.current = still
+        ? target
+        : THREE.MathUtils.damp(progress.current, target, 4.5, Math.min(delta, 0.05))
       if (Math.abs(progress.current - target) < 0.002) progress.current = target
       else invalidate()
     }
-    const ease = smooth(Math.min(1, Math.max(0, progress.current)))
-    for (const face of faces.current) face.visible = ease > 0
-    const reach = ease * layout.maxRadius * sliceReach
-    slice.position.set(Math.sin(sliceAngle) * reach, ease * 0.12, Math.cos(sliceAngle) * reach)
-    slice.rotation.y = ease * sliceTurn
+    placeSlice()
 
     const pouring = motion.pour.active
     const drips = driven ? Math.min(1, Math.max(0, driven.drips)) : pouring ? motion.pour.progress(now) : 1
@@ -438,7 +464,7 @@ export function Cake({
       const t = toppingGroups.current[part]
       if (t) {
         t.visible = toppings > 0.01
-        t.position.y = (1 - settle(toppings)) * 1.4
+        t.position.y = (1 - settle(toppings)) * TOPPINGS_DROP
       }
     }
   })

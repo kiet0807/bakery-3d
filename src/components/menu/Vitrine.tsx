@@ -11,7 +11,6 @@ import { PRESETS, presetPrice, type Preset } from '@/lib/presets'
 import { useCart } from '@/lib/store'
 import { Icon } from '../Icon'
 import { ScenePoster } from '../ScenePoster'
-import type { Capture } from '../three/Capture'
 
 function VitrineLoading() {
   return <ScenePoster label={useDict().menu.loading} />
@@ -65,7 +64,6 @@ export function Vitrine() {
   const [added, setAdded] = useState<string | null>(null)
   const [status, setStatus] = useState('')
   const add = useCart((state) => state.add)
-  const captureRef = useRef<Capture | null>(null)
   const swipe = useRef<{ x: number; y: number } | null>(null)
 
   const preset = PRESETS[index]
@@ -79,9 +77,9 @@ export function Vitrine() {
     setStatus(m.status.chosen(nameOf(PRESETS[wrapped]), money(presetPrice(PRESETS[wrapped]), lang)))
   }
 
+  // The cart shows the house cake's own picture: a frame of the table could catch it still turning.
   const addToCart = () => {
-    const snapshot = captureRef.current?.(256) ?? undefined
-    add(preset.config, { presetId: preset.id, snapshot })
+    add(preset.config, { presetId: preset.id })
     setAdded(preset.id)
     setStatus(m.status.added(nameOf(preset)))
   }
@@ -110,13 +108,7 @@ export function Vitrine() {
             choose(index + (dx < 0 ? 1 : -1))
         }}
       >
-        <VitrineScene
-          presets={PRESETS}
-          index={index}
-          sliced={sliced}
-          onSelect={choose}
-          captureRef={captureRef}
-        />
+        <VitrineScene presets={PRESETS} index={index} sliced={sliced} onSelect={choose} />
         {/* Wide screens: the cakes at the sides fade into the cream page, so the title and the card stay clear. */}
         <div
           aria-hidden

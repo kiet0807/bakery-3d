@@ -60,6 +60,25 @@ describe('the topping ring', () => {
       )
   })
 
+  it('keeps fruit clear of the macarons, and no candle behind a macaron at the front', () => {
+    for (const size of ['bento', 's14', 's18', 'tier2'] as const) {
+      const { ring } = computeLayout(normalizeConfig({ size, toppings: ['strawberries', 'macarons'] }))
+      for (const m of ring.macarons)
+        for (const f of ring.strawberries) {
+          // A macaron's half width is 0.085 at scale 1, a strawberry's widest radius 0.088.
+          const gap = Math.hypot(m.x - f.x, m.z - f.z) - 0.085 * m.scale - 0.088 * f.scale
+          expect(gap, size).toBeGreaterThan(0.015)
+        }
+    }
+    const rainbow = PRESETS.find((preset) => preset.id === 'rainbow-birthday')!.config
+    const { ring, candles } = computeLayout(rainbow)
+    expect(candles).toHaveLength(5)
+    for (const m of ring.macarons.filter((m) => m.z > 0)) {
+      const inner = Math.abs(m.x) - 0.085 * m.scale * (m.z / Math.hypot(m.x, m.z))
+      for (const c of candles) expect(Math.abs(c.x)).toBeLessThan(inner)
+    }
+  })
+
   it('draws eight on a two-tier cake, and lets fruit fill the rest of the ring', () => {
     expect(ringOf({ size: 'tier2', toppings: ['macarons'] }).macarons).toHaveLength(8)
     const mixed = ringOf({ size: 's18', toppings: ['strawberries', 'macarons'] })

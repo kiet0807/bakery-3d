@@ -91,6 +91,13 @@ const MACARON_DIAMETER = 0.17
 const MACARON_REACH = 0.18
 /** A real macaron is about 3.5 cm across; on a small top it shrinks with the other toppings. */
 const MACARON_SCALE = 2
+/**
+ * Length of ring one piece of fruit needs between two macarons, at scale 1: the widest, a strawberry, is 0.194
+ * across at its largest random size. `FRUIT_EDGE` is kept clear on each side of a macaron as well: with the
+ * fruit right against it, a macaron standing taller hid half a strawberry from most cameras.
+ */
+const FRUIT_ROOM = 0.2
+const FRUIT_EDGE = 0.03
 
 /**
  * Where the macarons sit on the ring: `pitch` is the length of ring each one owns, `width` its size across.
@@ -98,9 +105,14 @@ const MACARON_SCALE = 2
  */
 function macaronRing(topRadius: number, kisses: boolean, count: number, shared: boolean) {
   const pitch = (Math.PI * 2 * ringRadius(topRadius, kisses)) / count
-  const full = MACARON_DIAMETER * MACARON_SCALE * toppingScale(topRadius)
-  return { pitch, width: Math.min(full, pitch - (shared ? 0.17 : 0.03)) }
+  const scale = toppingScale(topRadius)
+  const full = MACARON_DIAMETER * MACARON_SCALE * scale
+  return { pitch, width: Math.min(full, pitch - (shared ? FRUIT_ROOM * scale + 2 * FRUIT_EDGE : 0.03)) }
 }
+
+/** Room a candle keeps from a macaron's edge (its own radius and a little air), and from the next candle. */
+const CANDLE_CLEAR = 0.04
+const CANDLE_PITCH = 0.06
 
 /** Height of the chocolate plaque at full size, and of a candle from the cake top to the tip of its flame. */
 export const PLAQUE_HEIGHT = 0.27
@@ -246,7 +258,8 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
       // other kinds fill the gaps between them, taking turns, at least one piece per gap.
       const macarons = macaronCount(config.size)
       const { pitch, width } = macaronRing(top.radius, kisses, macarons, others.length > 0)
-      const between = others.length ? Math.max(1, Math.floor((pitch - width) / 0.2)) : 0
+      const gap = pitch - width - 2 * FRUIT_EDGE
+      const between = others.length ? Math.max(1, Math.floor(gap / (FRUIT_ROOM * small))) : 0
       // With candles or a message, the front (angle 0) falls between two macarons, so they frame the candles and
       // the plaque instead of standing in front of them.
       const framed = config.candles > 0 || Boolean(config.message)
@@ -256,7 +269,7 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
         const start = (k * pitch) / radius + first
         pieces.push({ angle: start, kind: 'macarons', macaronScale: width / MACARON_DIAMETER })
         for (let j = 0; j < between; j++) {
-          const along = width / 2 + ((pitch - width) * (j + 0.5)) / between
+          const along = width / 2 + FRUIT_EDGE + (gap * (j + 0.5)) / between
           pieces.push({ angle: start + along / radius, kind: others[turn++ % others.length] })
         }
       }
@@ -318,7 +331,8 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
     for (let i = 0; i < count; i++) {
       const angle = random() * Math.PI * 2
       const onTop = random() > 0.45
-      const r = onTop ? top.radius * (0.2 + random() * 0.75) : top.radius + FROSTING + 0.003
+      // On top, a whole flake stays inside the edge (the largest reaches 0.085 from its centre).
+      const r = onTop ? (top.radius - 0.09 * small) * (0.2 + random() * 0.8) : top.radius + FROSTING + 0.003
       const { x, z } = polar(r, angle)
       goldLeaf.push({
         x,
@@ -337,10 +351,28 @@ export function computeLayout(config: CakeConfig, { light = false }: LayoutOptio
   // words stay readable even with nine candles on a 10 cm bento.
   const candles: Placement[] = []
   const lone = config.candles === 1 && !config.message
+  const candleRadius = lone ? 0 : top.radius * (config.message ? 0.5 : 0.42)
+  let spread = config.message ? Math.PI * 1.1 : Math.PI * 2
+  if (config.message && config.candles > 1) {
+    // Seen from the front, a macaron on the ring hides the candles standing behind it (the five of "Sinh Nhật
+    // Cầu Vồng" lost two). The arc closes in to the gap between the front macarons, as far as the candles still
+    // stand apart.
+    const ringR = ringRadius(top.radius, kisses)
+    let limit = spread / 2
+    for (const m of ring.macarons) {
+      const angle = Math.atan2(m.x, m.z)
+      if (Math.cos(angle) <= 0) continue
+      const edge = ringR * Math.abs(Math.sin(angle)) - ((m.scale * MACARON_DIAMETER) / 2) * Math.cos(angle)
+      const room = (edge - CANDLE_CLEAR * small) / candleRadius
+      limit = Math.min(limit, Math.asin(Math.max(0, Math.min(1, room))))
+    }
+    const fit = (2 * limit * config.candles) / (config.candles - 1)
+    const apart = (config.candles * CANDLE_PITCH * small) / candleRadius
+    spread = Math.min(spread, Math.max(fit, apart))
+  }
   for (let i = 0; i < config.candles; i++) {
-    const spread = config.message ? Math.PI * 1.1 : Math.PI * 2
     const angle = lone ? 0 : -spread / 2 + (spread * (i + 0.5)) / config.candles
-    const r = lone ? 0 : top.radius * (config.message ? 0.5 : 0.42)
+    const r = candleRadius
     const { x, z } = polar(r, angle)
     candles.push({
       x,

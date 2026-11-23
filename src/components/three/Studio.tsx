@@ -1,6 +1,6 @@
 'use client'
 
-import { ContactShadows, Environment, Lightformer, useEnvironment } from '@react-three/drei'
+import { Environment, Lightformer, useEnvironment } from '@react-three/drei'
 import { createPortal, useFrame, useThree } from '@react-three/fiber'
 import {
   Component,
@@ -274,20 +274,14 @@ class CafeLightBoundary extends Component<{ children: ReactNode }, { failed: boo
  * Reflections come from a real café interior (Poly Haven, CC0) on the high tier, or from soft panels.
  */
 export function Studio({
-  floor,
-  shadowScale = 7,
-  shadows = true,
   horizon = HORIZON_STRENGTH,
 }: {
-  floor: number
-  shadowScale?: number
-  shadows?: boolean
   /** How bright the page shows in reflections seen at a low angle, 0 to 1 (see `Horizon`). */
   horizon?: number
 }) {
   const quality = useQuality()
   const high = quality === 'high'
-  const { light, ink } = useScene()
+  const { light } = useScene()
   // The same element while the colours stay: drei's Environment draws its cube again (and resets the scene's
   // light) whenever its children change, which a new element on every render of the scene would cause.
   const panels = useMemo(() => <Panels light={light} horizon={horizon} />, [light, horizon])
@@ -325,17 +319,6 @@ export function Studio({
             <CafeLight light={light} horizon={horizon} />
           </Suspense>
         </CafeLightBoundary>
-      )}
-      {shadows && (
-        <ContactShadows
-          position={[0, floor + 0.002, 0]}
-          opacity={0.35}
-          scale={shadowScale}
-          blur={2.4}
-          far={1.6}
-          resolution={512}
-          color={ink}
-        />
       )}
     </>
   )

@@ -329,7 +329,7 @@ export default function BoxScene({ config, children }: { config: CakeConfig; chi
       poster={cart.done.boxLoading}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}
     >
-      <Studio floor={-T} shadows={false} />
+      <Studio />
       <ShadowBlob radius={boxSize(config).width * 1.05} y={-T} />
       <FoldingBox config={config} startedAt={startedAt} />
       {/* The box on show turns at the idle pace; while it folds, FoldingBox asks for every frame itself. */}

@@ -173,7 +173,7 @@ function Director({
       startedAt.current ??= now
       const t = now - startedAt.current
       dripsIntro = range(t, 0.4, 1.8)
-      toppingsIntro = range(t, 1.2, 2.6)
+      toppingsIntro = range(t, 1.2, 2.1)
     }
     c.drips = Math.min(dripsIntro, dripsByScroll)
     c.toppings = Math.min(toppingsIntro, toppingsByScroll)
@@ -236,7 +236,7 @@ export default function StoryScene({
     >
       <LoadingReporter onProgress={onProgress} />
       {/* The story's cameras skim the white glaze from low down: there it has to mirror the bright page. */}
-      <Studio floor={-0.4} shadows={false} horizon={0.72} />
+      <Studio horizon={0.72} />
       <FloatingSprinkles count={80} />
       <Director chapterRef={chapterRef} started={started} startedAt={startedAt} onReady={onReady}>
         <CakeBoard radius={STORY_RADIUS} />

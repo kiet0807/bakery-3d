@@ -14,7 +14,9 @@ import { Effects } from '../Effects'
 import { FitCamera } from '../FitCamera'
 import { ShadowBlob } from '../ShadowBlob'
 import { IdlePace } from '../IdlePace'
+import { useReducedMotionScene } from '../motion'
 import { Studio } from '../Studio'
+import { useSettler } from '../tween'
 import { useDict } from '@/i18n/LangProvider'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { usePalette } from '@/lib/usePalette'
@@ -66,6 +68,56 @@ function OrbitTail() {
     left.current -= 1
     invalidate()
   })
+  return null
+}
+
+/** The OrbitControls calls FaceTheSlice makes. */
+interface OrbitTurn {
+  enableDamping: boolean
+  getAzimuthalAngle: () => number
+  setAzimuthalAngle: (angle: number) => void
+  addEventListener: (type: 'start', listener: () => void) => void
+  removeEventListener: (type: 'start', listener: () => void) => void
+}
+
+/** How long a picture taken right after the cut still lands the camera at the front, in milliseconds. */
+const FACE_SLICE_MS = 1500
+
+/**
+ * The slice comes out at the front (+Z). Someone who turned the cake round before cutting it saw it come out at
+ * the back, so on the cut the camera turns back to the front: with the orbit's own damped glide, or at once with
+ * reduced motion. A picture taken meanwhile is taken from the front; dragging the cake hands the camera back.
+ */
+function FaceTheSlice({ sliced }: { sliced: boolean }) {
+  const get = useThree((state) => state.get)
+  const still = useReducedMotionScene()
+  const settler = useSettler()
+  const was = useRef(sliced)
+  useEffect(() => {
+    const cut = sliced && !was.current
+    was.current = sliced
+    // Read when the cake is cut: the orbit is the scene's default controls by then.
+    const controls = get().controls as unknown as OrbitTurn | null
+    if (!cut || !controls || Math.abs(controls.getAzimuthalAngle()) < Math.PI / 4) return
+    const land = () => {
+      controls.enableDamping = false
+      controls.setAzimuthalAngle(0)
+      controls.enableDamping = true
+    }
+    if (still) return land()
+    controls.setAzimuthalAngle(0)
+    const unsettle = settler.add(land)
+    const stop = () => {
+      unsettle()
+      controls.removeEventListener('start', stop)
+    }
+    controls.addEventListener('start', stop)
+    const timer = window.setTimeout(stop, FACE_SLICE_MS)
+    return () => {
+      window.clearTimeout(timer)
+      stop()
+    }
+  }, [sliced, get, still, settler])
   return null
 }
 
@@ -132,6 +184,7 @@ export default function DesignScene({
     >
       <RedrawOnChange config={config} sliced={sliced} />
       <OrbitTail />
+      <FaceTheSlice sliced={sliced} />
       {config.candles > 0 && <IdlePace />}
       <FitCamera
         radius={frame.radius}
@@ -154,7 +207,7 @@ export default function DesignScene({
         maxDistance={11}
         enabled={!photo}
       />
-      <Studio floor={-STAND_HEIGHT} shadows={false} />
+      <Studio />
       <ShadowBlob radius={radius + 0.9} y={-STAND_HEIGHT} />
       <CakeStand radius={radius} />
       <Cake config={config} sliced={sliced} />

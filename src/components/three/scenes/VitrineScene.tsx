@@ -2,8 +2,7 @@
 
 import { MeshReflectorMaterial } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import type { EffectComposer as Composer } from 'postprocessing'
-import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { useDict } from '@/i18n/LangProvider'
@@ -13,7 +12,6 @@ import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
 import { CakeStand, STAND_HEIGHT } from '../CakeStand'
 import { CanvasShell } from '../CanvasShell'
-import { CaptureBridge, type Capture } from '../Capture'
 import { Effects } from '../Effects'
 import { useQuality, useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
@@ -99,6 +97,8 @@ function Showcase({
   const spin = useRef<THREE.Group>(null)
   const ring = useRef<THREE.MeshBasicMaterial>(null)
   const lift = useRef(selected ? 1 : 0)
+  /** Frames left in which even a cake at the back is drawn (see below). */
+  const warm = useRef(2)
 
   const invalidate = useThree((state) => state.invalidate)
   useFrame((_, delta) => {
@@ -116,8 +116,14 @@ function Showcase({
     }
     if (ring.current) ring.current.color.copy(marks.rest).lerp(marks.chosen, ease)
     if (root.current) {
-      // Slow devices skip the cakes at the back of the table (about half of the draw calls).
-      root.current.visible = !low || root.current.getWorldPosition(where).z > BACK_CUTOFF
+      // Slow devices skip the cakes at the back of the table (about half of the draw calls). They still draw
+      // them in the first two frames, under the loading poster: drawn for the first time when the table brought
+      // them round, their shaders, buffers and lettering froze a phone for 312 ms (Gemini, 4x slower CPU).
+      root.current.visible = !low || warm.current > 0 || root.current.getWorldPosition(where).z > BACK_CUTOFF
+    }
+    if (warm.current > 0) {
+      warm.current -= 1
+      invalidate()
     }
     const group = spin.current
     if (group) {
@@ -332,15 +338,12 @@ export default function VitrineScene({
   index,
   sliced,
   onSelect,
-  captureRef,
 }: {
   presets: Preset[]
   index: number
   sliced: boolean
   onSelect: (index: number) => void
-  captureRef: RefObject<Capture | null>
 }) {
-  const composer = useRef<Composer | null>(null)
   const dict = useDict()
   const { page } = useScene()
   const presetLabel = dict.cake.presets[presets[index].id].name
@@ -358,7 +361,7 @@ export default function VitrineScene({
       <RedrawOnPalette />
       {/* Fixed args and the colour as a prop: a palette change recolours the fog instead of replacing it. */}
       <fog attach="fog" args={['#ffffff', 11, 19]} color={page} />
-      <Studio floor={FLOOR} shadows={false} />
+      <Studio />
       <Rig index={index} count={presets.length}>
         <Turntable />
         {presets.map((preset, i) => (
@@ -372,9 +375,8 @@ export default function VitrineScene({
           />
         ))}
       </Rig>
-      <Effects ref={composer} />
+      <Effects />
       <ToppingsOutOfReflection />
-      <CaptureBridge captureRef={captureRef} composerRef={composer} crop={0.72} />
       <ResetCursor />
     </CanvasShell>
   )

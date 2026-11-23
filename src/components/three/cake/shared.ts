@@ -24,7 +24,10 @@ export interface SharedGeometry {
   flame: THREE.BufferGeometry
 }
 
-/** A torn flake of gold leaf: an irregular, flat polygon. */
+/**
+ * A torn flake of gold leaf: an irregular, flat polygon, 0.6 to 1.3 cm across at scale 1. At a third of that the
+ * flakes read as specks of dust, on a topping that costs up to 140.000đ.
+ */
 function flakeGeometry(seed: number) {
   let s = seed
   const random = () => {
@@ -34,7 +37,7 @@ function flakeGeometry(seed: number) {
   const corners = 6 + Math.floor(random() * 3)
   const points = Array.from({ length: corners }, (_, i) => {
     const a = (i / corners) * Math.PI * 2
-    const r = 0.012 + random() * 0.014
+    const r = 0.03 + random() * 0.035
     return new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r * (0.6 + random() * 0.6))
   })
   return new THREE.ShapeGeometry(new THREE.Shape(points))

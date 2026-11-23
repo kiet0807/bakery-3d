@@ -75,7 +75,9 @@ export function restoreItems(input: unknown): CartItem[] {
     const item = raw as Record<string, unknown>
     if (typeof item.id !== 'string') return []
     const snapshot =
-      typeof item.snapshot === 'string' && item.snapshot.startsWith('data:image/') ? item.snapshot : undefined
+      typeof item.snapshot === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(item.snapshot)
+        ? item.snapshot
+        : undefined
     const preset = presetById(typeof item.presetId === 'string' ? item.presetId : undefined)
     return [
       {

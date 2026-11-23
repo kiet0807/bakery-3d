@@ -37,6 +37,7 @@ export const cart: CartDict = {
     subtotal: 'Cakes',
     shipping: 'Delivery',
     shippingValue: 'By the app',
+    shippingPickup: 'Free, you pick it up',
     total: 'Cakes total',
     shipNote:
       'Delivery is priced by the ride app (Grab, Be, Ahamove) when we book it, and you pay the driver. Pick it up and it costs nothing.',

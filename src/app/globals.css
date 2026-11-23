@@ -359,7 +359,8 @@ h3 {
   padding: 0.7rem 1rem;
   font-size: 1rem;
   color: var(--color-ink);
-  outline: none;
+  /* See-through rather than none: forced-colour modes paint it, and drop the border colour and the glow. */
+  outline: 2px solid transparent;
   transition:
     border-color 0.2s var(--ease-out),
     box-shadow 0.25s var(--ease-out);

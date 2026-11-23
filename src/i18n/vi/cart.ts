@@ -39,6 +39,7 @@ export const cart = {
     subtotal: 'Tiền bánh',
     shipping: 'Phí ship',
     shippingValue: 'Theo app',
+    shippingPickup: '0đ, nhận tại tiệm',
     total: 'Tổng tiền bánh',
     shipNote:
       'Phí ship tính theo app (Grab, Be, Ahamove) lúc gọi xe, bạn trả khi nhận. Nhận tại tiệm thì khỏi tốn đồng nào.',

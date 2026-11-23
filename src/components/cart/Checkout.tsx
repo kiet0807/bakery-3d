@@ -81,10 +81,12 @@ const HEADER_ROOM = 96
 export function Checkout({
   items,
   total,
+  onMethod,
   onPlaced,
 }: {
   items: CartItem[]
   total: number
+  onMethod: (method: Method) => void
   onPlaced: (order: Order) => void
 }) {
   const dict = useDict()
@@ -96,7 +98,10 @@ export function Checkout({
     keyof OrderForm,
     string
   >
-  const [form, setForm] = useState<OrderForm>(EMPTY_FORM)
+  const [typed, setForm] = useState<OrderForm>(EMPTY_FORM)
+  // A deposit (another cake in the cart, a holiday) rules cash out: the choice made before it counts as not made.
+  const cashOff = typed.payment === 'cod' && depositFor(items, typed.date || undefined).amount > 0
+  const form: OrderForm = cashOff ? { ...typed, payment: '' } : typed
   const [step, setStep] = useState<Step>(1)
   // The step on screen, for the popstate handler (which is set up once).
   const stepRef = useRef<Step>(1)
@@ -142,25 +147,20 @@ export function Checkout({
     },
   }
 
-  const setMethod = (method: Method) =>
+  const setMethod = (method: Method) => {
+    onMethod(method)
     setForm((current) => {
       // Keep the chosen time only if the new method still offers it.
       const keep = now && current.date ? slotsFor(current.date, { now, method, items }) : []
       return { ...current, method, time: keep.includes(current.time) ? current.time : '' }
     })
+  }
 
   const setDate = (date: string) =>
     setForm((current) => {
-      // A new day keeps the time only if that day offers it, and a day that brings a deposit (a holiday)
-      // unticks cash: the deposit is paid by transfer or MoMo.
+      // A new day keeps the time only if that day offers it.
       const keep = now && date ? slotsFor(date, { now, method: current.method, items }) : []
-      const cashOff = current.payment === 'cod' && depositFor(items, date || undefined).amount > 0
-      return {
-        ...current,
-        date,
-        time: keep.includes(current.time) ? current.time : '',
-        payment: cashOff ? '' : current.payment,
-      }
+      return { ...current, date, time: keep.includes(current.time) ? current.time : '' }
     })
 
   // After a step change: focus its heading (a screen reader announces the new step) and bring its top into view

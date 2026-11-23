@@ -150,6 +150,30 @@ test.describe('cart and test checkout', () => {
     await expect(page.getByLabel(/thẻ|card|cvc|expiry|email/i)).toHaveCount(0)
   })
 
+  test('the delivery line follows the choice, and a deposit that comes later unticks cash', async ({
+    page,
+  }) => {
+    await page.goto('/cart')
+    await seedCart(page, [TWO_LINES[0]])
+    const order = page.getByRole('complementary', { name: 'Đơn hàng' })
+    await expect(order.getByText('0đ, nhận tại tiệm')).toBeVisible()
+    await page.getByText('Giao tận nơi', { exact: true }).click()
+    await expect(order.getByText('Theo app', { exact: true })).toBeVisible()
+    await page.getByText('Nhận tại tiệm', { exact: true }).click()
+    await expect(order.getByText('0đ, nhận tại tiệm')).toBeVisible()
+
+    await page.getByRole('textbox', { name: 'Tên người nhận' }).fill('Linh')
+    await page.getByRole('textbox', { name: 'Số điện thoại' }).fill('0347 551 122')
+    await page.getByRole('button', { name: /Tiếp tục: chọn ngày nhận/ }).click()
+    // 700.000đ: no deposit, cash is fine. One more cake takes the order over 1.000.000đ.
+    await page.getByText('Tiền mặt', { exact: true }).click()
+    const cash = page.getByRole('radio', { name: /Tiền mặt/ })
+    await expect(cash).toBeChecked()
+    await page.getByRole('button', { name: 'Thêm một Dâu Tây Mây Hồng' }).click()
+    await expect(cash).toBeDisabled()
+    await expect(cash).not.toBeChecked()
+  })
+
   test('placing a test order boxes the cake and empties the cart', async ({ page }) => {
     await page.goto('/cart')
     await seedCart(page, TWO_LINES)

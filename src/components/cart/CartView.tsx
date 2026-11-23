@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useDict, LocalLink } from '@/i18n/LangProvider'
 import { countItems, subtotal } from '@/lib/cart'
-import type { Order } from '@/lib/order'
+import { EMPTY_FORM, type Method, type Order } from '@/lib/order'
 import { CART_STORAGE_KEY, useCart } from '@/lib/store'
 import { useCartHydrated } from '@/lib/useHydrated'
 import { TickingMoney } from '../TickingMoney'
@@ -109,6 +109,8 @@ export function CartView() {
   const hydrated = useCartHydrated()
   const items = useCart((state) => state.items)
   const [order, setOrder] = useState<PlacedOrder | null>(null)
+  // Told by the checkout, so the delivery line above it says what this visitor will pay.
+  const [method, setMethod] = useState<Method>(EMPTY_FORM.method)
 
   if (order) return <OrderDone order={order} />
   if (!hydrated || !items.length) return <EmptyOrPending pending={!hydrated} />
@@ -156,7 +158,7 @@ export function CartView() {
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted">{t.shipping}</dt>
-            <dd>{t.shippingValue}</dd>
+            <dd>{method === 'pickup' ? t.shippingPickup : t.shippingValue}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 border-t-2 border-dashed border-line pt-3">
             <dt className="font-display font-bold">{t.total}</dt>
@@ -166,7 +168,7 @@ export function CartView() {
           </div>
         </dl>
         <p className="text-xs leading-relaxed text-muted">{t.shipNote}</p>
-        <Checkout items={items} total={total} onPlaced={placed} />
+        <Checkout items={items} total={total} onMethod={setMethod} onPlaced={placed} />
       </aside>
     </div>
   )

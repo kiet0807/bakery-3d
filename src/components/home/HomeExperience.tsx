@@ -87,6 +87,8 @@ export function HomeExperience() {
     let lastIn = true
     const update = () => {
       frame = 0
+      // Scrolled before the first measurement: it comes right after.
+      if (!centres.length) return
       const middle = window.scrollY + window.innerHeight / 2
       let chapter = 0
       if (middle >= centres[centres.length - 1]) chapter = centres.length - 1

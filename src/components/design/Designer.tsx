@@ -227,13 +227,14 @@ export function Designer() {
 
   return (
     // `--stage`: the stage's height below `lg`, shared with the bar that sticks under it. It shrinks while the words
-    // on the cake are typed, when a phone's keyboard takes the lower half of the screen.
+    // on the cake are typed, when a phone's keyboard takes the lower half of the screen. It grows back a moment after
+    // the field loses the focus, not at once: the tap that took the focus would otherwise land on what moved there.
     <div className="group/builder mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-6 px-3 pt-20 [--stage:max(38svh,13rem)] max-lg:has-[[data-typing]:focus]:[--stage:max(24svh,9rem)] sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)] lg:gap-10 lg:pt-24">
       {/* The wheel zooms the cake here (OrbitControls), so the smooth page scroll keeps out of the stage. */}
       <div
         ref={stage}
         data-lenis-prevent-wheel
-        className="sticky top-16 z-10 -mx-3 h-(--stage) overflow-hidden border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
+        className="sticky top-16 z-10 -mx-3 h-(--stage) overflow-hidden transition-[height] delay-300 duration-0 max-lg:group-has-[[data-typing]:focus]/builder:delay-0 sm:top-20 border-b-2 border-ink bg-linear-to-b from-sky-top to-sky-bottom sm:mx-0 sm:rounded-[2rem] sm:border-2 sm:shadow-sticker-lg lg:top-24 lg:h-[calc(100svh-7.5rem)]"
       >
         <DesignScene
           config={config}

@@ -81,7 +81,7 @@ export function SectionNav({
     <nav
       ref={bar}
       aria-label={design.sectionsLabel}
-      className="sticky top-[calc(4rem+var(--stage))] z-10 -mx-3 border-b border-line bg-cream/95 backdrop-blur-md sm:rounded-b-2xl lg:hidden"
+      className="sticky top-[calc(4rem+var(--stage))] z-10 -mx-3 border-b border-line bg-cream/95 backdrop-blur-md transition-[top] delay-300 duration-0 group-has-[[data-typing]:focus]/builder:delay-0 sm:top-[calc(5rem+var(--stage))] sm:rounded-b-2xl lg:hidden"
     >
       <ol
         ref={list}

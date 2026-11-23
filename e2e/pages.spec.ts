@@ -146,9 +146,11 @@ test.describe('every page from a phone', () => {
   test('one button in the header lists the pages, and closes by itself', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Wide screens show the links in the header.')
     await page.goto('/faq')
-    const button = page.getByRole('button', { name: 'Mở danh sách trang' })
+    const button = page.getByRole('button', { name: 'Danh sách trang' })
     await expect(page.getByRole('banner').getByRole('link', { name: 'Tự thiết kế bánh' })).toBeHidden()
+    await expect(button).toHaveAttribute('aria-expanded', 'false')
     await button.click()
+    await expect(button).toHaveAttribute('aria-expanded', 'true')
     const pages = page.getByRole('banner').getByRole('link')
     for (const name of ['Tự thiết kế bánh', 'Menu bánh', 'Về tiệm', 'Chính sách', 'Hỏi đáp'])
       await expect(pages.filter({ hasText: name })).toBeVisible()

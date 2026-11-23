@@ -2,7 +2,16 @@
 
 import { ContactShadows, Environment, Lightformer, useEnvironment } from '@react-three/drei'
 import { createPortal, useFrame, useThree } from '@react-three/fiber'
-import { Component, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  Component,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import * as THREE from 'three'
 import { useQuality, useReducedMotionScene } from './motion'
 import { useScene, type Scene } from './theme'
@@ -21,11 +30,9 @@ const HEMISPHERE = { high: 1.05, low: 1.35 }
 const HORIZON_SHARE = 0.26
 /** The horizon's height, in degrees above eye level: full strength between the inner pair, none outside the outer. */
 const HORIZON = { from: -38, full: -8, until: 24, to: 58 }
-let horizonDome: THREE.BufferGeometry | null = null
 
-/** A dome around the scene whose vertices carry how much of the horizon shows there, as alpha. Shared by every canvas. */
+/** A dome around the scene whose vertices carry how much of the horizon shows there, as alpha. */
 function horizonGeometry() {
-  if (horizonDome) return horizonDome
   const dome = new THREE.SphereGeometry(30, 24, 48)
   const position = dome.getAttribute('position')
   const colors = new Float32Array(position.count * 4).fill(1)
@@ -36,7 +43,7 @@ function horizonGeometry() {
       (1 - THREE.MathUtils.smoothstep(height, HORIZON.until, HORIZON.to))
   }
   dome.setAttribute('color', new THREE.BufferAttribute(colors, 4))
-  return (horizonDome = dome)
+  return dome
 }
 
 /**
@@ -45,8 +52,10 @@ function horizonGeometry() {
  * of a white-chocolate cake turned grey-brown and every drip wore a dark outline, on a page that is cream all round.
  */
 function Horizon({ color, strength }: { color: string; strength: number }) {
+  const geometry = useMemo(() => horizonGeometry(), [])
+  useEffect(() => () => geometry.dispose(), [geometry])
   return (
-    <mesh geometry={horizonGeometry()}>
+    <mesh geometry={geometry}>
       <meshBasicMaterial
         color={color}
         vertexColors

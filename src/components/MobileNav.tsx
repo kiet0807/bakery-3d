@@ -56,7 +56,7 @@ export function MobileNav() {
       <button
         ref={button}
         type="button"
-        aria-label={open ? t.closeAll : t.all}
+        aria-label={t.all}
         aria-expanded={open}
         aria-controls={panel}
         onClick={() => setOpenOn(open ? null : pathname)}

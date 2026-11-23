@@ -29,7 +29,8 @@ realistic on purpose, but no order is ever sent and nobody is charged; every pag
   the front and its cloche lifts. Add it as it is, or open it in the builder.
 - **Cart** (`/cart`): quantities, then a demo checkout in two steps (who and how, then when and how to pay):
   pickup at the shop or delivery, chips for the next seven open days, time slots in the shop's own time zone,
-  lead times, holiday rules and a 50% deposit where the policy needs one. It ends with
+  lead times, holiday rules and a 50% deposit where the policy needs one. A cake in the cart can be reopened in the
+  builder and put back in its own line. It ends with
   the cake being lowered into a box that folds shut and gets a ribbon.
 - **About, policies, FAQ**: the story of the (imaginary) shop and of the project, ordering, payment,
   cancellation, storage and allergy policies, and 13 questions answered.
@@ -61,7 +62,8 @@ A switch in the header recolours the whole shop, 3D scenes included, and the bro
 
 ### Two languages, one set of pages
 
-- Every page lives under `src/app/[lang]` and is prerendered for `vi` and `en`.
+- Every page lives under `src/app/[lang]` and is prerendered for `vi` and `en`. Each language's words are a chunk of
+  their own (`src/i18n/Words.tsx`), without the long policy and FAQ pages, which only the server renders.
 - `src/proxy.ts` keeps Vietnamese without a prefix: `/menu` is rewritten to `/vi/menu`, `/vi/menu`
   redirects (308) to `/menu`, and `/en/menu` is served as it is. Each page has one address per language,
   a canonical link and `hreflang` alternates; the sitemap lists both.

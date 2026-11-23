@@ -1,10 +1,12 @@
 'use client'
 
-import { ContactShadows, Environment, Lightformer } from '@react-three/drei'
-import { useThree } from '@react-three/fiber'
-import { Suspense, useEffect } from 'react'
-import { useQuality } from './motion'
+import { ContactShadows, Environment, Lightformer, useEnvironment } from '@react-three/drei'
+import { createPortal, useFrame, useThree } from '@react-three/fiber'
+import { Component, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import * as THREE from 'three'
+import { useQuality, useReducedMotionScene } from './motion'
 import { useScene, type Scene } from './theme'
+import { Timeline, useSettler } from './tween'
 
 /** "Comfy Café" by Sergej Majboroda, Poly Haven (CC0): the light of every high-tier scene and of photos. */
 export const CAFE_HDRI = '/hdri/comfy_cafe_1k.hdr'
@@ -52,15 +54,158 @@ function Panels({ light }: { light: Scene['light'] }) {
   )
 }
 
+/** How strongly each light shows in reflections: the panels alone, and the café with the same panels. */
+const PANELS_INTENSITY = 0.85
+const CAFE_INTENSITY = 0.7
+/** Size of each face of the environment cube. */
+const ENV_RESOLUTION = 256
+/** How long the café light takes to come in when its download lands after the scene is on screen. */
+const LIGHT_FADE_MS = 600
+
+const smooth = (t: number) => t * t * (3 - 2 * t)
+
+/** The cube the café light is drawn into, and how far its fade has come. It lives outside React's state. */
+class CafeCube {
+  readonly virtual = new THREE.Scene()
+  readonly target = new THREE.WebGLCubeRenderTarget(ENV_RESOLUTION)
+  readonly fade = new Timeline()
+  /** How far the café light has come in, eased, 0 to 1. */
+  mix = 0
+  private camera: THREE.CubeCamera | null = null
+
+  constructor() {
+    this.target.texture.type = THREE.HalfFloatType
+  }
+
+  attach(camera: THREE.CubeCamera | null) {
+    this.camera = camera
+  }
+
+  /** Makes this cube the scene's light, at the strength the fade has reached. */
+  claim(scene: THREE.Scene) {
+    scene.environment = this.target.texture
+    scene.environmentIntensity = THREE.MathUtils.lerp(PANELS_INTENSITY, CAFE_INTENSITY, this.mix)
+  }
+
+  /** Remembers the scene's light (the panels'), to give it back when the café light goes. */
+  takeOver(scene: THREE.Scene) {
+    const environment = scene.environment
+    const intensity = scene.environmentIntensity
+    return () => {
+      scene.environment = environment
+      scene.environmentIntensity = intensity
+      this.target.dispose()
+    }
+  }
+
+  /** Draws the cube with the café at this strength (0 to 1) behind the panels. */
+  draw(gl: THREE.WebGLRenderer, scene: THREE.Scene, cafe: THREE.Texture, value: number) {
+    this.mix = value
+    this.virtual.background = cafe
+    this.virtual.environment = cafe
+    this.virtual.backgroundIntensity = value
+    this.claim(scene)
+    if (!this.camera) return
+    const autoClear = gl.autoClear
+    gl.autoClear = true
+    this.camera.update(gl, this.virtual)
+    gl.autoClear = autoClear
+  }
+}
+
 /**
- * Asks for one frame when it mounts. Placed beside the café HDRI in its Suspense boundary, it mounts when the
- * download lands: drei sets the scene's environment directly, which a scene rendering on demand would not see
- * until something else moved.
+ * The café HDRI (1.6 MB) usually lands after the scene is on screen, lit by the panels alone. drei's Environment
+ * would swap one light for the other in a single frame, a visible jump in brightness and warmth. This draws the
+ * same cube drei would (the café as background, the same panels in front of it) but brings the café in over
+ * LIGHT_FADE_MS: its strength in the cube goes from 0 to 1 while the scene's environment intensity goes from the
+ * panels' to the café's, so the first frame is exactly the panel light and the last exactly the café light. Each
+ * frame of the fade draws the cube again (and three refilters it). With reduced motion the café light is simply
+ * there; a saved picture or studio photo (the settler) jumps to the end.
  */
-function RedrawOnArrival() {
-  const invalidate = useThree((state) => state.invalidate)
-  useEffect(() => invalidate(), [invalidate])
-  return null
+function CafeLight({ light }: { light: Scene['light'] }) {
+  const cafe = useEnvironment({ files: CAFE_HDRI })
+  const get = useThree((state) => state.get)
+  const still = useReducedMotionScene()
+  const settler = useSettler()
+  const [cube] = useState(() => new CafeCube())
+  const release = useRef<() => void>(() => {})
+  const draw = (value: number) => {
+    const { gl, scene } = get()
+    cube.draw(gl, scene, cafe, value)
+  }
+
+  // Holds the scene's light while mounted, and hands back the panels' when it goes.
+  useLayoutEffect(() => {
+    const restore = cube.takeOver(get().scene)
+    return () => {
+      restore()
+      cafe.dispose()
+    }
+  }, [get, cube, cafe])
+
+  // The download has landed: fade in, or be there at once.
+  useLayoutEffect(() => {
+    if (still) {
+      draw(1)
+      get().invalidate()
+      return
+    }
+    cube.fade.play(LIGHT_FADE_MS)
+    draw(0)
+    const done = settler.add(() => {
+      cube.fade.finish()
+      draw(1)
+    })
+    release.current = done
+    return done
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the download lands
+  }, [])
+
+  // A new colour set repaints the panels inside the cube.
+  const drawnFor = useRef(light)
+  useLayoutEffect(() => {
+    if (drawnFor.current === light) return
+    drawnFor.current = light
+    draw(cube.mix)
+    get().invalidate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the panels change
+  }, [light])
+
+  // The panels' own Environment (rendered just before this) sets the scene's light again whenever its children
+  // change: take it back after every commit. Two assignments, no drawing.
+  useLayoutEffect(() => cube.claim(get().scene))
+
+  useFrame(({ gl, scene, invalidate }) => {
+    if (!cube.fade.active) return
+    cube.draw(gl, scene, cafe, smooth(cube.fade.progress()))
+    if (cube.fade.active) invalidate()
+    else release.current()
+  })
+
+  return createPortal(
+    <>
+      <Panels light={light} />
+      <cubeCamera ref={(camera) => cube.attach(camera)} args={[0.1, 1000, cube.target]} />
+    </>,
+    cube.virtual,
+  )
+}
+
+/**
+ * A café light that cannot load (offline, a failed download) leaves the panel light on. Without this the error
+ * reached the scene's own boundary, which swapped the whole 3D scene for the 2D drawing.
+ */
+class CafeLightBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  componentDidCatch(error: unknown) {
+    console.warn('The café light did not load; the scene keeps the panel light.', error)
+  }
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
 }
 
 /**
@@ -80,6 +225,9 @@ export function Studio({
   const quality = useQuality()
   const high = quality === 'high'
   const { light, ink } = useScene()
+  // The same element while the colours stay: drei's Environment draws its cube again (and resets the scene's
+  // light) whenever its children change, which a new element on every render of the scene would cause.
+  const panels = useMemo(() => <Panels light={light} />, [light])
   return (
     <>
       {/* Colours as props, not args: a palette change recolours the light instead of replacing it. */}
@@ -101,16 +249,15 @@ export function Studio({
       />
       <directionalLight position={[-4, 3, -4]} intensity={high ? 1.3 : 1.1} color={light.fill} />
       <pointLight position={[-2.5, -0.5, 2.5]} intensity={2.2} distance={8} color={light.bounce} />
-      <Environment resolution={256} frames={1} environmentIntensity={0.85}>
-        <Panels light={light} />
+      <Environment resolution={ENV_RESOLUTION} frames={1} environmentIntensity={PANELS_INTENSITY}>
+        {panels}
       </Environment>
       {high && (
-        <Suspense fallback={null}>
-          <Environment files={CAFE_HDRI} environmentIntensity={0.7} resolution={256}>
-            <Panels light={light} />
-          </Environment>
-          <RedrawOnArrival />
-        </Suspense>
+        <CafeLightBoundary>
+          <Suspense fallback={null}>
+            <CafeLight light={light} />
+          </Suspense>
+        </CafeLightBoundary>
       )}
       {shadows && (
         <ContactShadows

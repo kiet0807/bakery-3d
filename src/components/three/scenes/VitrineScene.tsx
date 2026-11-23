@@ -3,7 +3,7 @@
 import { MeshReflectorMaterial } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import type { EffectComposer as Composer } from 'postprocessing'
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { useDict } from '@/i18n/LangProvider'
@@ -31,6 +31,24 @@ const CAKE_HALF_WIDTH = 1.45
 const CAKE_HEIGHT = 2.5
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
+
+/**
+ * The vitrine renders on demand. Its idle motion (the chosen cake's slow turn, about 13° a second, and candle
+ * flames) is drawn at this rate, which reads as smooth as 60 for something that slow and halves the cost of the
+ * page's longest state (a quarter of it on a 120 Hz screen, which drew 120 frames a second). The table turning,
+ * the camera following the pointer and the cloche lifting ask for every frame while they move.
+ */
+const IDLE_FPS = 30
+/** Below this a damped value counts as arrived: it is set to its goal and stops asking for frames. */
+const SETTLED = 1e-4
+
+/**
+ * The table's reflection is rendered from a camera below it that sees layer 0 only. Toppings sit on top of the
+ * cakes, where that camera cannot see them past the cakes themselves (measured: the picture does not change by
+ * more than 3 of 255 in any pixel), yet they were more than half of its draw calls (145 of 254). On this layer they are left out of
+ * the reflection; the scene's camera, the shadow pass and saved pictures still see them.
+ */
+const NOT_REFLECTED = 1
 
 /** Size of the glass cloche that covers a cake on its stand. */
 function clocheSize(config: CakeConfig) {
@@ -88,10 +106,13 @@ function Showcase({
   const ring = useRef<THREE.MeshBasicMaterial>(null)
   const lift = useRef(selected ? 1 : 0)
 
+  const invalidate = useThree((state) => state.invalidate)
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05)
     const goal = selected ? 1 : 0
     lift.current = still ? goal : THREE.MathUtils.damp(lift.current, goal, 3.4, dt)
+    if (Math.abs(lift.current - goal) < SETTLED) lift.current = goal
+    else invalidate()
     const ease = smooth(lift.current)
     if (cloche.current && glass.current) {
       // The cloche rises and fades out of view while the chosen cake is on show.
@@ -111,6 +132,8 @@ function Showcase({
         // Turn back to face the visitor, by the shortest way round.
         const home = Math.round(group.rotation.y / TAU) * TAU
         group.rotation.y = still ? home : THREE.MathUtils.damp(group.rotation.y, home, 4, dt)
+        if (Math.abs(group.rotation.y - home) < SETTLED) group.rotation.y = home
+        else invalidate()
       }
     }
   })
@@ -217,6 +240,18 @@ function Rig({ index, count, children }: { index: number; count: number; childre
   const goal = useRef(-index * step)
   const shown = useRef(index)
   const look = useMemo(() => new THREE.Vector3(), [])
+  const aim = useMemo(() => new THREE.Vector3(), [])
+  const invalidate = useThree((state) => state.invalidate)
+  // The element the pointer is read from: over the page's text columns it does not move, nor does the camera.
+  const source = useThree((state) => state.events.connected) as EventTarget | null | undefined
+  // A new cake to bring round, or the pointer moving (the camera drifts after it): frames until it has settled.
+  useEffect(() => invalidate(), [index, invalidate])
+  useEffect(() => {
+    if (still || !source) return
+    const wake = () => invalidate()
+    source.addEventListener('pointermove', wake, { passive: true })
+    return () => source.removeEventListener('pointermove', wake)
+  }, [still, source, invalidate])
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05)
@@ -227,6 +262,8 @@ function Rig({ index, count, children }: { index: number; count: number; childre
       shown.current = index
     }
     angle.current = still ? goal.current : THREE.MathUtils.damp(angle.current, goal.current, 2.6, dt)
+    if (Math.abs(angle.current - goal.current) < SETTLED) angle.current = goal.current
+    else invalidate()
     if (table.current) table.current.rotation.y = angle.current
 
     // Frame the front cake. On wide screens the stage runs behind the side columns, so the cake only gets the
@@ -239,11 +276,16 @@ function Rig({ index, count, children }: { index: number; count: number; childre
     const distance = Math.max(CAKE_HALF_WIDTH / share / (tan * aspect), CAKE_HEIGHT / 0.62 / 2 / tan)
     const x = still ? 0 : pointer.x * 0.35
     const y = 0.45 + distance * 0.2 + (still ? 0 : pointer.y * 0.15)
-    camera.position.set(
-      THREE.MathUtils.damp(camera.position.x, x, 3, dt),
-      THREE.MathUtils.damp(camera.position.y, y, 3, dt),
-      THREE.MathUtils.damp(camera.position.z, distance, 3, dt),
-    )
+    const goalCamera = aim.set(x, y, distance)
+    if (camera.position.distanceTo(goalCamera) < SETTLED) camera.position.copy(goalCamera)
+    else {
+      camera.position.set(
+        THREE.MathUtils.damp(camera.position.x, x, 3, dt),
+        THREE.MathUtils.damp(camera.position.y, y, 3, dt),
+        THREE.MathUtils.damp(camera.position.z, distance, 3, dt),
+      )
+      invalidate()
+    }
     if (scene.fog instanceof THREE.Fog) {
       // The cakes at the back fade into the page's cream, whatever the distance.
       scene.fog.near = distance + 2
@@ -257,6 +299,59 @@ function Rig({ index, count, children }: { index: number; count: number; childre
       <group ref={table}>{children}</group>
     </group>
   )
+}
+
+/** Draws the idle motion at IDLE_FPS, in step with the screen's refresh. Off under reduced motion: nothing idles. */
+function IdlePace() {
+  const invalidate = useThree((state) => state.invalidate)
+  const still = useReducedMotionScene()
+  useEffect(() => {
+    if (still) return
+    const interval = 1000 / IDLE_FPS
+    let last = 0
+    let frame = requestAnimationFrame(function tick(now) {
+      // A few milliseconds of slack, so a 60 Hz screen draws every second refresh rather than every third.
+      if (now - last >= interval - 4) {
+        last = now
+        invalidate()
+      }
+      frame = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [still, invalidate])
+  return null
+}
+
+/**
+ * Puts every topping on NOT_REFLECTED and lets the scene's camera see that layer. Toppings are all mounted with
+ * their cakes (the vitrine's designs never change), so a look every 30 drawn frames only catches stragglers.
+ */
+function ToppingsOutOfReflection() {
+  const camera = useThree((state) => state.camera)
+  const scene = useThree((state) => state.scene)
+  // Only the high tier has the reflective table.
+  const high = useQuality() === 'high'
+  const frames = useRef(0)
+  useLayoutEffect(() => {
+    if (!high) return
+    camera.layers.enable(NOT_REFLECTED)
+    return () => camera.layers.disable(NOT_REFLECTED)
+  }, [camera, high])
+  useFrame(() => {
+    if (!high || frames.current++ % 30) return
+    scene.traverse((object) => {
+      if (object.name === 'toppings') object.traverse((child) => child.layers.set(NOT_REFLECTED))
+    })
+  })
+  return null
+}
+
+/** A new colour set (lights, fog, table, rings) is drawn at once, even with nothing idling (reduced motion). */
+function RedrawOnPalette() {
+  const invalidate = useThree((state) => state.invalidate)
+  const colours = useScene()
+  useEffect(() => invalidate(), [colours, invalidate])
+  return null
 }
 
 export default function VitrineScene({
@@ -284,7 +379,10 @@ export default function VitrineScene({
       poster={dict.menu.loading}
       camera={{ position: [0, 2.2, 9], fov: 34, near: 0.1, far: 60 }}
       lowDpr={1}
+      mode="demand"
     >
+      <IdlePace />
+      <RedrawOnPalette />
       {/* Fixed args and the colour as a prop: a palette change recolours the fog instead of replacing it. */}
       <fog attach="fog" args={['#ffffff', 11, 19]} color={page} />
       <Studio floor={FLOOR} shadows={false} />
@@ -302,6 +400,7 @@ export default function VitrineScene({
         ))}
       </Rig>
       <Effects ref={composer} />
+      <ToppingsOutOfReflection />
       <CaptureBridge captureRef={captureRef} composerRef={composer} crop={0.72} />
       <ResetCursor />
     </CanvasShell>

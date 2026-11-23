@@ -81,12 +81,15 @@ function TierPiece({
   part,
   material,
   texture,
+  faces,
 }: {
   tier: TierLayout
   part: Part
   /** The frosting, shared by every piece of the cake (its colour eases when the visitor picks another). */
   material: THREE.Material
   texture: THREE.Texture | null
+  /** The cake's cut faces: shown only while the slice is out (see `Cake`). */
+  faces: RefObject<Set<THREE.Object3D>>
 }) {
   const [start, length] = RANGES[part]
   const surface = useMemo(
@@ -101,7 +104,20 @@ function TierPiece({
     <group position-y={tier.base}>
       <mesh geometry={surface} material={material} castShadow receiveShadow />
       {[HALF, -HALF].map((phi) => (
-        <mesh key={phi} geometry={face} rotation-y={faceRotation(phi)} receiveShadow>
+        <mesh
+          key={phi}
+          ref={(node) => {
+            if (!node) return
+            const all = faces.current
+            all.add(node)
+            return () => void all.delete(node)
+          }}
+          geometry={face}
+          rotation-y={faceRotation(phi)}
+          // The cake's frame loop shows it before the first frame if the slice starts out.
+          visible={false}
+          receiveShadow
+        >
           <meshStandardMaterial
             map={texture}
             bumpMap={texture}
@@ -358,6 +374,12 @@ export function Cake({
   const dripGroups = useRef<Record<string, THREE.Group | null>>({})
   const toppingGroups = useRef<Partial<Record<Part, THREE.Group | null>>>({})
   const progress = useRef(sliced ? 1 : 0)
+  /**
+   * With the slice home the cut faces meet inside the closed cake, where nothing can see them, yet they cost four
+   * draw calls a tier in every pass (the vitrine's six cakes: about 60 a frame). They are drawn only while the
+   * slice is out.
+   */
+  const faces = useRef(new Set<THREE.Object3D>())
   const invalidate = useThree((state) => state.invalidate)
   useEffect(() => invalidate(), [sliced, invalidate])
 
@@ -394,6 +416,7 @@ export function Cake({
       else invalidate()
     }
     const ease = smooth(Math.min(1, Math.max(0, progress.current)))
+    for (const face of faces.current) face.visible = ease > 0
     const reach = ease * layout.maxRadius * sliceReach
     slice.position.set(Math.sin(sliceAngle) * reach, ease * 0.12, Math.cos(sliceAngle) * reach)
     slice.rotation.y = ease * sliceTurn
@@ -432,6 +455,7 @@ export function Cake({
                 part={part}
                 material={materials.frosting}
                 texture={textures[i]}
+                faces={faces}
               />
             ))}
             {drip &&
@@ -447,7 +471,7 @@ export function Cake({
                   />
                 </group>
               ))}
-            <group ref={(node) => void (toppingGroups.current[part] = node)}>
+            <group name="toppings" ref={(node) => void (toppingGroups.current[part] = node)}>
               <Toppings layout={layout} part={part} kissMaterial={materials.kiss} lit={lit} />
             </group>
           </group>

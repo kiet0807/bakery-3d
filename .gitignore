@@ -41,9 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 # local notes (never committed)
+.ai
 HANDOFF.md
 PLAN.md
-REVIEW-PROMPT.md
+REVIEW-PROMPT*.md
 BAO-CAO-REVIEW-*.md
 
 # playwright

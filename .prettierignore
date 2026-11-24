@@ -4,9 +4,12 @@ pnpm-lock.yaml
 public/fonts
 test-results
 playwright-report
+.ai
 HANDOFF.md
 PLAN.md
 AGENTS.md
+REVIEW-PROMPT*.md
+BAO-CAO-REVIEW-*.md
 
 # Design-lint tool state
 .impeccable/

@@ -201,6 +201,8 @@ export const cart: CartDict = {
     eyebrow: (number: string) => `Order ${number}`,
     title: 'Boxed up and',
     titleMark: { pickup: 'ready for you!', delivery: 'ready to ride!' },
+    boxing: 'Boxing it up,',
+    boxingMark: 'one sec!',
     waiting: (count: number, name: string) =>
       count === 1 ? `${name}'s cake will be ready at` : `${name}'s ${count} cakes will be ready at`,
     pickupWhere: 'Pickup at the shop, Thủ Đức area.',

@@ -189,8 +189,10 @@ if (want('og'))
     const s = await open(path, {
       width: 1200,
       height: 630,
-      // Without the header there is room above: the title moves up, clear of the macarons.
-      css: 'header, #story > nav, #story section:first-of-type > * { visibility: hidden !important; } #story h1 { top: 1.75rem !important; }',
+      // Without the header there is room above: the title moves up, clear of the macarons. On the page the scene
+      // is drawn over the title (the cake's top overlaps it); here the title goes on top, so no sprinkle drifting
+      // through the still picture lands on a letter.
+      css: 'header, #story > nav, #story section:first-of-type > * { visibility: hidden !important; } #story h1 { top: 1.75rem !important; z-index: 1; }',
     })
     await s.page.waitForTimeout(9000)
     await done(name, s, (file) => s.page.screenshot({ path: file }))

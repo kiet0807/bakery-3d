@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cakeName, describeCake } from '@/i18n/cake-text'
 import { LocalLink, useDict, useLang } from '@/i18n/LangProvider'
 import { priceOf } from '@/lib/cake'
@@ -20,6 +20,12 @@ export interface PlacedOrder extends Order {
   items: CartItem[]
 }
 
+/**
+ * The title says the box is done only once the bow is tied. If the box never gets that far in view (still loading,
+ * scrolled away so it stops drawing), the title stops waiting after this long.
+ */
+const TITLE_WAIT_MS = 12000
+
 /** The end of checkout: the first cake boxed up in 3D, and a receipt that says plainly nothing was charged. */
 export function OrderDone({ order }: { order: PlacedOrder }) {
   const dict = useDict()
@@ -27,23 +33,47 @@ export function OrderDone({ order }: { order: PlacedOrder }) {
   const t = dict.cart.done
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
+  const [tied, setTied] = useState(false)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTied(true), TITLE_WAIT_MS)
+    return () => window.clearTimeout(timer)
+  }, [])
   const count = order.items.reduce((sum, item) => sum + item.quantity, 0)
   const { form, deposit } = order
 
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 pt-20 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(340px,1fr)] lg:gap-12 lg:pt-28">
       <div className="sticker h-[52svh] min-h-80 overflow-hidden bg-soft lg:sticky lg:top-28 lg:h-[calc(100svh-9rem)]">
-        <BoxScene config={order.items[0].config} fallback={<BoxLoading />} />
+        <BoxScene config={order.items[0].config} onTied={() => setTied(true)} fallback={<BoxLoading />} />
       </div>
       <div className="space-y-8 self-center pb-10">
         <header className="space-y-3">
           <p className="eyebrow">{t.eyebrow(order.number)}</p>
+          {/*
+            While the box folds, the title says it is being boxed; the finished title lands with the bow, in the
+            same place (both lines share one grid cell, so nothing below moves). Screen readers get the finished
+            title at once: the heading takes focus on arrival.
+          */}
           <h1
             ref={heading}
             tabIndex={-1}
-            className="font-display text-[clamp(2.6rem,6vw,4.4rem)] leading-[1.02] font-extrabold outline-none"
+            className="grid font-display text-[clamp(2.6rem,6vw,4.4rem)] leading-[1.02] font-extrabold outline-none"
           >
-            {t.title} <span className="mark">{t.titleMark[form.method]}</span>
+            <span
+              aria-hidden
+              className={`[grid-area:1/1] transition-[opacity,translate] duration-300 ease-out ${
+                tied ? '-translate-y-2 opacity-0' : ''
+              }`}
+            >
+              {t.boxing} <span className="mark">{t.boxingMark}</span>
+            </span>
+            <span
+              className={`[grid-area:1/1] transition-[opacity,translate] duration-500 ease-out ${
+                tied ? '' : 'translate-y-3 opacity-0'
+              }`}
+            >
+              {t.title} <span className="mark">{t.titleMark[form.method]}</span>
+            </span>
           </h1>
           <p className="text-lg leading-relaxed text-muted">
             {t.waiting(count, form.name)}{' '}

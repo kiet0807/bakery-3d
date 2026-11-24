@@ -167,7 +167,15 @@ function Bow({ y, bowRef }: { y: number; bowRef: (node: THREE.Group | null) => v
  * `startedAt` lives outside the canvas: when a slow device drops to the light tier the canvas is rebuilt, and
  * the box must carry on where it was instead of unpacking itself and folding up again.
  */
-function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefObject<number | null> }) {
+function FoldingBox({
+  config,
+  startedAt,
+  onTied,
+}: {
+  config: CakeConfig
+  startedAt: RefObject<number | null>
+  onTied?: () => void
+}) {
   const { scenes } = useDict()
   const { box } = useScene()
   const still = useReducedMotionScene()
@@ -180,6 +188,7 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
   const sideBands = useRef<(THREE.Group | null)[]>([])
   const bow = useRef<THREE.Group>(null)
   const look = useMemo(() => new THREE.Vector3(), [])
+  const told = useRef(false)
   const rx = W * RIBBON_X
   const rz = W * RIBBON_Z
   // Where the ribbon crosses each face, in that face's frame (front, right, back, left).
@@ -193,6 +202,10 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
     startedAt.current ??= now
     const t = still ? END : now - startedAt.current
     if (t < END) state.invalidate()
+    else if (!told.current) {
+      told.current = true
+      onTied?.()
+    }
 
     if (cake.current) cake.current.position.y = (1 - settle(range(t, 0, 0.9))) * (H + 0.5)
     folds.current.forEach((pivot, i) => {
@@ -318,7 +331,16 @@ function FoldingBox({ config, startedAt }: { config: CakeConfig; startedAt: RefO
   )
 }
 
-export default function BoxScene({ config, children }: { config: CakeConfig; children?: ReactNode }) {
+export default function BoxScene({
+  config,
+  onTied,
+  children,
+}: {
+  config: CakeConfig
+  /** Called once the bow is tied, or at once when the 2D drawing stands in for the box. */
+  onTied?: () => void
+  children?: ReactNode
+}) {
   const { scenes, cart } = useDict()
   const startedAt = useRef<number | null>(null)
   return (
@@ -328,10 +350,11 @@ export default function BoxScene({ config, children }: { config: CakeConfig; chi
       label={scenes.box}
       poster={cart.done.boxLoading}
       camera={{ position: [0, 3, 7], fov: 32, near: 0.1, far: 60 }}
+      onFallback={onTied}
     >
       <Studio />
       <ShadowBlob radius={boxSize(config).width * 1.05} y={-T} />
-      <FoldingBox config={config} startedAt={startedAt} />
+      <FoldingBox config={config} startedAt={startedAt} onTied={onTied} />
       {/* The box on show turns at the idle pace; while it folds, FoldingBox asks for every frame itself. */}
       <IdlePace />
       {children}

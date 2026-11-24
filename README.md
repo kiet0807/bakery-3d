@@ -32,7 +32,8 @@ realistic on purpose, but no order is ever sent and nobody is charged. Every pag
   pickup at the shop or delivery, chips for the next seven open days, time slots in the shop's own time zone,
   lead times, holiday rules and a 50% deposit where the policy needs one. A cake in the cart can be reopened in the
   builder and put back in its own line. It ends with
-  the cake being lowered into a box that folds shut and gets a ribbon.
+  the cake being lowered into a box that folds shut and gets a ribbon; the title says it is boxed up once the bow
+  is tied.
 - **About, policies, FAQ**: the story of the (imaginary) shop and of the project, ordering, payment,
   cancellation, storage and allergy policies, and 13 questions answered.
 

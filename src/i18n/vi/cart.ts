@@ -203,6 +203,9 @@ export const cart = {
     eyebrow: (number: string) => `Đơn ${number}`,
     title: 'Đóng hộp xong,',
     titleMark: { pickup: 'chờ bạn tới lấy!', delivery: 'chờ ship tới nè!' } satisfies Record<Method, string>,
+    /** Shown while the box is still folding; the title above takes its place once the bow is tied. */
+    boxing: 'Đang đóng hộp,',
+    boxingMark: 'chờ xíu nha!',
     waiting: (count: number, name: string) =>
       count === 1
         ? `Chiếc bánh của ${name} sẽ sẵn sàng lúc`

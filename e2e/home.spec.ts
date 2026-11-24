@@ -68,6 +68,10 @@ test.describe('home', () => {
 
     release()
     await expect(note).toHaveCSS('opacity', '0', { timeout: 60_000 })
+    // With the scene drawn, the page loads the other scenes' code in idle moments, through the route above. The
+    // test ends now and closes the page: a handler still reading such a chunk would fail ("Response has been
+    // disposed") and fail the test with it, so the handlers are let go quietly.
+    await page.unrouteAll({ behavior: 'ignoreErrors' })
   })
 
   test('the title says the shop name and its tagline', async ({ page }) => {

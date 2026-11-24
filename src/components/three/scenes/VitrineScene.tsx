@@ -2,7 +2,7 @@
 
 import { MeshReflectorMaterial } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
 import { sizeOf, type CakeConfig } from '@/lib/cake'
 import { useDict } from '@/i18n/LangProvider'
@@ -12,7 +12,7 @@ import { FROSTING } from '../cake/geometry'
 import { Cake } from '../cake/Cake'
 import { headroom } from '../cake/layout'
 import { CakeStand, STAND_HEIGHT } from '../CakeStand'
-import { CanvasShell } from '../CanvasShell'
+import { CanvasShell, useHoldPoster } from '../CanvasShell'
 import { Effects } from '../Effects'
 import { useQuality, useReducedMotionScene } from '../motion'
 import { ShadowBlob } from '../ShadowBlob'
@@ -322,16 +322,80 @@ function Rig({
   )
 }
 
+/** The order the cakes are put on the table: the one on show, then its neighbours, outwards on both sides. */
+function arrivalOrder(first: number, count: number) {
+  const order = [first]
+  for (let step = 1; order.length < count; step++) {
+    order.push((first + step) % count)
+    if (order.length < count) order.push((first - step + count) % count)
+  }
+  return order
+}
+
 /**
- * Puts every topping on NOT_REFLECTED and lets the scene's camera see that layer. Toppings are all mounted with
- * their cakes (the vitrine's designs never change), so a look every 30 drawn frames only catches stragglers.
+ * The cakes on the table, put there one a frame. All six built at once (their geometry and painted cut faces, then
+ * shaders, buffers and textures in the first draw) froze a phone for over 200 ms on a first visit to the menu, and
+ * the page with it. The first frame draws the empty table, so the studio light and the effect chain get one of their
+ * own, then one cake a frame; the poster stays up until the table is full.
  */
-function ToppingsOutOfReflection() {
+function Cakes({
+  presets,
+  index,
+  sliced,
+  onSelect,
+}: {
+  presets: Preset[]
+  index: number
+  sliced: boolean
+  onSelect: (index: number) => void
+}) {
+  const count = presets.length
+  const [order] = useState(() => arrivalOrder(index, count))
+  const [placed, setPlaced] = useState(0)
+  useHoldPoster(placed < count)
+  const invalidate = useThree((state) => state.invalidate)
+  useFrame(() => {
+    if (placed >= count) return
+    // The cake placed last is drawn in this frame; the next one is built after it.
+    setPlaced(placed + 1)
+    invalidate()
+  })
+  const on = new Set(order.slice(0, placed))
+  const step = TAU / count
+  return (
+    <>
+      {presets.map(
+        (preset, i) =>
+          on.has(i) && (
+            <Showcase
+              key={preset.id}
+              preset={preset}
+              angle={i * step}
+              selected={i === index}
+              sliced={sliced}
+              onSelect={() => onSelect(i)}
+            />
+          ),
+      )}
+      <ToppingsOutOfReflection cakes={placed} />
+    </>
+  )
+}
+
+/**
+ * Puts every topping on NOT_REFLECTED and lets the scene's camera see that layer. Toppings are mounted with their
+ * cakes (the vitrine's designs never change): they are looked at when a cake is put on the table, and a look every
+ * 30 drawn frames catches stragglers.
+ */
+function ToppingsOutOfReflection({ cakes }: { cakes: number }) {
   const camera = useThree((state) => state.camera)
   const scene = useThree((state) => state.scene)
   // Only the high tier has the reflective table.
   const high = useQuality() === 'high'
   const frames = useRef(0)
+  useEffect(() => {
+    frames.current = 0
+  }, [cakes])
   useLayoutEffect(() => {
     if (!high) return
     camera.layers.enable(NOT_REFLECTED)
@@ -371,7 +435,6 @@ export default function VitrineScene({
   const dict = useDict()
   const { page } = useScene()
   const presetLabel = dict.cake.presets[presets[index].id].name
-  const step = TAU / presets.length
   return (
     <CanvasShell
       className="h-full w-full"
@@ -388,19 +451,9 @@ export default function VitrineScene({
       <Studio />
       <Rig index={index} count={presets.length} drag={drag}>
         <Turntable />
-        {presets.map((preset, i) => (
-          <Showcase
-            key={preset.id}
-            preset={preset}
-            angle={i * step}
-            selected={i === index}
-            sliced={sliced}
-            onSelect={() => onSelect(i)}
-          />
-        ))}
+        <Cakes presets={presets} index={index} sliced={sliced} onSelect={onSelect} />
       </Rig>
       <Effects />
-      <ToppingsOutOfReflection />
     </CanvasShell>
   )
 }

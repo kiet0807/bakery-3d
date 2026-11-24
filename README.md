@@ -133,6 +133,10 @@ unless the visitor asked for reduced motion.
 - The vitrine renders on demand too: its slow idle turn draws 30 frames a second, anything the visitor moves gets
   every frame, toppings stay out of the floor reflection, and closed cakes skip their cut faces (about a third of
   the old cost). The café light fades in when it arrives instead of brightening the scene in one jump.
+- The vitrine sets its table one piece a frame under the loading poster: the empty table with its light and effects
+  first, then the cake on show and its neighbours outwards. Built in one go, the six cakes held up a phone's first
+  frame for over 200 ms (about 70 ms now, 4x slower CPU); `useHoldPoster` keeps the poster up until a scene that
+  builds this way is whole.
 - The cart page sends its empty state from the server and swaps in the skeleton before the first paint when the
   saved cart holds cakes, so nothing shifts as it loads.
 - `node scripts/vitals.mjs <url> 3 / /design /menu /cart` measures loading on an emulated mid-range phone

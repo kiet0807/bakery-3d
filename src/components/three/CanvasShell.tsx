@@ -4,6 +4,8 @@ import { PerformanceMonitor } from '@react-three/drei'
 import { Canvas, useFrame, useThree, type CanvasProps } from '@react-three/fiber'
 import {
   Component,
+  createContext,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -84,6 +86,21 @@ const FADE = 'opacity 420ms cubic-bezier(0.16, 1, 0.3, 1)'
 /** Copies what the canvas shows into a plain 2D canvas, drawn again and copied in the same task. */
 type Snapshot = () => HTMLCanvasElement | null
 
+/** Lets a scene that is still putting itself together keep its poster up (see `useHoldPoster`). */
+interface Building {
+  hold: () => () => void
+}
+const BuildingContext = createContext<Building | null>(null)
+
+/**
+ * For a scene that builds itself over several frames instead of in one long one (the vitrine puts one cake a frame
+ * on its table): while `building` is true the poster stays up and the canvas hidden, so nothing comes in half made.
+ */
+export function useHoldPoster(building: boolean) {
+  const context = useContext(BuildingContext)
+  useLayoutEffect(() => (building ? context?.hold() : undefined), [building, context])
+}
+
 /**
  * Inside the canvas: reports once a few frames have been drawn (the scene is really there, shaders compiled),
  * and lends the shell a way to take a picture of the scene before the canvas is rebuilt.
@@ -91,9 +108,12 @@ type Snapshot = () => HTMLCanvasElement | null
 function CanvasReady({
   onDrawn,
   snapshotRef,
+  buildingRef,
 }: {
   onDrawn: () => void
   snapshotRef: RefObject<Snapshot | null>
+  /** How many parts of the scene are still building themselves: the frames are counted once they are done. */
+  buildingRef: RefObject<number>
 }) {
   const gl = useThree((state) => state.gl)
   const scene = useThree((state) => state.scene)
@@ -101,6 +121,11 @@ function CanvasReady({
   const invalidate = useThree((state) => state.invalidate)
   const frames = useRef(0)
   useFrame(() => {
+    if (buildingRef.current > 0 && frames.current < 3) {
+      frames.current = 0
+      invalidate()
+      return
+    }
     frames.current += 1
     if (frames.current === 3) onDrawn()
     // Asks for the frames it counts, so a scene rendering on demand cannot leave its poster up.
@@ -310,6 +335,21 @@ export function CanvasShell({
     }),
     [],
   )
+  const building = useRef(0)
+  const buildingHold = useMemo<Building>(
+    () => ({
+      hold: () => {
+        building.current += 1
+        let released = false
+        return () => {
+          if (released) return
+          released = true
+          building.current -= 1
+        }
+      },
+    }),
+    [],
+  )
 
   useEffect(() => {
     const element = wrapper.current
@@ -398,10 +438,10 @@ export function CanvasShell({
                   <KeepFresh />
                   <ContextGuard onGone={() => setLost(true)} />
                   <PerformanceHoldContext.Provider value={performanceHold}>
-                    {children}
+                    <BuildingContext.Provider value={buildingHold}>{children}</BuildingContext.Provider>
                   </PerformanceHoldContext.Provider>
                 </SettleContext.Provider>
-                <CanvasReady onDrawn={() => setDrawn(true)} snapshotRef={snapshot} />
+                <CanvasReady onDrawn={() => setDrawn(true)} snapshotRef={snapshot} buildingRef={building} />
               </Canvas>
             </QualityContext.Provider>
           </ReducedMotionContext.Provider>
